@@ -1,0 +1,769 @@
+// prisma/schema.prisma
+// ENEM Medicina Hub — Schema completo
+// Versão 1.0
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// AUTH (NextAuth.js)
+// ============================================================
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?   // hashed, para Credentials provider
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // NextAuth relations
+  accounts         Account[]
+  sessions         Session[]
+
+  // App relations
+  profile          UserProfile?
+  studySessions    StudySession[]
+  flashcardReviews FlashcardReview[]
+  userQuestions    UserQuestion[]
+  videosWatched    VideoWatched[]
+  userSimulados    UserSimulado[]
+  essays           Essay[]
+  notes            Note[]
+  noteFolders      NoteFolder[]
+  studyPlans       StudyPlan[]
+  achievements     UserAchievement[]
+  favorites        Favorite[]
+  flashcardDecks   FlashcardDeck[]
+  agentInsights    AgentInsight[]
+}
+
+model UserProfile {
+  id             String    @id @default(cuid())
+  userId         String    @unique
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Goals
+  targetScore    Float     @default(950)
+  targetCourse   String    @default("Medicina")
+  examDate       DateTime?
+  dailyStudyGoal Int       @default(120) // minutos
+
+  // Gamification
+  currentLevel   Int       @default(1)
+  totalXP        Int       @default(0)
+  streak         Int       @default(0)
+  longestStreak  Int       @default(0)
+  lastStudyDate  DateTime?
+
+  // Trilha de estudos (detectada automaticamente pela data da prova)
+  trail          TrailType @default(EXTENSIVA)
+
+  // Preferences
+  theme          String    @default("dark")
+  language       String    @default("pt-BR")
+
+  // Estimated score (updated after each simulado)
+  estimatedScore Float?
+
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ============================================================
+// CONTENT STRUCTURE (Matriz ENEM)
+// ============================================================
+
+model Area {
+  id          String       @id @default(cuid())
+  name        String
+  slug        String       @unique
+  description String?
+  icon        String?      // Lucide icon name
+  color       String?      // Tailwind color (e.g. "blue")
+  order       Int
+
+  disciplines Discipline[]
+
+  createdAt   DateTime     @default(now())
+}
+
+model Discipline {
+  id          String   @id @default(cuid())
+  areaId      String
+  area        Area     @relation(fields: [areaId], references: [id])
+
+  name        String
+  slug        String   @unique
+  icon        String?
+  order       Int
+
+  topics      Topic[]
+
+  createdAt   DateTime @default(now())
+
+  @@index([areaId])
+}
+
+model Topic {
+  id           String     @id @default(cuid())
+  disciplineId String
+  discipline   Discipline @relation(fields: [disciplineId], references: [id])
+
+  name         String
+  slug         String     @unique
+  description  String?
+  order        Int
+
+  // ENEM metadata
+  importance   Int        @default(3) // 1-5 (importância para aprovação)
+  frequency    Int        @default(3) // 1-5 (frequência histórica no ENEM)
+
+  subtopics    Subtopic[]
+  contents     Content[]
+  questions    Question[]
+  flashcards   Flashcard[]
+  planItems    StudyPlanItem[]
+  videos       TopicVideo[]
+
+  createdAt    DateTime   @default(now())
+
+  @@index([disciplineId])
+  @@index([importance, frequency])
+}
+
+model Subtopic {
+  id        String     @id @default(cuid())
+  topicId   String
+  topic     Topic      @relation(fields: [topicId], references: [id])
+
+  name      String
+  slug      String     @unique
+  order     Int
+
+  contents  Content[]
+  questions Question[]
+
+  createdAt DateTime   @default(now())
+
+  @@index([topicId])
+}
+
+model Content {
+  id           String    @id @default(cuid())
+  topicId      String?
+  topic        Topic?    @relation(fields: [topicId], references: [id])
+  subtopicId   String?
+  subtopic     Subtopic? @relation(fields: [subtopicId], references: [id])
+
+  title        String
+  slug         String    @unique
+
+  // Content blocks
+  summary      String    @db.Text  // resumo rápido (3-5 linhas)
+  body         String    @db.Text  // conteúdo completo (MDX/HTML)
+
+  // Structured metadata
+  keyConcepts  String[]            // conceitos-chave
+  tips         String[]            // dicas de prova
+  formulas     String[]            // fórmulas importantes
+  tricks       String[]            // macetes e pegadinhas
+
+  // ENEM metadata
+  importance   Int       @default(3)
+  frequency    Int       @default(3)
+  readTime     Int?      // minutos de leitura estimados
+
+  flashcards   Flashcard[]
+  questions    Question[]
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([topicId])
+  @@index([subtopicId])
+}
+
+// ============================================================
+// FLASHCARDS (FSRS)
+// ============================================================
+
+model FlashcardDeck {
+  id          String      @id @default(cuid())
+  userId      String?
+  user        User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  name        String
+  description String?
+  isPublic    Boolean     @default(false)
+  topicId     String?
+
+  flashcards  Flashcard[]
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([userId])
+}
+
+model Flashcard {
+  id         String        @id @default(cuid())
+  deckId     String?
+  deck       FlashcardDeck? @relation(fields: [deckId], references: [id], onDelete: SetNull)
+  topicId    String?
+  topic      Topic?        @relation(fields: [topicId], references: [id])
+  contentId  String?
+  content    Content?      @relation(fields: [contentId], references: [id])
+
+  front      String        @db.Text  // frente do card
+  back       String        @db.Text  // verso do card
+  type       FlashcardType @default(BASIC)
+  tags       String[]
+
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  reviews    FlashcardReview[]
+
+  @@index([topicId])
+  @@index([deckId])
+}
+
+enum FlashcardType {
+  BASIC    // frente/verso texto
+  CLOZE    // completar lacuna: "A mitose produz células {{filhas}} idênticas"
+  IMAGE    // imagem na frente
+  FORMULA  // fórmula matemática/química
+}
+
+model FlashcardReview {
+  id          String      @id @default(cuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  flashcardId String
+  flashcard   Flashcard   @relation(fields: [flashcardId], references: [id], onDelete: Cascade)
+
+  // Rating dado pelo usuário
+  rating      Int         // 1=Again, 2=Hard, 3=Good, 4=Easy
+
+  // Campos FSRS/SM-2
+  stability   Float       @default(1.0)   // dias para 90% retenção
+  difficulty  Float       @default(5.0)   // 1-10
+  elapsed     Int         @default(0)     // dias desde última revisão
+  scheduled   Int         @default(1)     // dias até próxima revisão
+  nextReview  DateTime                    // data da próxima revisão
+  state       ReviewState @default(NEW)
+
+  reviewedAt  DateTime    @default(now())
+
+  @@index([userId, nextReview])
+  @@index([userId, flashcardId])
+}
+
+enum ReviewState {
+  NEW        // nunca revisado
+  LEARNING   // em aprendizado inicial
+  REVIEW     // em revisão periódica
+  RELEARNING // esqueceu, recomeçando
+}
+
+enum TrailType {
+  EXTENSIVA      // 9+ meses para a prova
+  SEMI_EXTENSIVA // 6-9 meses
+  INTENSIVA      // 3-6 meses
+  SPRINT         // menos de 3 meses
+}
+
+// ============================================================
+// QUESTÕES
+// ============================================================
+
+model Question {
+  id           String         @id @default(cuid())
+  topicId      String?
+  topic        Topic?         @relation(fields: [topicId], references: [id])
+  subtopicId   String?
+  subtopic     Subtopic?      @relation(fields: [subtopicId], references: [id])
+  contentId    String?
+  content      Content?       @relation(fields: [contentId], references: [id])
+
+  // Origem
+  source       String?        // "ENEM 2023", "Custom", "Fuvest"
+  year         Int?           // ano da prova original
+  areaSlug     String?        // área para filtro rápido
+  number       Int?           // número da questão original
+
+  // Conteúdo
+  statement    String         @db.Text
+  images       String[]       // URLs de imagens no enunciado
+
+  // Resposta
+  options      QuestionOption[]
+  correctId    String?        // ID da QuestionOption correta
+
+  explanation  String         @db.Text
+  difficulty   Difficulty     @default(MEDIUM)
+  tags         String[]
+
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  userAnswers         UserQuestion[]
+  simuladoQuestions   SimuladoQuestion[]
+
+  @@index([topicId])
+  @@index([areaSlug])
+  @@index([year])
+  @@index([difficulty])
+}
+
+model QuestionOption {
+  id         String   @id @default(cuid())
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  letter     String   // "A", "B", "C", "D", "E"
+  text       String   @db.Text
+  image      String?
+  order      Int
+
+  @@index([questionId])
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+  VERY_HARD
+}
+
+model UserQuestion {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  selectedId String?  // ID da QuestionOption selecionada
+  isCorrect  Boolean
+  timeSpent  Int      // segundos
+  mode       String?  // "practice", "simulado", "review"
+
+  answeredAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([userId, questionId])
+  @@index([userId, isCorrect])
+}
+
+// ============================================================
+// SIMULADOS
+// ============================================================
+
+model Simulado {
+  id          String           @id @default(cuid())
+  title       String
+  description String?
+  type        SimuladoType
+  duration    Int              // minutos
+  isPublic    Boolean          @default(true)
+
+  questions   SimuladoQuestion[]
+  userAttempts UserSimulado[]
+
+  createdAt   DateTime         @default(now())
+}
+
+enum SimuladoType {
+  FULL        // 180 questões, ENEM completo
+  AREA        // ~45 questões de uma área
+  DISCIPLINE  // 20-30 questões de uma disciplina
+  CUSTOM      // configurado pelo usuário
+}
+
+model SimuladoQuestion {
+  id         String   @id @default(cuid())
+  simuladoId String
+  simulado   Simulado @relation(fields: [simuladoId], references: [id], onDelete: Cascade)
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id])
+  order      Int
+
+  @@unique([simuladoId, questionId])
+  @@index([simuladoId])
+}
+
+model UserSimulado {
+  id         String         @id @default(cuid())
+  userId     String
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  simuladoId String
+  simulado   Simulado       @relation(fields: [simuladoId], references: [id])
+
+  status     SimuladoStatus @default(IN_PROGRESS)
+
+  // Resultado
+  scoreTotal Float?
+  scoreCN    Float?         // Ciências da Natureza
+  scoreCH    Float?         // Ciências Humanas
+  scoreLCT   Float?         // Linguagens
+  scoreMT    Float?         // Matemática
+
+  answers    UserSimuladoAnswer[]
+
+  startedAt  DateTime       @default(now())
+  finishedAt DateTime?
+  timeSpent  Int?           // segundos total
+
+  @@index([userId])
+  @@index([userId, status])
+}
+
+enum SimuladoStatus {
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
+}
+
+model UserSimuladoAnswer {
+  id             String       @id @default(cuid())
+  userSimuladoId String
+  userSimulado   UserSimulado @relation(fields: [userSimuladoId], references: [id], onDelete: Cascade)
+  questionId     String
+  selectedId     String?
+  isCorrect      Boolean
+  timeSpent      Int          // segundos nesta questão
+  markedForReview Boolean     @default(false)
+
+  @@index([userSimuladoId])
+}
+
+// ============================================================
+// SESSÕES DE ESTUDO
+// ============================================================
+
+model StudySession {
+  id        String      @id @default(cuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  topicId   String?
+  areaSlug  String?
+  type      SessionType
+
+  duration  Int         // minutos
+  xpEarned  Int         @default(0)
+  notes     String?     // anotação rápida da sessão
+
+  date      DateTime    @default(now())
+
+  @@index([userId])
+  @@index([userId, date])
+}
+
+enum SessionType {
+  CONTENT    // leitura de teoria
+  FLASHCARDS // revisão de flashcards
+  QUESTIONS  // banco de questões
+  SIMULADO   // simulado completo
+  REDACAO    // redação
+  REVISION   // revisão geral
+}
+
+// ============================================================
+// PLANEJADOR
+// ============================================================
+
+model StudyPlan {
+  id         String          @id @default(cuid())
+  userId     String
+  user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title      String          @default("Plano ENEM")
+  startDate  DateTime
+  endDate    DateTime        // data da prova
+  dailyGoal  Int             // minutos por dia
+  weeklyGoal Int             // minutos por semana
+  isActive   Boolean         @default(true)
+
+  items      StudyPlanItem[]
+
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+
+  @@index([userId])
+}
+
+model StudyPlanItem {
+  id          String    @id @default(cuid())
+  planId      String
+  plan        StudyPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  topicId     String?
+  topic       Topic?    @relation(fields: [topicId], references: [id])
+
+  title       String
+  description String?
+  type        SessionType
+  scheduledAt DateTime
+  duration    Int         // minutos estimados
+
+  completed   Boolean     @default(false)
+  completedAt DateTime?
+  priority    Int         @default(3) // 1-5
+
+  @@index([planId])
+  @@index([planId, scheduledAt])
+  @@index([planId, completed])
+}
+
+// ============================================================
+// NOTAS
+// ============================================================
+
+model NoteFolder {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name      String
+  color     String?  // hex color
+  icon      String?
+
+  notes     Note[]
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Note {
+  id        String      @id @default(cuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  folderId  String?
+  folder    NoteFolder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  topicId   String?
+
+  title     String
+  body      String      @db.Text  // HTML/Markdown
+  tags      String[]
+  isPinned  Boolean     @default(false)
+
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@index([userId])
+  @@index([userId, folderId])
+}
+
+// ============================================================
+// REDAÇÃO
+// ============================================================
+
+model Essay {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title      String
+  theme      String   // tema da redação
+  body       String   @db.Text
+
+  // Notas por competência ENEM (0, 40, 80, 120, 160, 200 cada)
+  comp1Score Int?     // Domínio da norma culta
+  comp2Score Int?     // Compreensão da proposta
+  comp3Score Int?     // Organização das informações
+  comp4Score Int?     // Mecanismos linguísticos
+  comp5Score Int?     // Proposta de intervenção
+  totalScore Int?     // Soma (0-1000)
+
+  feedback   String?  @db.Text  // feedback da IA
+  version    Int      @default(1)
+  wordCount  Int?
+  lineCount  Int?
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([userId])
+}
+
+// ============================================================
+// GAMIFICAÇÃO
+// ============================================================
+
+model Achievement {
+  id          String            @id @default(cuid())
+  name        String
+  description String
+  icon        String            // Lucide icon name ou emoji
+  xpReward    Int               @default(0)
+  category    AchievementCategory
+  condition   String            @db.Text // JSON com condições
+  isHidden    Boolean           @default(false) // conquista surpresa
+
+  users       UserAchievement[]
+
+  createdAt   DateTime          @default(now())
+}
+
+enum AchievementCategory {
+  STREAK        // sequência de dias
+  STUDY         // horas de estudo
+  QUESTIONS     // questões respondidas
+  FLASHCARDS    // flashcards revisados
+  SIMULADO      // simulados completados
+  REDACAO       // redações escritas
+  SCORE         // nota atingida
+  SPECIAL       // conquistas especiais
+}
+
+model UserAchievement {
+  id            String      @id @default(cuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievementId String
+  achievement   Achievement @relation(fields: [achievementId], references: [id])
+
+  earnedAt      DateTime    @default(now())
+
+  @@unique([userId, achievementId])
+  @@index([userId])
+}
+
+// ============================================================
+// FAVORITOS
+// ============================================================
+
+model Favorite {
+  id        String       @id @default(cuid())
+  userId    String
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type      FavoriteType
+  itemId    String       // ID do item favoritado
+
+  createdAt DateTime     @default(now())
+
+  @@unique([userId, type, itemId])
+  @@index([userId, type])
+}
+
+enum FavoriteType {
+  CONTENT
+  QUESTION
+  FLASHCARD
+  NOTE
+  SIMULADO
+}
+
+// ============================================================
+// AGENTE DE ANÁLISE DE ERROS
+// ============================================================
+
+model AgentInsight {
+  id        String      @id @default(cuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type      InsightType
+  title     String
+  body      String      @db.Text
+  topicIds  String[]    // tópicos relacionados
+  read      Boolean     @default(false)
+
+  createdAt DateTime    @default(now())
+
+  @@index([userId, read])
+  @@index([userId, createdAt])
+}
+
+enum InsightType {
+  ERROR_ANALYSIS   // análise pós-simulado
+  WEAK_POINT       // ponto fraco detectado
+  STREAK_RISK      // risco de quebrar streak
+  PLAN_SUGGESTION  // sugestão do planejador
+}
+
+// ============================================================
+// VÍDEO AULAS (YouTube embeds curados)
+// ============================================================
+
+model TopicVideo {
+  id          String   @id @default(cuid())
+  topicId     String
+  topic       Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  title       String
+  youtubeId   String   // ID do vídeo no YouTube (ex: "dQw4w9WgXcQ")
+  channel     String   // Nome do canal (ex: "Noslen", "Descomplica")
+  duration    Int?     // Duração em minutos (estimada)
+  description String?  // Descrição curta do que o vídeo cobre
+
+  order       Int      @default(0)
+  isHighlight Boolean  @default(false) // vídeo recomendado principal
+
+  createdAt   DateTime @default(now())
+
+  watched     VideoWatched[]
+
+  @@unique([youtubeId])
+  @@index([topicId])
+  @@index([topicId, order])
+}
+
+model VideoWatched {
+  id       String     @id @default(cuid())
+  userId   String
+  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  videoId  String
+  video    TopicVideo @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  watchedAt DateTime @default(now())
+
+  @@unique([userId, videoId])
+  @@index([userId])
+}

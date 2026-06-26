@@ -1,26 +1,126 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* ── Dark-mode via class ──────────────────────────────────── */
+@custom-variant dark (&:where(.dark, .dark *));
 
+/* ── Tailwind v4: mapeia CSS vars para utilitários de cor ─── */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-jetbrains-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* ── Light theme ─────────────────────────────────────────── */
+:root {
+  --radius: 0.5rem;
+
+  --background: hsl(0 0% 100%);
+  --foreground: hsl(224 71.4% 4.1%);
+
+  --card: hsl(0 0% 98%);
+  --card-foreground: hsl(224 71.4% 4.1%);
+
+  --popover: hsl(0 0% 100%);
+  --popover-foreground: hsl(224 71.4% 4.1%);
+
+  /* Roxo principal */
+  --primary: hsl(262 83% 58%);
+  --primary-foreground: hsl(0 0% 100%);
+
+  --secondary: hsl(220 14.3% 95.9%);
+  --secondary-foreground: hsl(220.9 39.3% 11%);
+
+  --muted: hsl(220 14.3% 95.9%);
+  --muted-foreground: hsl(220 8.9% 46.1%);
+
+  /* Verde conquista */
+  --accent: hsl(142 71% 45%);
+  --accent-foreground: hsl(0 0% 100%);
+
+  --destructive: hsl(0 84.2% 60.2%);
+  --destructive-foreground: hsl(0 0% 98%);
+
+  --border: hsl(220 13% 91%);
+  --input: hsl(220 13% 91%);
+  --ring: hsl(262 83% 58%);
+
+  /* Amarelo atenção */
+  --warning: hsl(38 92% 50%);
+  --warning-foreground: hsl(0 0% 5%);
+}
+
+/* ── Dark theme ──────────────────────────────────────────── */
+.dark {
+  --background: hsl(224 71.4% 4.1%);
+  --foreground: hsl(210 20% 98%);
+
+  --card: hsl(224 71.4% 6%);
+  --card-foreground: hsl(210 20% 98%);
+
+  --popover: hsl(224 71.4% 5%);
+  --popover-foreground: hsl(210 20% 98%);
+
+  --primary: hsl(263 70% 65%);
+  --primary-foreground: hsl(0 0% 100%);
+
+  --secondary: hsl(215 27.9% 16.9%);
+  --secondary-foreground: hsl(210 20% 98%);
+
+  --muted: hsl(215 27.9% 16.9%);
+  --muted-foreground: hsl(217.9 10.6% 64.9%);
+
+  --accent: hsl(142 71% 45%);
+  --accent-foreground: hsl(0 0% 100%);
+
+  --destructive: hsl(0 62.8% 30.6%);
+  --destructive-foreground: hsl(0 0% 98%);
+
+  --border: hsl(215 27.9% 16.9%);
+  --input: hsl(215 27.9% 16.9%);
+  --ring: hsl(263 70% 65%);
+
+  --warning: hsl(38 92% 50%);
+  --warning-foreground: hsl(0 0% 5%);
+}
+
+/* ── Base styles ─────────────────────────────────────────── */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
   }
-}
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-inter), system-ui, sans-serif;
+  }
+
+  /* Safe area para mobile (bottom nav) */
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
 }
