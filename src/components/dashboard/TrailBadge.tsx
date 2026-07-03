@@ -80,7 +80,7 @@ export async function TrailBadge({ userId }: { userId: string }) {
               title={`Simulados: ${Math.round(config.ratios.simulados * 100)}%`}
             />
           </div>
-          <div className="flex justify-between text-[10px] text-muted-foreground">
+          <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-muted-foreground">
             <span className="flex items-center gap-1">
               <span className="inline-block h-1.5 w-1.5 rounded-full bg-blue-500" />
               Teoria {Math.round(config.ratios.content * 100)}%
@@ -92,6 +92,10 @@ export async function TrailBadge({ userId }: { userId: string }) {
             <span className="flex items-center gap-1">
               <span className="inline-block h-1.5 w-1.5 rounded-full bg-purple-500" />
               Cards {Math.round(config.ratios.flashcards * 100)}%
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-orange-500" />
+              Simulados {Math.round(config.ratios.simulados * 100)}%
             </span>
           </div>
         </div>

@@ -93,7 +93,8 @@ export function PlannerClient({ weekStart, items, hasPlan, dailyGoal }: PlannerC
   // Group items by day of week
   const days = Array.from({ length: 7 }, (_, i) => {
     const date = addDays(weekStartDate, i)
-    const dateStr = format(date, "yyyy-MM-dd")
+    // Use UTC date string so comparison matches ISO scheduledAt strings from server
+    const dateStr = date.toISOString().slice(0, 10)
     const dayItems = localItems.filter((item) =>
       item.scheduledAt.startsWith(dateStr)
     )
@@ -221,7 +222,7 @@ export function PlannerClient({ weekStart, items, hasPlan, dailyGoal }: PlannerC
         /* Weekly calendar */
         <div className="grid grid-cols-1 sm:grid-cols-7 gap-2">
           {days.map(({ date, label, items: dayItems }) => {
-            const isToday = format(date, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd")
+            const isToday = date.toISOString().slice(0, 10) === new Date().toISOString().slice(0, 10)
             const completedCount = dayItems.filter((i) => i.completed).length
             const totalMins = dayItems.reduce((s, i) => s + i.duration, 0)
 
@@ -238,7 +239,7 @@ export function PlannerClient({ weekStart, items, hasPlan, dailyGoal }: PlannerC
                     {label}
                   </span>
                   <span className="text-[10px] text-muted-foreground">
-                    {format(date, "dd/MM")}
+                    {date.toISOString().slice(8, 10)}/{date.toISOString().slice(5, 7)}
                   </span>
                 </div>
                 {totalMins > 0 && (

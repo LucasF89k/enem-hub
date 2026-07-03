@@ -2,7 +2,7 @@
 
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
-import { awardXP } from "@/lib/xp"
+import { awardXP, recordStudyActivity } from "@/lib/xp"
 import { checkAchievements, type NewAchievement } from "@/lib/achievements"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
@@ -180,6 +180,7 @@ export async function finalizeSimulado(
   })
 
   await awardXP(userId, Math.round(scoreTotal * 0.5) + 20)
+  await recordStudyActivity(userId, Math.max(10, Math.round(totalTimeSpent / 60)), "SIMULADO")
   const newAchievements = await checkAchievements(userId)
 
   revalidatePath("/simulados")

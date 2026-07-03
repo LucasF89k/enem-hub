@@ -2,7 +2,7 @@
 
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
-import { awardXP } from "@/lib/xp"
+import { awardXP, recordStudyActivity } from "@/lib/xp"
 import { checkAchievements, type NewAchievement } from "@/lib/achievements"
 import { z } from "zod"
 
@@ -43,6 +43,7 @@ export async function answerQuestion(
   })
 
   await awardXP(userId, isCorrect ? 10 : 2)
+  await recordStudyActivity(userId, 3, "QUESTIONS")
   const newAchievements = await checkAchievements(userId)
 
   return {

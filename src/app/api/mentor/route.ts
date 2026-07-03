@@ -118,6 +118,11 @@ DIRETRIZES:
 - Incentive sem ser genérico: use os dados reais do perfil
 - Para criar flashcards, formate como: **Frente:** pergunta \n **Verso:** resposta`
 
+  if (!process.env.GEMINI_API_KEY) {
+    console.error("[mentor] GEMINI_API_KEY não configurada")
+    return new Response("Configuração de IA ausente", { status: 503 })
+  }
+
   // Build Gemini conversation
   const history = messages.slice(0, -1).map((m) => ({
     role: m.role === "user" ? ("user" as const) : ("model" as const),
@@ -126,22 +131,30 @@ DIRETRIZES:
 
   const lastUserMessage = messages[messages.length - 1].content
 
-  const chat = geminiPro.startChat({
-    history: [
-      { role: "user", parts: [{ text: systemPrompt }] },
-      {
-        role: "model",
-        parts: [
-          {
-            text: "Entendido! Sou o seu Mentor ENEM. Estou aqui para te ajudar a conquistar a nota que você precisa para Medicina. O que você precisa?",
-          },
-        ],
-      },
-      ...history,
-    ],
-  })
-
-  const result = await chat.sendMessageStream(lastUserMessage)
+  let result
+  try {
+    const chat = geminiPro.startChat({
+      history: [
+        { role: "user", parts: [{ text: systemPrompt }] },
+        {
+          role: "model",
+          parts: [
+            {
+              text: "Entendido! Sou o seu Mentor ENEM. Estou aqui para te ajudar a conquistar a nota que você precisa para Medicina. O que você precisa?",
+            },
+          ],
+        },
+        ...history,
+      ],
+    })
+    result = await chat.sendMessageStream(lastUserMessage)
+  } catch (error) {
+    console.error("[mentor] Gemini API error:", error)
+    return new Response(
+      "Desculpe, o Mentor está temporariamente indisponível. Verifique sua conexão e tente novamente.",
+      { status: 503 }
+    )
+  }
 
   const encoder = new TextEncoder()
   const stream = new ReadableStream({
@@ -153,6 +166,11 @@ DIRETRIZES:
             controller.enqueue(encoder.encode(text))
           }
         }
+      } catch (streamError) {
+        console.error("[mentor] stream error:", streamError)
+        controller.enqueue(
+          encoder.encode("\n\n_Erro ao processar resposta. Por favor, tente novamente._")
+        )
       } finally {
         controller.close()
       }
