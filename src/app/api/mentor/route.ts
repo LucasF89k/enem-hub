@@ -1,16 +1,18 @@
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
-import { geminiPro } from "@/lib/gemini"
+import { GoogleGenerativeAI } from "@google/generative-ai"
 import { NextRequest } from "next/server"
 import { z } from "zod"
 
 const bodySchema = z.object({
-  messages: z.array(
-    z.object({
-      role: z.enum(["user", "assistant"]),
-      content: z.string(),
-    })
-  ).min(1),
+  messages: z
+    .array(
+      z.object({
+        role: z.enum(["user", "assistant"]),
+        content: z.string(),
+      })
+    )
+    .min(1),
   topicId: z.string().optional(),
 })
 
@@ -21,7 +23,14 @@ export async function POST(req: NextRequest) {
   }
   const userId = session.user.id
 
-  const body = await req.json()
+  if (!process.env.GEMINI_API_KEY) {
+    console.error("[mentor] GEMINI_API_KEY não configurada")
+    return new Response("Configuração de IA ausente", { status: 503 })
+  }
+
+  const body = await req.json().catch(() => null)
+  if (!body) return new Response("Bad request", { status: 400 })
+
   const parsed = bodySchema.safeParse(body)
   if (!parsed.success) {
     return new Response("Bad request", { status: 400 })
@@ -29,48 +38,56 @@ export async function POST(req: NextRequest) {
 
   const { messages, topicId } = parsed.data
 
-  // Build user context in parallel
+  // Build user context — .catch(() => fallback) prevents DB failures from breaking the request
   const [profile, recentWrong, todayPlanItems, currentTopic] = await Promise.all([
-    db.userProfile.findUnique({
-      where: { userId },
-      select: { targetScore: true, streak: true, totalXP: true, currentLevel: true },
-    }),
+    db.userProfile
+      .findUnique({
+        where: { userId },
+        select: { targetScore: true, streak: true, totalXP: true, currentLevel: true },
+      })
+      .catch(() => null),
 
-    db.userQuestion.findMany({
-      where: { userId, isCorrect: false },
-      orderBy: { answeredAt: "desc" },
-      take: 5,
-      select: {
-        question: {
-          select: {
-            statement: true,
-            topic: { select: { name: true, discipline: { select: { name: true } } } },
+    db.userQuestion
+      .findMany({
+        where: { userId, isCorrect: false },
+        orderBy: { answeredAt: "desc" },
+        take: 5,
+        select: {
+          question: {
+            select: {
+              statement: true,
+              topic: { select: { name: true, discipline: { select: { name: true } } } },
+            },
           },
         },
-      },
-    }),
+      })
+      .catch(() => []),
 
-    db.studyPlanItem.findMany({
-      where: {
-        completed: false,
-        plan: { userId, isActive: true },
-        scheduledAt: {
-          gte: new Date(new Date().setHours(0, 0, 0, 0)),
-          lte: new Date(new Date().setHours(23, 59, 59, 999)),
+    db.studyPlanItem
+      .findMany({
+        where: {
+          completed: false,
+          plan: { userId, isActive: true },
+          scheduledAt: {
+            gte: new Date(new Date().setHours(0, 0, 0, 0)),
+            lte: new Date(new Date().setHours(23, 59, 59, 999)),
+          },
         },
-      },
-      take: 5,
-      select: { title: true, type: true, duration: true },
-    }),
+        take: 5,
+        select: { title: true, type: true, duration: true },
+      })
+      .catch(() => []),
 
     topicId
-      ? db.topic.findUnique({
-          where: { id: topicId },
-          select: {
-            name: true,
-            discipline: { select: { name: true, area: { select: { name: true } } } },
-          },
-        })
+      ? db.topic
+          .findUnique({
+            where: { id: topicId },
+            select: {
+              name: true,
+              discipline: { select: { name: true, area: { select: { name: true } } } },
+            },
+          })
+          .catch(() => null)
       : null,
   ])
 
@@ -116,40 +133,31 @@ DIRETRIZES:
 - Se o estudante errou questões, priorize explicar esses tópicos
 - Ao sugerir o que estudar, considere o plano do dia
 - Incentive sem ser genérico: use os dados reais do perfil
-- Para criar flashcards, formate como: **Frente:** pergunta \n **Verso:** resposta`
+- Para criar flashcards, formate como: **Frente:** pergunta \\n **Verso:** resposta`
 
-  if (!process.env.GEMINI_API_KEY) {
-    console.error("[mentor] GEMINI_API_KEY não configurada")
-    return new Response("Configuração de IA ausente", { status: 503 })
-  }
+  // Build full prompt: system + conversation history + last message
+  const historyLines = messages.slice(0, -1).map((m) => {
+    const role = m.role === "user" ? "Estudante" : "Mentor"
+    return `${role}: ${m.content}`
+  })
+  const historyText =
+    historyLines.length > 0 ? `\n\nHistórico da conversa:\n${historyLines.join("\n\n")}\n\n` : "\n\n"
 
-  // Build Gemini conversation
-  const history = messages.slice(0, -1).map((m) => ({
-    role: m.role === "user" ? ("user" as const) : ("model" as const),
-    parts: [{ text: m.content }],
-  }))
+  const lastMessage = messages[messages.length - 1].content
+  const fullPrompt = systemPrompt + historyText + `Estudante: ${lastMessage}\n\nMentor:`
 
-  const lastUserMessage = messages[messages.length - 1].content
+  // Use generateContentStream — more reliable than startChat across all SDK versions
+  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
+  const model = genAI.getGenerativeModel({
+    model: "gemini-1.5-flash",
+    generationConfig: { temperature: 0.5, maxOutputTokens: 4096 },
+  })
 
   let result
   try {
-    const chat = geminiPro.startChat({
-      history: [
-        { role: "user", parts: [{ text: systemPrompt }] },
-        {
-          role: "model",
-          parts: [
-            {
-              text: "Entendido! Sou o seu Mentor ENEM. Estou aqui para te ajudar a conquistar a nota que você precisa para Medicina. O que você precisa?",
-            },
-          ],
-        },
-        ...history,
-      ],
-    })
-    result = await chat.sendMessageStream(lastUserMessage)
+    result = await model.generateContentStream(fullPrompt)
   } catch (error) {
-    console.error("[mentor] Gemini API error:", error)
+    console.error("[mentor] Gemini API error:", error instanceof Error ? error.message : String(error))
     return new Response(
       "Desculpe, o Mentor está temporariamente indisponível. Verifique sua conexão e tente novamente.",
       { status: 503 }

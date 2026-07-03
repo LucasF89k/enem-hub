@@ -11,7 +11,7 @@ export default async function PlannerPage() {
   if (!session?.user?.id) redirect("/login")
   const userId = session.user.id
 
-  const weekStart = startOfWeek(startOfDay(new Date()), { weekStartsOn: 0 })
+  const weekStart = startOfWeek(startOfDay(new Date()), { weekStartsOn: 1 })
   const weekEnd = endOfDay(addDays(weekStart, 6))
 
   const activePlan = await db.studyPlan.findFirst({

@@ -5,7 +5,7 @@ import { getTrailConfig } from "@/lib/trail"
 import { differenceInDays, format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import Link from "next/link"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { AvatarUpload } from "@/components/profile/AvatarUpload"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -66,12 +66,7 @@ export default async function ProfilePage() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-4">
-          <Avatar className="h-16 w-16">
-            <AvatarImage src={user.image ?? undefined} alt={user.name ?? "Avatar"} />
-            <AvatarFallback className="text-xl font-bold bg-primary/20 text-primary">
-              {initials}
-            </AvatarFallback>
-          </Avatar>
+          <AvatarUpload currentImage={user.image ?? null} initials={initials} />
           <div>
             <h1 className="text-xl font-bold">{user.name ?? "Usuário"}</h1>
             <p className="text-sm text-muted-foreground">{user.email}</p>

@@ -98,7 +98,7 @@ export function PlannerClient({ weekStart, items, hasPlan, dailyGoal }: PlannerC
     const dayItems = localItems.filter((item) =>
       item.scheduledAt.startsWith(dateStr)
     )
-    return { date, label: DAY_LABELS[i], items: dayItems }
+    return { date, label: DAY_LABELS[date.getDay()], items: dayItems }
   })
 
   function handleComplete(item: PlanItem) {

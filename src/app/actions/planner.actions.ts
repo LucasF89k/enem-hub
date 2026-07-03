@@ -4,8 +4,9 @@ import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { revalidatePath } from "next/cache"
 import { generateStudyPlan } from "@/lib/planner"
+import { recordStudyActivity } from "@/lib/xp"
 import { z } from "zod"
-import { startOfDay } from "date-fns"
+import { startOfDay, startOfWeek } from "date-fns"
 
 const generateSchema = z.object({
   daysCount: z.coerce.number().int().min(1).max(90).default(14),
@@ -31,9 +32,10 @@ export async function generatePlan(
   if (!parsed.success) return { success: false, error: "Parâmetros inválidos" }
 
   try {
+    // Start from this week's Monday so current week shows items (not just future weeks)
     const planId = await generateStudyPlan({
       userId,
-      startDate: startOfDay(new Date()),
+      startDate: startOfWeek(startOfDay(new Date()), { weekStartsOn: 1 }),
       ...parsed.data,
     })
     revalidatePath("/planner")
@@ -53,13 +55,18 @@ export async function completePlanItem(itemId: string): Promise<void> {
   })
   if (!item) return
 
+  const willComplete = !item.completed
   await db.studyPlanItem.update({
     where: { id: itemId },
     data: {
-      completed: !item.completed,
-      completedAt: !item.completed ? new Date() : null,
+      completed: willComplete,
+      completedAt: willComplete ? new Date() : null,
     },
   })
+
+  if (willComplete) {
+    await recordStudyActivity(session.user.id, 10, "CONTENT").catch(() => {})
+  }
 
   revalidatePath("/planner")
 }

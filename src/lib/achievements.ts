@@ -97,6 +97,15 @@ export const ACHIEVEMENT_DEFS: AchievementDef[] = [
 
   // QUESTIONS
   {
+    key: "questions_1",
+    name: "Primeira Questão",
+    description: "Respondeu a primeira questão",
+    icon: "🎯",
+    xpReward: 10,
+    category: "QUESTIONS",
+    check: (s) => s.totalQuestions >= 1,
+  },
+  {
     key: "questions_10",
     name: "Primeiros Passos",
     description: "10 questões respondidas",

@@ -3,7 +3,7 @@
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { sm2 } from "@/lib/sm2"
-import { awardXP } from "@/lib/xp"
+import { awardXP, recordStudyActivity } from "@/lib/xp"
 
 export async function submitFlashcardReview(
   flashcardId: string,
@@ -44,5 +44,6 @@ export async function submitFlashcardReview(
   })
 
   const xpEarned = await awardXP(userId, 5)
+  await recordStudyActivity(userId, 5, "FLASHCARDS")
   return { xpEarned }
 }
