@@ -317,11 +317,62 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
 
 ---
 
-## Próximas Sessões (não implementadas)
+## Sessões Implementadas após Sessão 18
+
+### Bugs corrigidos (pós-sessão 18)
+- **Foto de perfil:** `AvatarUpload.tsx` + `profile.actions.ts` — upload base64, salvo em `User.image`; layout busca imagem do DB direto (JWT não atualiza automaticamente)
+- **Mentor IA:** reescrito para MiMo (OpenAI-compatible, `api.xiaomimimo.com/v1`, `mimo-v2.5`); cliente mostra erro real no chat (não mais mensagem genérica); fallback não-streaming
+- **Planner dias errados:** `getUTCDay()` em vez de `getDay()` em todo o código; weekStart calculado com `Date.UTC()` para evitar bug de timezone Brasil UTC-3
+- **Streak/XP:** Duolingo-style — primeiro `StudySession` do dia por tipo incrementa streak; `recordStudyActivity()` chamada em flashcards, planner e questões
+- **Planner Recalibrar:** botão "Recalibrar" em `planner-client.tsx`; action `recalibratePlan()` detecta weekDays do plano atual e regenera com scoring de erros frescos
+- **Settings:** página `/profile/settings` com form de configurações; `updateUserSettings()` action
+
+### Arquivos novos criados nessas sessões
+- `src/lib/mimo.ts` — cliente OpenAI apontando para api.xiaomimimo.com/v1
+- `src/components/profile/AvatarUpload.tsx` — upload circular de foto de perfil
+- `src/app/actions/profile.actions.ts` — `updateProfileImage(base64)`
+- `src/app/(app)/profile/settings/page.tsx` — página de configurações
+- `src/app/actions/settings.actions.ts` — `updateUserSettings(formData)`
+- `src/app/api/profile/route.ts` — GET dados do perfil para pré-preencher settings
+- `scripts/import-questions.ts` — importa ~2.700 questões reais do ENEM via api.enem.dev
+
+### Variáveis de ambiente adicionadas
+- `MIMO_API_KEY` — chave da API do MiMo (adicionar no Vercel também)
+- `GEMINI_API_KEY` — ainda usada no script `generate-content.ts` (Sessão 19)
+
+---
+
+## Próxima Tarefa IMEDIATA — Importar Questões ENEM
+
+O script `scripts/import-questions.ts` está pronto mas precisa de rede sem bloqueio de porta 5432.
+
+**Rodar no PC novo (sem firewall de ISP):**
+```powershell
+# PowerShell — use a DATABASE_URL do .env (nunca commitar a senha)
+$env:DATABASE_URL="<copie do .env local>"
+npx tsx scripts/import-questions.ts --all
+```
+
+```bash
+# Bash/Linux/Mac
+DATABASE_URL="<copie do .env local>" npx tsx scripts/import-questions.ts --all
+```
+
+**Como o script funciona:**
+- Fonte: `https://api.enem.dev/v1/exams/{year}/questions/{index}` (endpoint individual — o de lista não retorna alternativas)
+- Busca cada questão individualmente com 150ms de delay entre requisições (~7 min total)
+- Idempotente: pula questões já importadas (`source + year + number` únicos)
+- Mapeia disciplina → areaSlug, usa keyword matching para topicId
+- Anos: 2009–2023, ~183 questões/ano = ~2.745 questões
+
+---
+
+## Próximas Sessões (pendentes)
 
 ### Sessão 19: Pipeline de Conteúdo
-- Script para popular Content records via Gemini (teoria + resumo + conceitos-chave + dicas por tópico)
+- Script para popular Content records via Gemini/MiMo (teoria + resumo + conceitos-chave + dicas por tópico)
 - Estimativa: ~185 tópicos × ~300ms = ~1 minuto de processamento
+- **ATENÇÃO:** `PROJECT_STATE.md` diz "nunca usar Anthropic SDK — sempre @google/generative-ai". Mas o Mentor agora usa MiMo. Para geração de conteúdo, pode usar MiMo também via `src/lib/mimo.ts`
 
 ### Sessão 20: Notificações Push
 - Web Push API com VAPID keys
@@ -343,8 +394,8 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
 ## Deploy
 
 - **Plataforma:** Vercel (auto-deploy em push para `main`)
-- **Banco:** Neon PostgreSQL (pooler na porta 6543)
-- **Variáveis de ambiente Vercel:** `DATABASE_URL`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL`, `GEMINI_API_KEY`
+- **Banco:** Neon PostgreSQL (pooler)
+- **Variáveis de ambiente Vercel:** `DATABASE_URL`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL`, `GEMINI_API_KEY`, `MIMO_API_KEY`, `YOUTUBE_API_KEY`
 - **Branch principal:** `main`
 - **Repositório:** `https://github.com/LucasF89k/enem-hub.git`
 
