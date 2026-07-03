@@ -1,18 +1,28 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { db } from "@/lib/db"
-import { startOfWeek, addDays, startOfDay, endOfDay } from "date-fns"
+import { addDays } from "date-fns"
 import { PlannerClient } from "./planner-client"
 
 export const metadata = { title: "Planejador — ENEM Hub" }
+
+/** Monday of the current week, computed entirely in UTC to avoid tz mismatch. */
+function getThisMondayUTC(): Date {
+  const now = new Date()
+  const dayUTC = now.getUTCDay() // 0=Sun, 1=Mon …
+  const daysSinceMonday = (dayUTC + 6) % 7 // Mon→0, Sun→6
+  return new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - daysSinceMonday)
+  )
+}
 
 export default async function PlannerPage() {
   const session = await auth()
   if (!session?.user?.id) redirect("/login")
   const userId = session.user.id
 
-  const weekStart = startOfWeek(startOfDay(new Date()), { weekStartsOn: 1 })
-  const weekEnd = endOfDay(addDays(weekStart, 6))
+  const weekStart = getThisMondayUTC()
+  const weekEnd = new Date(addDays(weekStart, 6).setUTCHours(23, 59, 59, 999))
 
   const activePlan = await db.studyPlan.findFirst({
     where: { userId, isActive: true },

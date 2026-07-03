@@ -98,7 +98,9 @@ export function PlannerClient({ weekStart, items, hasPlan, dailyGoal }: PlannerC
     const dayItems = localItems.filter((item) =>
       item.scheduledAt.startsWith(dateStr)
     )
-    return { date, label: DAY_LABELS[date.getDay()], items: dayItems }
+    // getUTCDay() — scheduledAt is stored as UTC midnight; getDay() would return
+    // the LOCAL day (e.g. Brazil UTC-3 turns Monday UTC into Sunday night locally)
+    return { date, label: DAY_LABELS[date.getUTCDay()], items: dayItems }
   })
 
   function handleComplete(item: PlanItem) {

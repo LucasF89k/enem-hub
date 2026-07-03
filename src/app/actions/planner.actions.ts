@@ -6,7 +6,16 @@ import { revalidatePath } from "next/cache"
 import { generateStudyPlan } from "@/lib/planner"
 import { recordStudyActivity } from "@/lib/xp"
 import { z } from "zod"
-import { startOfDay, startOfWeek } from "date-fns"
+
+/** Monday of the current week in UTC (independent of server/local timezone). */
+function getThisMondayUTC(): Date {
+  const now = new Date()
+  const dayUTC = now.getUTCDay() // 0=Sun
+  const daysSinceMonday = (dayUTC + 6) % 7
+  return new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - daysSinceMonday)
+  )
+}
 
 const generateSchema = z.object({
   daysCount: z.coerce.number().int().min(1).max(90).default(14),
@@ -32,10 +41,9 @@ export async function generatePlan(
   if (!parsed.success) return { success: false, error: "Parâmetros inválidos" }
 
   try {
-    // Start from this week's Monday so current week shows items (not just future weeks)
     const planId = await generateStudyPlan({
       userId,
-      startDate: startOfWeek(startOfDay(new Date()), { weekStartsOn: 1 }),
+      startDate: getThisMondayUTC(),
       ...parsed.data,
     })
     revalidatePath("/planner")

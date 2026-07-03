@@ -128,7 +128,8 @@ export async function generateStudyPlan(params: GeneratePlanParams): Promise<str
 
   for (let d = 0; d < daysCount; d++) {
     const day = addDays(startOfDay(startDate), d)
-    if (!weekDays.includes(day.getDay())) continue
+    // getUTCDay(): startDate is UTC midnight; getDay() would use local tz and give wrong weekday
+    if (!weekDays.includes(day.getUTCDay())) continue
 
     let slot = 0
     const alloc = {
