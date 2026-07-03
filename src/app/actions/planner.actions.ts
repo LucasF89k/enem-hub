@@ -82,6 +82,56 @@ export async function completePlanItem(itemId: string): Promise<void> {
 // Alias used by dashboard PlanoHojeCardClient
 export const markPlanItemDone = completePlanItem
 
+/**
+ * Regenerates the active plan with updated topic priorities based on the user's
+ * current error rates. Detects the existing plan's weekDays from its items.
+ */
+export async function recalibratePlan(): Promise<{ success: boolean; error?: string }> {
+  const session = await auth()
+  if (!session?.user?.id) throw new Error("Unauthorized")
+  const userId = session.user.id
+
+  const activePlan = await db.studyPlan.findFirst({
+    where: { userId, isActive: true },
+    include: {
+      items: {
+        where: { scheduledAt: { gte: new Date() } },
+        select: { scheduledAt: true },
+        take: 30,
+      },
+    },
+  })
+
+  if (!activePlan) return { success: false, error: "Nenhum plano ativo para recalibrar." }
+
+  // Detect which weekdays the plan uses (from future items' UTC day-of-week)
+  const weekDaySet = new Set<number>()
+  for (const item of activePlan.items) {
+    weekDaySet.add(item.scheduledAt.getUTCDay())
+  }
+  const weekDays = weekDaySet.size > 0 ? Array.from(weekDaySet).sort() : [1, 2, 3, 4, 5]
+
+  // How many days remain until the exam (or 14 default)
+  const now = new Date()
+  const remainingDays = activePlan.endDate > now
+    ? Math.min(90, Math.ceil((activePlan.endDate.getTime() - now.getTime()) / 86_400_000))
+    : 14
+
+  try {
+    await generateStudyPlan({
+      userId,
+      startDate: getThisMondayUTC(),
+      daysCount: remainingDays,
+      dailyGoalMinutes: activePlan.dailyGoal,
+      weekDays,
+    })
+    revalidatePath("/planner")
+    return { success: true }
+  } catch {
+    return { success: false, error: "Falha ao recalibrar o plano. Tente novamente." }
+  }
+}
+
 export async function removePlanItem(itemId: string): Promise<void> {
   const session = await auth()
   if (!session?.user?.id) throw new Error("Unauthorized")

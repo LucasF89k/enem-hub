@@ -1,5 +1,5 @@
 import { db } from "@/lib/db"
-import { startOfDay, subDays, addDays } from "date-fns"
+import { startOfDay, subDays } from "date-fns"
 
 function calcLevel(totalXP: number): number {
   return Math.min(99, Math.floor(totalXP / 500) + 1)
@@ -24,8 +24,8 @@ export async function awardXP(userId: string, amount: number): Promise<number> {
 }
 
 /**
- * Records study activity (creates/extends a StudySession for today) and
- * updates streak only when the user hits their dailyStudyGoal for the day.
+ * Records study activity and updates streak on the FIRST activity of each day
+ * (Duolingo-style: any study = streak, not tied to a daily goal).
  */
 export async function recordStudyActivity(
   userId: string,
@@ -33,7 +33,6 @@ export async function recordStudyActivity(
   type: "QUESTIONS" | "FLASHCARDS" | "SIMULADO" | "CONTENT" | "REDACAO" | "REVISION" = "QUESTIONS"
 ): Promise<void> {
   const today = startOfDay(new Date())
-  const tomorrow = addDays(today, 1)
   const yesterday = subDays(today, 1)
 
   // Upsert today's study session for this type
@@ -47,33 +46,26 @@ export async function recordStudyActivity(
       where: { id: existing.id },
       data: { duration: existing.duration + minutes },
     })
-  } else {
-    await db.studySession.create({
-      data: { userId, type, date: today, duration: minutes },
-    })
+    // Session already exists for today — streak was already counted on first activity
+    return
   }
 
-  // Check total study minutes across ALL types today
-  const [todayTotal, profile] = await Promise.all([
-    db.studySession.aggregate({
-      where: { userId, date: { gte: today, lt: tomorrow } },
-      _sum: { duration: true },
-    }),
-    db.userProfile.findUnique({
-      where: { userId },
-      select: { streak: true, longestStreak: true, lastStudyDate: true, dailyStudyGoal: true },
-    }),
-  ])
+  // First activity of this type today — create session
+  await db.studySession.create({
+    data: { userId, type, date: today, duration: minutes },
+  })
+
+  // Update streak only once per day (check if lastStudyDate is already today)
+  const profile = await db.userProfile.findUnique({
+    where: { userId },
+    select: { streak: true, longestStreak: true, lastStudyDate: true },
+  })
 
   if (!profile) return
 
-  const minutesToday = todayTotal._sum.duration ?? 0
-
-  // Streak only increments when the daily goal is fully met
-  if (minutesToday < profile.dailyStudyGoal) return
-
-  // Already counted today (lastStudyDate is within today's window)
   const lastStudyDay = profile.lastStudyDate ? startOfDay(profile.lastStudyDate) : null
+
+  // Already counted today
   if (lastStudyDay && lastStudyDay.getTime() === today.getTime()) return
 
   const studiedYesterday =

@@ -101,7 +101,10 @@ export function MentorChat() {
         })
 
         if (!response.ok) {
-          appendToMessage(assistantId, "Desculpe, ocorreu um erro. Tente novamente.")
+          const errorBody = await response.text().catch(() => "")
+          const errorMsg = errorBody.trim() || `Erro ${response.status}`
+          console.error("[Mentor] API error:", response.status, errorBody)
+          appendToMessage(assistantId, `⚠️ ${errorMsg}`)
           return
         }
 

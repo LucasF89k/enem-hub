@@ -24,7 +24,7 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { cn } from "@/lib/utils"
-import { completePlanItem, removePlanItem, generatePlan } from "@/app/actions/planner.actions"
+import { completePlanItem, removePlanItem, generatePlan, recalibratePlan } from "@/app/actions/planner.actions"
 import {
   BookOpen,
   HelpCircle,
@@ -36,6 +36,7 @@ import {
   Wand2,
   Loader2,
   CalendarDays,
+  RefreshCw,
 } from "lucide-react"
 
 const SESSION_ICON: Record<string, React.ReactNode> = {
@@ -89,6 +90,7 @@ export function PlannerClient({ weekStart, items, hasPlan, dailyGoal }: PlannerC
   const [showGenDialog, setShowGenDialog] = useState(!hasPlan)
   const [isGenerating, startGenerate] = useTransition()
   const [isCompleting, startComplete] = useTransition()
+  const [isRecalibrating, startRecalibrate] = useTransition()
 
   // Group items by day of week
   const days = Array.from({ length: 7 }, (_, i) => {
@@ -140,6 +142,22 @@ export function PlannerClient({ weekStart, items, hasPlan, dailyGoal }: PlannerC
         window.location.reload()
       } catch {
         toast.error("Erro ao gerar plano. Tente novamente.")
+      }
+    })
+  }
+
+  function handleRecalibrate() {
+    startRecalibrate(async () => {
+      try {
+        const result = await recalibratePlan()
+        if (result.success) {
+          toast.success("Plano recalibrado com base no seu desempenho!")
+          window.location.reload()
+        } else {
+          toast.error(result.error ?? "Erro ao recalibrar")
+        }
+      } catch {
+        toast.error("Erro ao recalibrar plano.")
       }
     })
   }
@@ -197,7 +215,7 @@ export function PlannerClient({ weekStart, items, hasPlan, dailyGoal }: PlannerC
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6 space-y-5">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">Planejador</h1>
           <p className="text-sm text-muted-foreground">
@@ -205,7 +223,26 @@ export function PlannerClient({ weekStart, items, hasPlan, dailyGoal }: PlannerC
             {format(addDays(weekStartDate, 6), "dd MMM yyyy", { locale: ptBR })}
           </p>
         </div>
-        <GenerateDialog />
+        <div className="flex items-center gap-2">
+          {hasPlan && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1"
+              onClick={handleRecalibrate}
+              disabled={isRecalibrating || isGenerating}
+              title="Recalcula prioridades com base no seu desempenho atual"
+            >
+              {isRecalibrating ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4" />
+              )}
+              <span className="hidden sm:inline">Recalibrar</span>
+            </Button>
+          )}
+          <GenerateDialog />
+        </div>
       </div>
 
       {!hasPlan && localItems.length === 0 ? (
