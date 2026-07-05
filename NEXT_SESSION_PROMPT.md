@@ -7,13 +7,13 @@ Cole este prompt inteiro no início de uma nova conversa com Claude Code:
 ```
 Você está continuando o desenvolvimento do ENEM Hub — uma plataforma de estudos para o ENEM focada em candidatos a Medicina.
 
-Leia o PROJECT_STATE.md antes de qualquer coisa. Ele documenta tudo: stack, versões, armadilhas do Prisma, os 18 sessões já implementadas, e o que falta.
+Leia o PROJECT_STATE.md antes de qualquer coisa. Ele documenta tudo: stack, versões, armadilhas do Prisma, todas as sessões já implementadas, e o que falta. Preste atenção especial às seções "Sessão 19", "Sessão D", "Vídeos do YouTube" e "Setup em máquina nova" — foram atualizadas na última sessão.
 
 ## Contexto rápido do projeto
 
 - Next.js 16.2.9 + React 19 + Tailwind 4 + Prisma 6 + NextAuth v5 beta
-- Banco: Neon PostgreSQL (variável DATABASE_URL no .env — nunca commitar)
-- IA: @google/generative-ai gemini-1.5-flash (NUNCA Anthropic SDK)
+- Banco: Neon PostgreSQL (variável DATABASE_URL no .env — nunca commitar; .env NÃO existe no repo, precisa ser criado do zero em máquina nova)
+- IA: Mentor + geração de conteúdo/flashcards usam **MiMo** (src/lib/mimo.ts, api.xiaomimimo.com/v1) — NUNCA Anthropic SDK. Gemini (gemini-2.5-flash, não mais 1.5-flash) ainda é usado só em essay.actions.ts (avaliação de redação) — cota free tier do Gemini é de só 20 req/dia, por isso não é usado para geração em lote.
 - Deploy: Vercel (auto-deploy no push para main)
 - Repo: https://github.com/LucasF89k/enem-hub.git
 
@@ -25,45 +25,30 @@ Leia o PROJECT_STATE.md antes de qualquer coisa. Ele documenta tudo: stack, vers
 4. `"use server"` só em arquivos que exportam APENAS funções async
 5. Server Actions: validar sessão com auth() PRIMEIRO, depois Zod
 6. Prisma: modelo é `userSimulado` (não userAttempt), campo é `streak` (não streakDays), `scoreTotal` é percentual 0–100
-7. Nunca commitar .env
+7. Datas: sempre `getUTCDay()` e `Date.UTC()` — nunca `getDay()` (bug de timezone Brasil)
+8. Nunca commitar .env
 
-## O que já foi implementado (sessões 1–18)
+## O que já foi implementado
 
-- Autenticação completa (NextAuth v5 + Credentials + JWT)
-- Hierarquia de conteúdo: Área → Disciplina → Tópico → Conteúdo
-- Flashcards com algoritmo SM-2
-- Banco de questões com histórico de respostas
-- Simulados com scoreTotal e página de resultado
-- Editor de redação com avaliação por Gemini
-- Mentor IA (chat streaming com Gemini)
-- Planejador de estudos adaptado por trilha (Extensiva/Semi/Intensiva/Sprint)
-- Analytics (radar de áreas, heatmap, linha de evolução)
-- Sistema de trilhas detectado pela data da prova
-- Gamificação: 25 achievements, XP, confetti, galeria /conquistas
-- PWA: Service Worker, IndexedDB offline queue, install prompt
-- Busca global Cmd+K com CommandDialog e debounce 300ms
-- Widget Medicina com nota de corte das 20 melhores faculdades
-- Polish: skeletons, empty states, error boundaries, transições Framer Motion
-- Seeds: 185 tópicos cobrindo toda a matriz ENEM + 20 temas de redação históricos
+- Sessões 1–18: fundação completa (auth, layout, trilhas, flashcards SM-2, questões, simulados, redação, mentor, planejador, analytics, gamificação, PWA, busca global, modo medicina, seeds de 207 tópicos)
+- Bugs pós-18: foto de perfil, mentor migrado para MiMo, planner UTC, streak Duolingo-style, settings
+- **Sessão 19 (Pipeline de Conteúdo)**: `scripts/generate-content.ts` — 207/207 tópicos com Content completo (via MiMo)
+- **Sessão D (Pipeline de Flashcards)**: `scripts/generate-flashcards.ts` — 2.082 flashcards, todos os 207 tópicos com 8+ cards cada
+- **Import de questões**: 1.135 questões reais do ENEM importadas via `scripts/import-questions.ts` (total no banco: 1.232, incluindo seeds)
+- **Vídeos do YouTube**: EM ANDAMENTO — 113/207 tópicos com vídeo (292 vídeos salvos), bloqueado pela cota diária da YouTube Data API (10.000 unidades/dia, ~100 buscas/dia). Ver seção "Vídeos do YouTube" no PROJECT_STATE.md para detalhes e como retomar.
 
-## O que falta (sessões 19–22)
+## O que falta
 
-### Sessão 19 — Pipeline de Conteúdo (PRIORIDADE ALTA)
-Criar script `scripts/generate-content.ts` que:
-- Lê todos os tópicos do banco sem Content associado
-- Para cada tópico, chama Gemini com prompt estruturado pedindo:
-  - `summary`: resumo de 3–5 linhas
-  - `body`: conteúdo completo em Markdown (teoria, exemplos, tabelas)
-  - `keyConcepts`: array de 5–8 conceitos-chave
-  - `tips`: array de 3–5 dicas de prova ENEM
-  - `formulas`: array de fórmulas (vazio se não for exatas)
-  - `tricks`: array de macetes e pegadinhas
-- Salva no banco como `Content` com `upsert` (idempotente)
-- Processa em lotes de 5 com `p-limit` para não estourar rate limit
-- Log de progresso: "X/185 tópicos processados"
-- Usar `src/lib/gemini.ts` existente
+### PRIORIDADE 1 — Terminar vídeos do YouTube
+```powershell
+$env:DATABASE_URL="<neon DATABASE_URL, ver PROJECT_STATE.md ou pedir ao usuário>"
+npm run search-videos -- --all
+```
+Se bater em `429`/quota logo nos primeiros tópicos, pare o processo e tente de novo mais tarde (a cota reseta à meia-noite Pacific Time). Considere implementar `--skip-existing` no script para não desperdiçar cota reprocessando tópicos que já têm vídeo (melhoria pendente).
 
-O model `Content` no schema tem: `title`, `slug`, `summary`, `body`, `keyConcepts String[]`, `tips String[]`, `formulas String[]`, `tricks String[]`, `importance`, `frequency`, `topicId`
+### PRIORIDADE 2 — Cloudinary + Google Drive (pedido explícito do usuário, ainda não iniciado)
+- Ajudar o usuário a configurar uma conta Cloudinary (25GB grátis) — cloud name, API key, API secret
+- Processar arquivos que o usuário vai enviar do Google Drive (Redação INEP + Anki) — aguardar ele organizar/enviar
 
 ### Sessão 20 — Notificações Push
 - Gerar VAPID keys e salvar como env vars
@@ -82,25 +67,31 @@ O model `Content` no schema tem: `title`, `slug`, `summary`, `body`, `keyConcept
 - `generateStaticParams` para os tópicos com `importance >= 4`
 - `revalidate = 3600` nas páginas de conteúdo estático
 
+## Setup em máquina nova (se necessário)
+
+Ver seção completa "Setup em máquina nova" no PROJECT_STATE.md. Resumo:
+1. Docker Desktop precisa estar aberto; recriar container `enem-db` se não existir
+2. Node.js pode não estar instalado — `winget install OpenJS.NodeJS.LTS --accept-package-agreements --accept-source-agreements`, depois refrescar `$env:Path` na sessão do PowerShell
+3. `npm install` pode bloquear postinstall scripts — `npm approve-scripts "@prisma/client" "@prisma/engines" esbuild prisma sharp unrs-resolver`
+4. `.env` não existe no repo — criar do zero com DATABASE_URL, NEXTAUTH_URL, NEXTAUTH_SECRET, GEMINI_API_KEY, MIMO_API_KEY, YOUTUBE_API_KEY
+
 ## Como rodar o projeto
 
 ```bash
 npm install
-# .env já deve ter DATABASE_URL, NEXTAUTH_SECRET, NEXTAUTH_URL, GEMINI_API_KEY
 npx prisma generate
 npx prisma migrate deploy
-npx prisma db seed
 npm run dev
 ```
 
-## Para migrate/seed no Neon
+## Para rodar scripts contra o Neon de produção
 
-Se a porta 5432/6543 estiver bloqueada (firewall), use hotspot do celular:
-```bash
-DATABASE_URL="postgresql://neondb_owner:<senha>@ep-young-pine-ai9fzrc8-pooler.c-4.us-east-1.aws.neon.tech/neondb?sslmode=require" npx prisma migrate deploy
+```powershell
+$env:DATABASE_URL="postgresql://neondb_owner:<senha>@ep-young-pine-ai9fzrc8-pooler.c-4.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+npx tsx scripts/<nome-do-script>.ts --all
 ```
 
 ---
 
-Comece pela Sessão 19 (pipeline de conteúdo). Leia o PROJECT_STATE.md para ver os padrões de código e os campos corretos do Prisma antes de escrever qualquer arquivo.
+Comece confirmando que leu o PROJECT_STATE.md, depois retome os vídeos do YouTube (Prioridade 1) antes de partir para Cloudinary/Drive ou as sessões novas.
 ```

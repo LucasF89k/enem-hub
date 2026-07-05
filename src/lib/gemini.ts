@@ -3,7 +3,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai"
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 
 export const gemini = genAI.getGenerativeModel({
-  model: "gemini-1.5-flash",
+  model: "gemini-2.5-flash",
   generationConfig: {
     temperature: 0.7,
     maxOutputTokens: 2048,
@@ -11,10 +11,10 @@ export const gemini = genAI.getGenerativeModel({
 })
 
 export const geminiPro = genAI.getGenerativeModel({
-  model: "gemini-1.5-flash",
+  model: "gemini-2.5-flash",
   generationConfig: {
     temperature: 0.5,
-    maxOutputTokens: 4096,
+    maxOutputTokens: 8192,
   },
 })
 

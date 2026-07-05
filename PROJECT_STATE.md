@@ -337,25 +337,72 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
 - `scripts/import-questions.ts` — importa ~2.700 questões reais do ENEM via api.enem.dev
 
 ### Variáveis de ambiente adicionadas
-- `MIMO_API_KEY` — chave da API do MiMo (adicionar no Vercel também)
-- `GEMINI_API_KEY` — ainda usada no script `generate-content.ts` (Sessão 19)
+- `MIMO_API_KEY` — chave da API do MiMo (já preenchida em `.env` local; adicionar no Vercel também)
+- `GEMINI_API_KEY` — usada em `essay.actions.ts` (avaliação de redação) e como fallback histórico; já preenchida em `.env` local
+- `YOUTUBE_API_KEY` — usada em `scripts/search-videos.ts`; já preenchida em `.env` local
 
 ---
 
-## Próxima Tarefa IMEDIATA — Importar Questões ENEM
+## Sessão 19 — Pipeline de Conteúdo (concluída)
 
-O script `scripts/import-questions.ts` está pronto mas precisa de rede sem bloqueio de porta 5432.
+- **Script:** `scripts/generate-content.ts` — busca Topics sem Content, gera via MiMo, `upsert` por `topicId`
+- **Schema:** adicionado `@@unique([topicId])` em `Content` (aplicado via `db push --accept-data-loss`, local e Neon) para permitir o upsert
+- **Decisão importante:** o ROADMAP original mandava usar `gemini-1.5-flash`, mas esse modelo está **descontinuado**. Além disso a cota free tier do Gemini (`gemini-2.5-flash`) é de só **20 requisições/dia** (não por minuto) — inviável para gerar conteúdo em lote. Por isso o pipeline de geração de conteúdo/flashcards foi migrado para **MiMo** (`src/lib/mimo.ts`), que não tem esse limite.
+- `src/lib/gemini.ts` foi atualizado para `gemini-2.5-flash` mesmo assim (ainda é usado em `essay.actions.ts`), com `maxOutputTokens` do `geminiPro` subido para 8192.
+- Adicionado `generateMimoJSON<T>(prompt, maxTokens)` em `src/lib/mimo.ts` — helper reutilizável para gerar JSON estruturado via MiMo (`mimo-v2.5-pro`), com limpeza de markdown fences e `JSON.parse`.
+- **Resultado:** 207/207 tópicos com `Content` completo (summary, body HTML, 6 keyConcepts, 4 tips, formulas quando aplicável, 3 tricks). Falhas de truncamento de JSON (raras) resolvidas com reruns idempotentes.
 
-**Rodar no PC novo (sem firewall de ISP):**
+## Sessão D (ROADMAP) — Pipeline de Flashcards (concluída)
+
+- **Script:** `scripts/generate-flashcards.ts` — busca Topics com Content mas menos de 8 Flashcards, gera 10 cards via `generateMimoJSON()` (4 BASIC, 4 CLOZE, 2 FORMULA — ou mais BASIC se não houver fórmulas)
+- **Dedup:** normaliza `front` (remove acentos/pontuação via `\p{M}` unicode) e compara por similaridade de tokens (Jaccard ≥ 0.6) contra cards já existentes do tópico, para não duplicar em re-execuções
+- `MAX_TOKENS = 6144` (maior que os 4096 do `generate-content.ts`) porque um array de 10 objetos trunca mais fácil
+- **Resultado:** 2.082 flashcards no banco (207 tópicos com 8+ cards cada). Variação de 10-11 cards por tópico é normal (LLM às vezes gera 1 a mais) — aceito pelo usuário como não-problema.
+
+## Vídeos do YouTube (`scripts/search-videos.ts`) — EM ANDAMENTO, retomar aqui
+
+Script já existia antes desta sessão (não foi criado agora). Busca vídeos via YouTube Data API v3 e salva em `TopicVideo` (upsert por `youtubeId`).
+
+**Estado atual (verificado em produção/Neon):**
+- `totalVideos`: 292 salvos
+- `topicsWithVideo`: 113 de 207 tópicos têm pelo menos 1 vídeo
+- **Faltam ~94 tópicos sem vídeo**
+
+**Problema conhecido — cota diária do YouTube Data API:**
+- Cada busca (`search.list`) custa **100 unidades**; cota gratuita é **10.000 unidades/dia** (~100 buscas/dia)
+- O script `--all` **sempre reprocessa do tópico 1** (não pula quem já tem vídeo — só evita duplicar via upsert). Isso significa que cada rodada gasta cota nos primeiros ~100 tópicos antes de chegar nos que faltam
+- A cota reseta à **meia-noite Pacific Time**, que cai de madrugada/manhã no horário do Brasil (verificar o horário exato conforme horário de verão dos EUA)
+- Nesta sessão, foram feitas **11+ tentativas horárias automáticas** (via loop de `ScheduleWakeup` + `TaskStop` quando batia em `429`) e a cota não resetou dentro de ~11h de tentativas — mais lento que o esperado. Ficou em aberto se há algo além do reset diário padrão consumindo a cota (outro processo usando a mesma key?)
+
+**Como retomar:**
 ```powershell
-# PowerShell — use a DATABASE_URL do .env (nunca commitar a senha)
+$env:DATABASE_URL="<neon DATABASE_URL, ver .env>"
+npm run search-videos -- --all
+```
+Se bater em `429`/quota, parar o processo (não deixar martelar) e tentar de novo mais tarde. Considerar:
+1. Esperar mais o reset natural
+2. Criar uma **segunda API key** do YouTube (projeto novo no Google Cloud Console) e usá-la temporariamente
+3. Modificar o script para aceitar `--skip-existing` e não reprocessar tópicos que já têm vídeo (economizaria cota nas retentativas — **melhoria pendente, não implementada**)
+
+---
+
+## Pendências mencionadas pelo usuário (ainda não iniciadas)
+
+- **Cloudinary**: configurar conta (25GB grátis) para upload de imagens de questões/conteúdo — necessário antes do processamento de arquivos do Google Drive
+- **Processar arquivos do Google Drive**: usuário vai enviar arquivos de Redação (INEP) e Anki para importar — aguardando ele organizar e enviar
+
+---
+
+## Próxima Tarefa IMEDIATA — Importar Questões ENEM (concluída nesta sessão)
+
+O script `scripts/import-questions.ts` já rodou com sucesso contra o Neon.
+
+**Resultado:** 1.135 questões importadas, 1.623 puladas (sem alternativas/disciplina/duplicatas), 0 erros. Total de questões no banco agora: 1.232 (inclui seeds anteriores).
+
+Script continua idempotente — pode rodar de novo (`--all`) se quiser tentar recuperar parte das puladas ajustando o keyword-matching de disciplina/tópico:
+```powershell
 $env:DATABASE_URL="<copie do .env local>"
 npx tsx scripts/import-questions.ts --all
-```
-
-```bash
-# Bash/Linux/Mac
-DATABASE_URL="<copie do .env local>" npx tsx scripts/import-questions.ts --all
 ```
 
 **Como o script funciona:**
@@ -369,10 +416,16 @@ DATABASE_URL="<copie do .env local>" npx tsx scripts/import-questions.ts --all
 
 ## Próximas Sessões (pendentes)
 
-### Sessão 19: Pipeline de Conteúdo
-- Script para popular Content records via Gemini/MiMo (teoria + resumo + conceitos-chave + dicas por tópico)
-- Estimativa: ~185 tópicos × ~300ms = ~1 minuto de processamento
-- **ATENÇÃO:** `PROJECT_STATE.md` diz "nunca usar Anthropic SDK — sempre @google/generative-ai". Mas o Mentor agora usa MiMo. Para geração de conteúdo, pode usar MiMo também via `src/lib/mimo.ts`
+### ~~Sessão 19: Pipeline de Conteúdo~~ ✅ CONCLUÍDA (ver seção acima)
+
+### ~~Sessão D (ROADMAP): Pipeline de Flashcards~~ ✅ CONCLUÍDA (ver seção acima)
+
+### EM ANDAMENTO: Completar vídeos do YouTube
+Ver seção "Vídeos do YouTube" acima — 113/207 tópicos com vídeo, bloqueado por cota diária da YouTube Data API. **Retomar isso primeiro** na próxima sessão.
+
+### Pendente (mencionado pelo usuário, ainda não iniciado): Cloudinary + Google Drive
+- Configurar conta Cloudinary (25GB grátis) — necessário para upload de imagens (questões com gráficos, resumos com imagens)
+- Processar arquivos que o usuário vai enviar do Google Drive (Redação INEP + Anki)
 
 ### Sessão 20: Notificações Push
 - Web Push API com VAPID keys
@@ -402,12 +455,20 @@ DATABASE_URL="<copie do .env local>" npx tsx scripts/import-questions.ts --all
 ### Rodar localmente
 ```bash
 npm install
-cp .env.example .env  # preencher com credenciais
+# NÃO existe .env.example no repo — crie .env manualmente com:
+# DATABASE_URL, NEXTAUTH_URL, NEXTAUTH_SECRET, GEMINI_API_KEY, MIMO_API_KEY, YOUTUBE_API_KEY
 npx prisma generate
 npx prisma migrate deploy
 npx prisma db seed
 npm run dev
 ```
+
+### Setup em máquina nova (checklist, aprendido nesta sessão)
+1. **Docker Desktop** precisa estar aberto antes de `docker run`/`docker ps`
+2. Recriar container local: `docker run --name enem-db -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=enem_hub -p 5432:5432 -d postgres:16`
+3. **Node.js pode não estar instalado** (ou pode "sumir" entre sessões/reinícios do ambiente) — instalar via `winget install OpenJS.NodeJS.LTS --accept-package-agreements --accept-source-agreements`. Depois de instalar, a sessão atual do PowerShell não pega o PATH novo automaticamente — rodar: `$env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")` antes de usar `node`/`npm`/`npx`
+4. `npm install` pode bloquear scripts de postinstall (Prisma, esbuild, sharp) por segurança — rodar `npm approve-scripts "@prisma/client" "@prisma/engines" esbuild prisma sharp unrs-resolver`
+5. `.env` **não existe no repo** (nem `.env.example`) — precisa ser criado do zero. `NEXTAUTH_SECRET` pode ser gerado com `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`
 
 ---
 
@@ -422,3 +483,9 @@ npm run dev
 | `prisma migrate dev` trava | Requer terminal interativo | Usar `prisma db push` em dev, `migrate deploy` em produção |
 | Porta 5432/6543 bloqueada | Firewall de ISP/rede corporativa | Usar hotspot móvel ou configurar via Vercel Dashboard |
 | `handlers[item.type]` TypeScript error | `item.type` é `any` | Cast: `handlers[item.type as keyof typeof handlers]` |
+| `gemini-1.5-flash` retorna 404 | Modelo descontinuado pelo Google | Usar `gemini-2.5-flash` (ver `src/lib/gemini.ts`) |
+| Gemini free tier trava com `429` rápido | Cota é 20 requisições/DIA por modelo (não por minuto) — inviável para geração em lote | Usar MiMo (`generateMimoJSON()`) para geração de conteúdo/flashcards em massa |
+| `Content.topicId` não aceita `upsert({ where: { topicId } })` | Não havia `@unique` no campo | Adicionado `@@unique([topicId])` no schema — aplicar com `prisma db push --accept-data-loss` (local E produção) |
+| `search-videos.ts --all` sempre recomeça do tópico 1 | Script não filtra por "já tem vídeo", só evita duplicar vídeo individual via upsert | Gasta cota nos primeiros ~100 tópicos toda vez — considerar adicionar flag `--skip-existing` (não implementado) |
+| YouTube Data API 429 | Cota de 10.000 unidades/dia, ~100 por busca (~100 buscas/dia) | Esperar reset (meia-noite Pacific Time) ou usar uma segunda API key |
+| Node.js "sumiu" do PATH/máquina | Ambiente Windows pode reiniciar/resetar entre sessões longas | Reinstalar via winget e refrescar `$env:Path` (ver checklist "Setup em máquina nova") |
