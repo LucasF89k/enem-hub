@@ -7,7 +7,9 @@ Cole este prompt inteiro no início de uma nova conversa com Claude Code:
 ```
 Você está continuando o desenvolvimento do ENEM Hub — uma plataforma de estudos para o ENEM focada em candidatos a Medicina.
 
-Leia o PROJECT_STATE.md antes de qualquer coisa. Ele documenta tudo: stack, versões, armadilhas do Prisma, todas as sessões já implementadas, e o que falta. Preste atenção especial às seções "Sessão 19", "Sessão D", "Vídeos do YouTube" e "Setup em máquina nova" — foram atualizadas na última sessão.
+Leia o PROJECT_STATE.md antes de qualquer coisa. Ele documenta tudo: stack, versões, armadilhas do Prisma, todas as sessões já implementadas, e o que falta. Preste atenção especial às seções "Vídeos do YouTube", "Importação de material externo" e "Setup em máquina nova" — foram atualizadas na última sessão.
+
+**Esta sessão provavelmente começa numa máquina/rede diferente da anterior.** A pasta `fonte de conteudo/` (material de provas/Anki/redação, ~3,7GB de PDFs/zips baixados de um Google Drive) está no `.gitignore` e NUNCA foi enviada pro GitHub — ela não existe neste checkout. O usuário já sabe disso e vai baixar o material de novo do Google Drive. Antes de tentar rodar qualquer um dos scripts de importação (`extract-pdf-exams.ts`, `import-anki-decks.ts`, `ingest-resumos.ts`), confirme com `ls "fonte de conteudo"` se a pasta já foi recolocada na raiz do projeto — se não estiver lá, peça para o usuário baixar do Drive e colocar antes de continuar.
 
 ## Contexto rápido do projeto
 
@@ -35,20 +37,33 @@ Leia o PROJECT_STATE.md antes de qualquer coisa. Ele documenta tudo: stack, vers
 - **Sessão 19 (Pipeline de Conteúdo)**: `scripts/generate-content.ts` — 207/207 tópicos com Content completo (via MiMo)
 - **Sessão D (Pipeline de Flashcards)**: `scripts/generate-flashcards.ts` — 2.082 flashcards, todos os 207 tópicos com 8+ cards cada
 - **Import de questões**: 1.135 questões reais do ENEM importadas via `scripts/import-questions.ts` (total no banco: 1.232, incluindo seeds)
-- **Vídeos do YouTube**: EM ANDAMENTO — 113/207 tópicos com vídeo (292 vídeos salvos), bloqueado pela cota diária da YouTube Data API (10.000 unidades/dia, ~100 buscas/dia). Ver seção "Vídeos do YouTube" no PROJECT_STATE.md para detalhes e como retomar.
+- **Vídeos do YouTube**: EM ANDAMENTO — 113/207 tópicos com vídeo (292 vídeos salvos), bloqueado pela cota diária da YouTube Data API (10.000 unidades/dia, ~100 buscas/dia). Script agora suporta `--skip-existing` (evita reprocessar tópicos que já têm vídeo). Na última sessão também bateu num bloqueio de rede local (portas 5432/6543 do Neon inacessíveis nesta máquina/rede — parece firewall corporativo/governamental) — precisa de outra rede (hotspot móvel) para rodar scripts contra o Neon. Ver seção "Vídeos do YouTube" no PROJECT_STATE.md.
+- **Cloudinary**: CONFIGURADO — conta criada, credenciais em `.env`, testado com `cloudinary.api.ping()` (OK). `src/lib/cloudinary.ts` criado com `uploadImage`/`deleteImage`. `updateProfileImage` (avatar) já migrado para usar Cloudinary em vez de base64 no banco. Não testado end-to-end (bloqueio de rede com o Neon nesta sessão).
+- **Sessão 21 (Vitest)**: CONCLUÍDA (parcial) — `vitest.config.mts` + 34 testes passando (`sm2.ts` e `trail.ts` 100%, `achievements.ts` ~95%, `xp.ts` parcial). `npm run test` / `test:watch` / `test:coverage`. Falta a parte de Playwright (E2E).
+- **Importação de material externo (`fonte de conteudo/`)**: pipeline de 4 scripts construído e validado via dry-run (`scripts/extract-pdf-exams.ts`, `scripts/import-anki-decks.ts`, `scripts/ingest-redacao.ts`, `scripts/ingest-resumos.ts` + `scripts/lib/discover-files.ts` e `scripts/lib/extract-text.ts`). `ingest-redacao.ts` já RODOU e salvou 32/32 arquivos em `public/data/redacao-extra.json`. Os outros 3 dependem do Neon e **bloquearam pela mesma rede que travou o YouTube** — ver seção "Importação de material externo" no PROJECT_STATE.md para os números reais (55.869 candidatos a questão, ~37h de MiMo) e comandos exatos para retomar.
 
 ## O que falta
 
-### PRIORIDADE 1 — Terminar vídeos do YouTube
-```powershell
-$env:DATABASE_URL="<neon DATABASE_URL, ver PROJECT_STATE.md ou pedir ao usuário>"
-npm run search-videos -- --all
-```
-Se bater em `429`/quota logo nos primeiros tópicos, pare o processo e tente de novo mais tarde (a cota reseta à meia-noite Pacific Time). Considere implementar `--skip-existing` no script para não desperdiçar cota reprocessando tópicos que já têm vídeo (melhoria pendente).
+### PRIORIDADE 1 — Terminar vídeos do YouTube E a importação de material externo (mesmo bloqueio de rede)
+Antes de qualquer um dos dois, confirme que a rede atual alcança o Neon (teste rápido: `npx prisma db pull` ou qualquer query). Se bloqueado (porta 5432/6543), troque para hotspot móvel ou outra rede.
 
-### PRIORIDADE 2 — Cloudinary + Google Drive (pedido explícito do usuário, ainda não iniciado)
-- Ajudar o usuário a configurar uma conta Cloudinary (25GB grátis) — cloud name, API key, API secret
-- Processar arquivos que o usuário vai enviar do Google Drive (Redação INEP + Anki) — aguardar ele organizar/enviar
+Vídeos do YouTube:
+```powershell
+npm run search-videos -- --all --skip-existing
+```
+Se bater em `429`/quota, pare o processo e tente de novo mais tarde (a cota reseta à meia-noite Pacific Time).
+
+Material externo (assumindo que a pasta `fonte de conteudo/` está presente — ver aviso no topo deste arquivo):
+```powershell
+npx tsx scripts/extract-pdf-exams.ts --all    # ~37h — usuário pediu para rodar tudo de uma vez em background
+npx tsx scripts/import-anki-decks.ts --all
+npx tsx scripts/ingest-resumos.ts --all       # 123 arquivos × 15s ≈ 31min
+```
+`ingest-redacao.ts` já foi concluído (32/32), não precisa rodar de novo a menos que o usuário adicione mais arquivos de redação na pasta.
+
+### PRIORIDADE 2 — Google Drive (pedido explícito do usuário)
+- A pasta `fonte de conteudo/` já foi processada nesta sessão (ver acima) — se o usuário mencionar "Google Drive" de novo, provavelmente é sobre essa mesma pasta ou material adicional
+- Considerar usar `uploadImage()` (`src/lib/cloudinary.ts`) para imagens de questões/conteúdo quando esse fluxo for implementado
 
 ### Sessão 20 — Notificações Push
 - Gerar VAPID keys e salvar como env vars
@@ -58,9 +73,8 @@ Se bater em `429`/quota logo nos primeiros tópicos, pare o processo e tente de 
 - Criar `src/lib/push.ts` com `sendPushNotification(userId, title, body)`
 - Disparar notificação quando: streak em risco (não estudou hoje), flashcard pendente, simulado agendado
 
-### Sessão 21 — Testes
-- Vitest para: `lib/sm2.ts`, `lib/trail.ts`, `lib/achievements.ts`, `lib/xp.ts`
-- Playwright para fluxos críticos: login → responder questão → ver achievement, criar simulado → finalizar → ver resultado
+### Sessão 21b — Testes E2E (Playwright) — pendente
+- Vitest (unitário) já feito. Falta Playwright para fluxos críticos: login → responder questão → ver achievement, criar simulado → finalizar → ver resultado
 
 ### Sessão 22 — Performance
 - `next/dynamic` para Recharts e Framer Motion (evitar hydration de libs pesadas)
@@ -93,5 +107,5 @@ npx tsx scripts/<nome-do-script>.ts --all
 
 ---
 
-Comece confirmando que leu o PROJECT_STATE.md, depois retome os vídeos do YouTube (Prioridade 1) antes de partir para Cloudinary/Drive ou as sessões novas.
+Comece confirmando que leu o PROJECT_STATE.md, depois retome os vídeos do YouTube e a importação de material externo (Prioridade 1, mesmo bloqueio de rede) antes de partir para as sessões novas.
 ```

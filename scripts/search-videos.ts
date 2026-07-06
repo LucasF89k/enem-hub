@@ -95,6 +95,7 @@ async function main() {
   if (!apiKey) { console.error("❌  YOUTUBE_API_KEY not set in .env"); process.exit(1) }
 
   const isDryRun = flags["dry-run"] === true
+  const skipExisting = flags["skip-existing"] === true
   const limitN = flags["limit"] ? parseInt(flags["limit"] as string) : undefined
   const areaFilter = flags["area"] as string | undefined
   const discFilter = flags["discipline"] as string | undefined
@@ -109,6 +110,7 @@ async function main() {
     if (areaFilter) disciplineFilter.area = { slug: areaFilter }
     where.discipline = disciplineFilter
   }
+  if (skipExisting) where.videos = { none: {} }
 
   const topics = await db.topic.findMany({
     where,

@@ -36,6 +36,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# material de estudo bruto importado (PDFs, .apkg, etc — não versionar)
+/fonte de conteudo/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

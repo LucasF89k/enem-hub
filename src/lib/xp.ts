@@ -1,7 +1,7 @@
 import { db } from "@/lib/db"
 import { startOfDay, subDays } from "date-fns"
 
-function calcLevel(totalXP: number): number {
+export function calcLevel(totalXP: number): number {
   return Math.min(99, Math.floor(totalXP / 500) + 1)
 }
 

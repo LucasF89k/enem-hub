@@ -2,6 +2,7 @@
 
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
+import { uploadImage } from "@/lib/cloudinary"
 import { revalidatePath } from "next/cache"
 
 export async function updateProfileImage(
@@ -19,9 +20,14 @@ export async function updateProfileImage(
     return { success: false, error: "Imagem muito grande. Máximo 2MB." }
   }
 
+  const { url } = await uploadImage(base64, {
+    folder: "enem-hub/avatars",
+    publicId: session.user.id,
+  })
+
   await db.user.update({
     where: { id: session.user.id },
-    data: { image: base64 },
+    data: { image: url },
   })
 
   revalidatePath("/profile")

@@ -382,14 +382,91 @@ npm run search-videos -- --all
 Se bater em `429`/quota, parar o processo (não deixar martelar) e tentar de novo mais tarde. Considerar:
 1. Esperar mais o reset natural
 2. Criar uma **segunda API key** do YouTube (projeto novo no Google Cloud Console) e usá-la temporariamente
-3. Modificar o script para aceitar `--skip-existing` e não reprocessar tópicos que já têm vídeo (economizaria cota nas retentativas — **melhoria pendente, não implementada**)
+3. ~~Modificar o script para aceitar `--skip-existing`~~ ✅ Implementado (`search-videos.ts` aceita `--skip-existing`, filtra `where.videos = { none: {} }`)
+
+**Bloqueio nesta sessão (máquina nova):** rede local (parece corporativa/governamental — DNS resolve via `VMW25DC1.cl.df.gov.br`) bloqueia as portas 5432 e 6543 do Neon (`Can't reach database server`). Testado com `/dev/tcp` — ambas as portas falham a conexão, apesar do DNS resolver normalmente. Precisa de hotspot móvel ou outra rede para rodar `search-videos.ts` (e qualquer script contra o Neon) nesta máquina/rede. Retomar vídeos do YouTube assim que a rede permitir:
+```powershell
+npm run search-videos -- --all --skip-existing
+```
+
+---
+
+## Cloudinary — configurado nesta sessão ✅
+
+- Conta criada pelo usuário (cloud name, API key, API secret já preenchidos em `.env` local — testado com `cloudinary.api.ping()`, respondeu OK)
+- `npm install cloudinary` adicionado ao projeto
+- **`src/lib/cloudinary.ts`** — cliente configurado via env vars + helpers `uploadImage(base64OrUrl, { folder, publicId })` e `deleteImage(publicId)`
+- **`src/app/actions/profile.actions.ts`** — `updateProfileImage` migrado: antes salvava base64 direto em `User.image` (ruim para escala), agora faz upload para Cloudinary (pasta `enem-hub/avatars`, `publicId` = user id) e salva a `secure_url` no banco
+- Não testado end-to-end contra o Neon nesta sessão (bloqueio de rede — ver acima), mas o `tsc --noEmit` passa limpo
+- **Pendente:** usar `uploadImage`/`deleteImage` também para imagens de questões/conteúdo (gráficos, resumos) quando esse fluxo for implementado
+
+### Nota de segurança
+O dashboard do Cloudinary tem um botão "Copy Prompt" (onboarding "Connect Cloudinary to Your AI Assistant") que gera um prompt com as credenciais reais embutidas e instruções para hardcodar os segredos direto em um script de exemplo (evitando `.env`). É uma feature legítima do Cloudinary, mas as instruções do prompt vão contra a convenção de segurança deste projeto — as credenciais foram salvas só no `.env` (gitignored), não em nenhum arquivo versionado.
+
+---
+
+## Importação de material externo (`fonte de conteudo/`) — pipeline construído, EM ANDAMENTO
+
+Usuário colocou uma pasta `fonte de conteudo/` na raiz do projeto com ~3,7GB de material baixado de um Google Drive (provas de vários vestibulares, decks Anki, redação INEP). **Adicionada ao `.gitignore` imediatamente** (`/fonte de conteudo/`) — nunca vai pro GitHub.
+
+### O que foi feito
+1. **Extração**: todos os `.zip`/`.rar` (20 arquivos) extraídos via 7-Zip para subpastas com nome limpo (script `fonte de conteudo/_extract.py`, idempotente). Nenhum zip aninhado.
+2. **Exceções aplicadas**: pasta "01 - ENEM 1998 - 2008 - bem antigas kkk" (50 arquivos, pré-2009) e "ENCCEJA ... ENSINO FUND" (38 arquivos) excluídas do processamento, conforme pedido.
+3. **Classificação por tipo** — `scripts/lib/discover-files.ts` (`discoverFiles(category)`), categorias: PROVA, REDACAO, RESUMO, ANKI, OUTRO (descartado), ARCHIVE. "RESOLUÇÃO COMENTADA"/arquivos de "resolução" (comentário de questão) tratados como RESUMO por decisão do usuário (valor didático), não descartados.
+4. **4 scripts de importação criados** (todos com `--dry-run`/`--all`, idempotentes):
+   - **`scripts/extract-pdf-exams.ts`** — extrai questões de múltiplas escolha de qualquer vestibular via `generateMimoJSON()`. Detecta blocos por `QUESTÃO N`/numeração, filtra candidatos por sequência alfabética de opções (A→E) nas linhas (formato ENEM não tem pontuação depois da letra: `"A texto..."`, não `"A) texto..."`). Dedup por MD5 do `statement` normalizado. Suporta `--file=<nome>` para reprocessar um arquivo isolado.
+   - **`scripts/import-anki-decks.ts`** — lê `.apkg` (zip + SQLite). Detecta os dois formatos de Anki: novo (`collection.anki21b`, comprimido em **zstd** — usa a lib `fzstd`, pura JS — com tabela `decks` própria) e antigo (`collection.anki2`/`anki21` sqlite puro, decks no blob JSON `col.decks`). Mapeia deck→Topic via MiMo, com **cache por nome de deck** (não por nota) para não explodir custo. Dedup por Jaccard do `front` (mesmo método do `generate-flashcards.ts`).
+   - **`scripts/ingest-redacao.ts`** — não depende do banco, salva em `public/data/redacao-extra.json` (array). **Rodado com sucesso: 32/32 arquivos processados e salvos.**
+   - **`scripts/ingest-resumos.ts`** — identifica Topic via MiMo e anexa/cria `Content`.
+   - Util compartilhado: `scripts/lib/extract-text.ts` (pdf-parse v2 — API nova é `new PDFParse({data}).getText()`, não mais `pdf(buffer)`; mammoth para .docx; md5/jaccard/sleep/parseCliFlags).
+
+### Armadilhas encontradas e resolvidas nesta sessão
+- **Unicode NFD vs NFC**: o 7-Zip extrai nomes de arquivo/pasta com acentos em **NFD** (decomposto, ex: "ç" = "c" + combining cedilla U+0327), mas strings literais no código-fonte são NFC (composto). `.includes()` falhava silenciosamente sem erro. Corrigido normalizando com `.normalize("NFC")` logo ao montar `relPath` em `discover-files.ts`. **Se mexer nesses scripts de novo, lembrar disso** — qualquer comparação de string com acento precisa passar por normalize primeiro.
+- **PDFs de prova real não têm pontuação após a letra da alternativa** (`"A texto"`, não `"A) texto"` nem `"A. texto"`) — o detector de opções (`looksLikeQuestion` em `extract-pdf-exams.ts`) precisou ser refeito para procurar linhas que começam com letra única A-E **em sequência alfabética estrita**, não com regex de pontuação.
+- **PDFs escaneados sem camada de texto**: os arquivos FAMEMA/FAMERP/Unifesp de 2015-2022 (mas não 2023+) retornam texto vazio do pdf-parse — são imagem pura, precisariam de OCR (fora de escopo, não implementado). Afeta ~40 arquivos.
+- **Anki 2.1.50+ usa zstd**: `.apkg` novo tem um `collection.anki2` placeholder (só um aviso "atualize o Anki") e os dados reais em `collection.anki21b` comprimido em zstd — Node não tem zstd nativo nesta versão, resolvido com a lib `fzstd` (pure JS, sem binding nativo).
+- **MiMo trunca JSON em textos longos** (raro, ~10%) — mesmo padrão já visto nas Sessões 19/D, resolvido rodando o script de novo (idempotente).
+
+### Escala real (dry-run, sem chamadas à MiMo)
+| Fonte | PROVA (candidatos) | Arquivos |
+|---|---:|---:|
+| Simulados Bernoulli | 19.139 | 216 |
+| Simu S0M0Z | 8.910 | 109 |
+| ENEM oficial (normal+PPL) | 6.713 | 192 |
+| Simulado Poliedro ("censured P0L") | 6.712 | 89 |
+| Simulados SAS | 5.139 | 91 |
+| Questões ENEM por nível de dificuldade | 4.111 | 4 |
+| UERJ | 1.589 | 48 |
+| UNESP | 742 | 22 |
+| ENCCEJA | 499 | 31 |
+| UFT (todos os anos) | ~950 | 13 |
+| FAMERP/FAMEMA/Unifesp | 561 | 76 |
+| Exato | ~253 | 4 |
+| Einstein/UNICEUB | ~139 | 5 |
+| **TOTAL PROVA** | **55.869** | **1.067** |
+
+- **ANKI**: 147 arquivos `.apkg`, **23.644 notas** (com bastante duplicação entre "Cards full matérias" + "separados por matérias" + "Baralhos Anki.apkg" — o dedup por Jaccard por tópico deve reduzir bastante no run real)
+- **REDACAO**: 32 arquivos — ✅ **já rodado e salvo** (32/32, `public/data/redacao-extra.json`: 15 competencia, 12 outro, 4 tema, 1 texto_motivador)
+- **RESUMO**: 123 arquivos (inclui as "RESOLUÇÃO COMENTADA"/"resolução" reclassificadas)
+
+A 5 questões/lote com 12s de delay, rodar TODO o PROVA levaria **~37 horas** de chamadas ao MiMo. Usuário optou por rodar tudo de uma vez em background quando a rede permitir (mesma decisão do YouTube).
+
+### BLOQUEIO — mesma rede que bloqueou o YouTube
+`extract-pdf-exams.ts`, `import-anki-decks.ts` e `ingest-resumos.ts` **dependem do Prisma/Neon** e não rodaram de verdade nesta sessão — a rede local bloqueia as portas 5432/6543 do Neon (mesmo bloqueio documentado na seção "Vídeos do YouTube"). `ingest-redacao.ts` não depende do banco (salva em JSON) e já rodou com sucesso.
+
+**Usuário vai trocar de máquina/rede.** Retomar assim que possível:
+```powershell
+npx tsx scripts/extract-pdf-exams.ts --all    # ~37h — rodar em background, não precisa acompanhar
+npx tsx scripts/import-anki-decks.ts --all    # bem mais rápido (custo de MiMo é só por deck, não por nota)
+npx tsx scripts/ingest-resumos.ts --all       # 123 arquivos × 15s delay ≈ 31min
+```
+Considerar rodar `extract-pdf-exams.ts` primeiro só com as fontes oficiais/vestibulares reais (usar `--file=<nome>` várias vezes, ou adicionar um filtro por pasta se for repetir isso) antes dos 4 simulados privados (Bernoulli/S0M0Z/Poliedro/SAS), que são 71% do volume e têm menos prioridade que ENEM oficial e vestibulares nomeados.
 
 ---
 
 ## Pendências mencionadas pelo usuário (ainda não iniciadas)
 
-- **Cloudinary**: configurar conta (25GB grátis) para upload de imagens de questões/conteúdo — necessário antes do processamento de arquivos do Google Drive
-- **Processar arquivos do Google Drive**: usuário vai enviar arquivos de Redação (INEP) e Anki para importar — aguardando ele organizar e enviar
+- ~~Processar arquivos do Google Drive~~ ✅ Recebido e processado nesta sessão — ver seção "Importação de material externo" acima. A pasta `fonte de conteudo/` não está neste repo (gitignored) — se for necessário reprocessar algo, peça ao usuário para baixar o material de novo do Google Drive.
 
 ---
 
@@ -421,11 +498,12 @@ npx tsx scripts/import-questions.ts --all
 ### ~~Sessão D (ROADMAP): Pipeline de Flashcards~~ ✅ CONCLUÍDA (ver seção acima)
 
 ### EM ANDAMENTO: Completar vídeos do YouTube
-Ver seção "Vídeos do YouTube" acima — 113/207 tópicos com vídeo, bloqueado por cota diária da YouTube Data API. **Retomar isso primeiro** na próxima sessão.
+Ver seção "Vídeos do YouTube" acima — 113/207 tópicos com vídeo, bloqueado por cota diária da YouTube Data API. Também bloqueado nesta última sessão por firewall de rede impedindo acesso ao Neon. **Retomar isso primeiro** na próxima sessão, junto com a importação de material externo abaixo.
 
-### Pendente (mencionado pelo usuário, ainda não iniciado): Cloudinary + Google Drive
-- Configurar conta Cloudinary (25GB grátis) — necessário para upload de imagens (questões com gráficos, resumos com imagens)
-- Processar arquivos que o usuário vai enviar do Google Drive (Redação INEP + Anki)
+### ~~Cloudinary~~ ✅ CONCLUÍDO — ver seção "Cloudinary" acima
+
+### EM ANDAMENTO: Importação de material externo (`fonte de conteudo/`)
+Ver seção "Importação de material externo" acima — pipeline de 4 scripts pronto e validado, `ingest-redacao.ts` já rodou (32/32). Os outros 3 (extract-pdf-exams, import-anki-decks, ingest-resumos) dependem do Neon e ficaram bloqueados pela mesma rede que travou o YouTube. **Retomar junto com os vídeos do YouTube.**
 
 ### Sessão 20: Notificações Push
 - Web Push API com VAPID keys
@@ -433,9 +511,19 @@ Ver seção "Vídeos do YouTube" acima — 113/207 tópicos com vídeo, bloquead
 - Service Worker já tem handler de push (`self.addEventListener('push', ...)` em `public/sw.js`)
 - `sendPushNotification` utility
 
-### Sessão 21: Testes
-- Vitest para lib/sm2.ts, lib/trail.ts, lib/achievements.ts
-- Playwright para fluxos críticos: login → questão → achievement
+### ~~Sessão 21: Testes unitários (Vitest)~~ ✅ CONCLUÍDA (parcial — falta Playwright)
+- **Config:** `vitest.config.mts` (precisa ser `.mts`, não `.ts` — o projeto é CJS por padrão e algumas deps do vitest são ESM-only, `require()` delas quebra; renomear para `.mts` força carregamento ESM). `pool: "threads"` explícito — o pool padrão (`forks`) trava com `Error: kill EPERM` no Windows.
+- Scripts: `npm run test` (roda uma vez), `npm run test:watch`, `npm run test:coverage`
+- **`src/lib/sm2.test.ts`** — 100% cobertura. Testa os 4 ratings (Again/Hard/Good/Easy), clamp de difficulty (1–10), scheduled mínimo de 1 dia, cálculo de `nextReview`
+- **`src/lib/trail.test.ts`** — 100% cobertura. Testa `detectTrail()` nos 4 cenários (EXTENSIVA/SEMI_EXTENSIVA/INTENSIVA/SPRINT) + exam no passado, e que os `ratios` de cada trilha somam 1
+- **`src/lib/achievements.test.ts`** — ~94-98% cobertura. Testa 8 condições de `ACHIEVEMENT_DEFS.check()` (streak, estudo, questões, precisão, flashcards, simulado, nível, special) + `checkAchievements()` fim-a-fim com Prisma mockado (`vi.mock("@/lib/db")`, `vi.mock("@/lib/xp")`): desbloqueia conquistas novas, pula já conquistadas, retorna vazio quando nada muda
+- **`src/lib/xp.test.ts`** — `calcLevel()` foi exportado de `xp.ts` (antes não-exportado) para ser testável isoladamente; testa limiares de nível (500 XP/nível) e cap em 99. `awardXP()` testado com `db.userProfile.update` mockado: incrementa XP, só atualiza `currentLevel` quando o nível muda
+- **34 testes, todos passando.** `recordStudyActivity()` (xp.ts) não foi coberto — fora do escopo pedido (streak/data, precisaria mockar `date-fns` + múltiplas chamadas Prisma)
+- **Pendente:** Playwright para fluxos críticos (login → questão → achievement; criar simulado → finalizar → resultado) — não iniciado
+
+### Sessão 21b (pendente): Testes E2E (Playwright)
+- Fluxos críticos: login → responder questão → ver achievement
+- Criar simulado → finalizar → ver resultado
 
 ### Sessão 22: Performance
 - `next/dynamic` para componentes pesados (Recharts, Framer Motion)
