@@ -11,15 +11,59 @@
 
 import "dotenv/config"
 import { PrismaClient, Difficulty } from "@prisma/client"
-import { generateMimoJSON } from "../src/lib/mimo"
+import { generateMimoJSON, mimo, MIMO_MODEL_PRO } from "../src/lib/mimo"
 import { discoverFiles } from "./lib/discover-files"
 import { extractPdfText, md5, sleep, parseCliFlags } from "./lib/extract-text"
+import { loadGabaritoForProva } from "./lib/gabarito"
 
 const db = new PrismaClient()
 
 const BATCH_SIZE = 5
 const BATCH_DELAY_MS = 12_000
 const MAX_TOKENS = 2048
+
+// ── Guarda de saldo / falha sistêmica do MiMo ────────────────────────────────
+// O saldo do MiMo pode zerar no meio de um run longo; a API passa a devolver
+// 402 "Insufficient account balance". Sem esta guarda, o script engoliria o erro
+// e continuaria "processando" arquivos sem salvar nada por horas.
+let mimoAborted = false
+let mimoAbortReason = ""
+
+/** true se o erro for de saldo/pagamento (402) do MiMo. */
+function isBalanceError(err: unknown): boolean {
+  const e = err as { status?: number; message?: string } | undefined
+  if (!e) return false
+  if (e.status === 402) return true
+  return /insufficient.*balance|saldo|payment required|402/i.test(e.message ?? "")
+}
+
+/**
+ * Pré-checagem: uma chamada mínima ao MiMo antes de extrair qualquer PDF.
+ * Retorna false se o saldo estiver zerado (aborta o run); true caso contrário.
+ */
+async function preflightMimoBalance(): Promise<boolean> {
+  try {
+    await mimo.chat.completions.create({
+      model: MIMO_MODEL_PRO,
+      messages: [{ role: "user", content: 'Responda apenas: {"ok":true}' }],
+      max_tokens: 20,
+      temperature: 0,
+    })
+    return true
+  } catch (err) {
+    if (isBalanceError(err)) {
+      console.error(
+        "\n❌  MiMo sem saldo (402 Insufficient account balance).\n" +
+          "    Recarregue a conta em https://api.xiaomimimo.com antes de rodar o extract.\n" +
+          "    Nenhum PDF foi processado.\n"
+      )
+      return false
+    }
+    const e = err as { status?: number; message?: string }
+    console.warn(`⚠️   Pré-checagem do MiMo falhou (status ${e?.status ?? "?"}): ${e?.message ?? err}. Seguindo mesmo assim.`)
+    return true
+  }
+}
 
 const flags = parseCliFlags(process.argv.slice(2))
 const isDryRun = flags["dry-run"] === true
@@ -155,6 +199,13 @@ async function main() {
 
   console.log(`📄  ${files.length} arquivos PROVA encontrados\n`)
 
+  // Aborta cedo se o MiMo já estiver sem saldo (evita extrair centenas de PDFs à toa).
+  if (!isDryRun && !(await preflightMimoBalance())) {
+    process.exitCode = 1
+    await db.$disconnect()
+    return
+  }
+
   const topics = isDryRun ? [] : await db.topic.findMany({ select: { id: true, name: true } })
 
   const existingHashes = new Set<string>()
@@ -191,6 +242,9 @@ async function main() {
       continue
     }
 
+    // Gabarito da prova (número→letra) — autoridade sobre a resposta certa.
+    const gabarito = await loadGabaritoForProva(file.fullPath).catch(() => ({ answers: new Map<number, string>(), count: 0 }))
+
     for (let i = 0; i < candidates.length; i += BATCH_SIZE) {
       const batch = candidates.slice(i, i + BATCH_SIZE)
 
@@ -200,12 +254,19 @@ async function main() {
             const prompt = buildPrompt(block.text, file.hint)
             const structured = await generateMimoJSON<StructuredQuestion>(prompt, MAX_TOKENS)
             if (!isValidStructured(structured)) return { status: "error" as const }
-            return { status: "ok" as const, structured }
-          } catch {
+            return { status: "ok" as const, structured, number: block.number }
+          } catch (err) {
+            if (isBalanceError(err)) {
+              mimoAborted = true
+              mimoAbortReason = "MiMo sem saldo (402 Insufficient account balance)"
+            }
             return { status: "error" as const }
           }
         })
       )
+
+      // Saldo zerou no meio do run — aborta em vez de rodar horas salvando nada.
+      if (mimoAborted) break
 
       for (const r of results) {
         if (r.status === "error") {
@@ -214,6 +275,10 @@ async function main() {
         }
         const s = r.structured
         if (s.options.length < 4 || s.statement.length <= 50) continue
+
+        // Resposta certa do gabarito (por número da questão) tem prioridade.
+        const fromGab = r.number != null ? gabarito.answers.get(r.number) : undefined
+        if (fromGab) s.correctLetter = fromGab
 
         const hash = md5(s.statement)
         if (existingHashes.has(hash)) {
@@ -263,10 +328,24 @@ async function main() {
       if (!isLastBatch) await sleep(BATCH_DELAY_MS)
     }
 
+    if (mimoAborted) break
+
     console.log(`  ✅  ${file.relPath} — processado (${candidates.length} candidatos)`)
   }
 
   console.log("\n" + "─".repeat(50))
+  if (mimoAborted) {
+    console.error(
+      `\n🛑  ABORTADO: ${mimoAbortReason}.\n` +
+        `    Salvei ${totalSaved} questões novas antes de parar.\n` +
+        `    Recarregue o saldo em https://api.xiaomimimo.com e rode de novo:\n` +
+        `      npx tsx scripts/extract-pdf-exams.ts --all\n` +
+        `    O script é idempotente (dedup por MD5) — retoma sem duplicar.\n`
+    )
+    process.exitCode = 1
+    await db.$disconnect()
+    return
+  }
   if (isDryRun) {
     console.log(`🔍  DRY RUN — nenhuma chamada à MiMo, nenhum salvamento`)
     console.log(`   Total de blocos detectados:      ${totalBlocks}`)
