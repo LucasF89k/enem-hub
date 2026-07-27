@@ -16,6 +16,7 @@ const PRIMARY_NAV = [
   { icon: BookOpen, label: "Estudar", href: "/study" },
   { icon: Brain, label: "Revisões", href: "/flashcards" },
   { icon: HelpCircle, label: "Questões", href: "/questions" },
+  { icon: FileText, label: "Simulados", href: "/simulados" },
   { icon: User, label: "Perfil", href: "/profile" },
 ] as const
 

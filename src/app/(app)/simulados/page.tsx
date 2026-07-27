@@ -42,12 +42,24 @@ export default async function SimuladosPage() {
     orderBy: { createdAt: "asc" },
   })
 
+  // Agrupa por ano (extraído do título, ex "ENEM 2020" → 2020).
+  type Sim = (typeof simulados)[number]
+  const byYear = new Map<string, Sim[]>()
+  for (const s of simulados) {
+    const year = s.title.match(/(19|20)\d{2}/)?.[0] ?? "Outros"
+    if (!byYear.has(year)) byYear.set(year, [])
+    byYear.get(year)!.push(s)
+  }
+  const years = [...byYear.keys()].sort((a, b) =>
+    a === "Outros" ? 1 : b === "Outros" ? -1 : b.localeCompare(a)
+  )
+
   return (
     <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Simulados</h1>
         <p className="text-sm text-muted-foreground">
-          Pratique no estilo ENEM com cronômetro e gabarito
+          Provas reais separadas por ano — cronômetro e gabarito no estilo ENEM
         </p>
       </div>
 
@@ -66,8 +78,18 @@ export default async function SimuladosPage() {
         </div>
       )}
 
-      <div className="space-y-3">
-        {simulados.map((s) => {
+      <div className="space-y-4">
+        {years.map((year) => (
+          <details key={year} open className="group">
+            <summary className="flex cursor-pointer list-none items-center gap-2 py-1">
+              <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-90" />
+              <span className="text-sm font-semibold uppercase tracking-wide">{year}</span>
+              <Badge variant="secondary" className="text-xs">
+                {byYear.get(year)!.length} prova{byYear.get(year)!.length !== 1 ? "s" : ""}
+              </Badge>
+            </summary>
+            <div className="space-y-3 mt-3">
+        {byYear.get(year)!.map((s) => {
           const completed = s.userAttempts.filter((a) => a.status === "COMPLETED")
           const inProgress = s.userAttempts.find((a) => a.status === "IN_PROGRESS")
           const bestScore = completed.length > 0
@@ -133,6 +155,9 @@ export default async function SimuladosPage() {
             </Card>
           )
         })}
+            </div>
+          </details>
+        ))}
       </div>
     </div>
   )
