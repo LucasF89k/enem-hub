@@ -72,13 +72,28 @@ async function fetchDurations(ids: string[], key: string): Promise<Map<string, n
   return map
 }
 
+const MAX_VIDEOS = 6
+
 function pickVideos(items: SearchItem[]) {
   const known = items.filter((i) => isKnown(i.snippet.channelTitle))
   const others = items.filter((i) => !isKnown(i.snippet.channelTitle))
-  const selected = known.length > 0
-    ? [...known.slice(0, 2), ...others.slice(0, 1)]
-    : others.slice(0, 3)
+  // Prioriza canais conhecidos, completa com outros até MAX_VIDEOS (sem repetir).
+  const seen = new Set<string>()
+  const selected = [...known, ...others]
+    .filter((v) => (seen.has(v.id.videoId) ? false : (seen.add(v.id.videoId), true)))
+    .slice(0, MAX_VIDEOS)
   return selected.map((v, idx) => ({ video: v, order: idx, isHighlight: idx === 0 }))
+}
+
+// Nomes de tópico com "—", ":", abreviações ou "ENEM 20XX" atrapalham a busca.
+// Limpa pra deixar só o assunto principal.
+function cleanTopicName(name: string): string {
+  return name
+    .replace(/\bENEM\s*\d{4}\b/gi, "")
+    .split(/[—–:]/)[0]
+    .replace(/\bCent\.?\b/gi, "Centrais")
+    .replace(/\s+/g, " ")
+    .trim()
 }
 
 // ── Main ─────────────────────────────────────────────────────────────
@@ -111,15 +126,22 @@ async function main() {
     where.discipline = disciplineFilter
   }
   if (skipExisting) where.videos = { none: {} }
+  const isFill = flags["fill"] === true // completa até MAX_VIDEOS por tópico (resumível)
 
-  const topics = await db.topic.findMany({
+  let topics = await db.topic.findMany({
     where,
-    include: { discipline: { include: { area: { select: { name: true, slug: true } } } } },
+    include: {
+      discipline: { include: { area: { select: { name: true, slug: true } } } },
+      _count: { select: { videos: true } },
+    },
     orderBy: { order: "asc" },
     ...(limitN ? { take: limitN } : {}),
   })
 
-  console.log(`📚  ${topics.length} topics to process\n`)
+  // --fill: só tópicos que ainda têm menos de MAX_VIDEOS vídeos (retoma entre dias de cota).
+  if (isFill) topics = topics.filter((t) => t._count.videos < MAX_VIDEOS)
+
+  console.log(`📚  ${topics.length} topics to process${isFill ? ` (com <${MAX_VIDEOS} vídeos)` : ""}\n`)
 
   let totalSaved = 0
   let totalEmpty = 0
@@ -127,7 +149,7 @@ async function main() {
 
   for (let i = 0; i < topics.length; i++) {
     const topic = topics[i]
-    const query = `${topic.name} ${topic.discipline.name} ENEM`
+    const query = `${cleanTopicName(topic.name)} ${topic.discipline.name} ENEM`
 
     process.stdout.write(`[${i + 1}/${topics.length}] ${topic.name} (${topic.discipline.area.name}) … `)
 
