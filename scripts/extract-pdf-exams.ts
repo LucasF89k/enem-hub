@@ -69,9 +69,13 @@ const flags = parseCliFlags(process.argv.slice(2))
 const isDryRun = flags["dry-run"] === true
 const isAll = flags["all"] === true
 const fileFilter = typeof flags["file"] === "string" ? flags["file"].toLowerCase() : null
+// --only=termo1,termo2  → processa só arquivos cujo caminho contém algum dos termos
+// --skip=termo1,termo2  → ignora arquivos cujo caminho contém algum dos termos
+const onlyTerms = typeof flags["only"] === "string" ? flags["only"].toLowerCase().split(",").map((s) => s.trim()).filter(Boolean) : null
+const skipTerms = typeof flags["skip"] === "string" ? flags["skip"].toLowerCase().split(",").map((s) => s.trim()).filter(Boolean) : null
 
-if (!isDryRun && !isAll && !fileFilter) {
-  console.error("❌  Passe --dry-run, --all, ou --file=<nome>")
+if (!isDryRun && !isAll && !fileFilter && !onlyTerms) {
+  console.error("❌  Passe --dry-run, --all, --file=<nome>, ou --only=<termos>")
   process.exit(1)
 }
 
@@ -196,6 +200,8 @@ function isValidStructured(data: unknown): data is StructuredQuestion {
 async function main() {
   let files = discoverFiles("PROVA")
   if (fileFilter) files = files.filter((f) => f.relPath.toLowerCase().includes(fileFilter))
+  if (onlyTerms) files = files.filter((f) => onlyTerms.some((t) => f.relPath.toLowerCase().includes(t)))
+  if (skipTerms) files = files.filter((f) => !skipTerms.some((t) => f.relPath.toLowerCase().includes(t)))
 
   console.log(`📄  ${files.length} arquivos PROVA encontrados\n`)
 

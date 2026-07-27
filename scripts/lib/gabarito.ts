@@ -87,7 +87,8 @@ export function findGabaritoFiles(provaFullPath: string): string[] {
     for (const e of entries) {
       const lower = e.toLowerCase().normalize("NFC")
       if (!lower.endsWith(".pdf")) continue
-      if (!lower.includes("gabarito")) continue
+      // grade de respostas: "gabarito" ou "respostas" (simulados às vezes usam "RESPOSTAS")
+      if (!lower.includes("gabarito") && !lower.includes("resposta")) continue
       if (lower.includes("resolu") || lower.includes("comentad")) continue // resolução comentada, não é grade seca
       found.push(path.join(d, e))
     }
