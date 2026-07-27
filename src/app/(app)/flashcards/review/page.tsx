@@ -17,15 +17,18 @@ export default async function ReviewPage({
   const userId = session.user.id
   const now = new Date()
 
-  const { deckId, topicId } = await searchParams
+  const { deckId, topicId, disciplineId } = await searchParams
   const deckFilter = typeof deckId === "string" ? deckId : undefined
   const topicFilter = typeof topicId === "string" ? topicId : undefined
+  const disciplineFilter = typeof disciplineId === "string" ? disciplineId : undefined
 
   // Build flashcard filter
+  const hasFilter = deckFilter || topicFilter || disciplineFilter
   const flashcardWhere = {
     ...(deckFilter ? { deckId: deckFilter } : {}),
     ...(topicFilter ? { topicId: topicFilter } : {}),
-    ...(!deckFilter && !topicFilter ? { deck: { isPublic: true } } : {}),
+    ...(disciplineFilter ? { topic: { disciplineId: disciplineFilter } } : {}),
+    ...(!hasFilter ? { deck: { isPublic: true } } : {}),
   }
 
   // Due reviews (already seen cards, now overdue)
