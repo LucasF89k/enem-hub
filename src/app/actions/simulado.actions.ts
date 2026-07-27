@@ -180,7 +180,8 @@ export async function finalizeSimulado(
   })
 
   await awardXP(userId, Math.round(scoreTotal * 0.5) + 20)
-  await recordStudyActivity(userId, Math.max(10, Math.round(totalTimeSpent / 60)), "SIMULADO")
+  // Tempo real gasto no simulado (sem piso fixo), pelo relógio.
+  await recordStudyActivity(userId, Math.round(totalTimeSpent / 60), "SIMULADO")
   const newAchievements = await checkAchievements(userId)
 
   revalidatePath("/simulados")

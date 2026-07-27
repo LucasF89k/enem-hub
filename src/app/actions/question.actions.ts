@@ -43,7 +43,11 @@ export async function answerQuestion(
   })
 
   await awardXP(userId, isCorrect ? 10 : 2)
-  await recordStudyActivity(userId, 3, "QUESTIONS")
+  // Tempo REAL gasto na questão (medido pelo relógio do dispositivo no cliente),
+  // em vez dos 3 min fixos que inflavam o tempo de estudo. Cap de 30 min evita
+  // contar uma questão deixada aberta por horas.
+  const qMinutes = Math.min(30, Math.round(parsed.timeSpentSeconds / 60))
+  await recordStudyActivity(userId, qMinutes, "QUESTIONS")
   const newAchievements = await checkAchievements(userId)
 
   return {

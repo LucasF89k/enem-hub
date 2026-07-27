@@ -8,6 +8,7 @@ import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import rehypeRaw from "rehype-raw"
 import rehypeSanitize from "rehype-sanitize"
+import { StudyTimer } from "@/components/study/StudyTimer"
 import {
   BookOpen,
   Clock,
@@ -72,6 +73,7 @@ const DIFFICULTY_CLASS: Record<string, string> = {
 export function TopicTabs({ topicId, content, flashcards, questions, pendingReviews, videos }: Props) {
   return (
     <Tabs defaultValue="teoria">
+      <StudyTimer />
       <TabsList className="w-full grid grid-cols-5">
         <TabsTrigger value="teoria" className="text-xs sm:text-sm">Teoria</TabsTrigger>
         <TabsTrigger value="resumo" className="text-xs sm:text-sm">Resumo</TabsTrigger>

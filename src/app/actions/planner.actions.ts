@@ -73,7 +73,9 @@ export async function completePlanItem(itemId: string): Promise<void> {
   })
 
   if (willComplete) {
-    await recordStudyActivity(session.user.id, 10, "CONTENT").catch(() => {})
+    // Só marca o streak (0 min); o tempo real vem das telas (leitura via
+    // StudyTimer, questões e flashcards pelo relógio do dispositivo).
+    await recordStudyActivity(session.user.id, 0, "CONTENT").catch(() => {})
   }
 
   revalidatePath("/planner")
