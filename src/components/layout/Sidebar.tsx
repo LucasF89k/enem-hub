@@ -6,8 +6,9 @@ import { usePathname } from "next/navigation"
 import {
   Home, BookOpen, Brain, HelpCircle, User,
   BarChart2, Calendar, FileText, MessageCircle, Settings, Trophy,
-  ChevronLeft, ChevronRight, Zap,
+  ChevronLeft, ChevronRight,
 } from "lucide-react"
+import { VionLogo } from "@/components/VionLogo"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
 
@@ -55,11 +56,9 @@ export function Sidebar({ user }: SidebarProps) {
           expanded ? "gap-2.5" : "justify-center"
         )}
       >
-        <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-primary shrink-0">
-          <Zap className="w-4 h-4 text-primary-foreground" />
-        </div>
+        <VionLogo className="w-8 h-8 shrink-0" />
         {expanded && (
-          <span className="text-sm font-bold text-foreground truncate">ENEM Hub</span>
+          <span className="text-sm font-bold text-foreground truncate">Vion</span>
         )}
       </div>
 

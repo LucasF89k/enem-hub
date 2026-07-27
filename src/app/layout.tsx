@@ -20,20 +20,20 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "ENEM Medicina Hub",
-    template: "%s | ENEM Medicina Hub",
+    default: "Vion",
+    template: "%s | Vion",
   },
   description:
     "Plataforma completa de preparação para o ENEM, focada em candidatos a Medicina. Flashcards SM-2, banco de questões, simulados e Mentor IA.",
   manifest: "/manifest.json",
   keywords: ["ENEM", "Medicina", "preparatório", "flashcards", "questões", "simulado"],
-  authors: [{ name: "ENEM Medicina Hub" }],
+  authors: [{ name: "Vion" }],
   openGraph: {
     type: "website",
     locale: "pt_BR",
-    title: "ENEM Medicina Hub",
+    title: "Vion",
     description: "Plataforma de preparação para o ENEM focada em Medicina",
-    siteName: "ENEM Medicina Hub",
+    siteName: "Vion",
   },
 }
 

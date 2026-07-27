@@ -3,7 +3,7 @@ import { redirect } from "next/navigation"
 import { db } from "@/lib/db"
 import { FlashcardReviewScreen, type ReviewCard } from "./flashcard-review-screen"
 
-export const metadata = { title: "Revisão — ENEM Hub" }
+export const metadata = { title: "Revisão — Vion" }
 
 const SESSION_LIMIT = 20
 

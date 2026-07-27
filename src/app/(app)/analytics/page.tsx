@@ -11,7 +11,7 @@ import { AreaRadarChart } from "@/components/analytics/AreaRadarChart"
 import { ScoreLineChart } from "@/components/analytics/ScoreLineChart"
 import { CalendarHeatmap } from "@/components/analytics/CalendarHeatmap"
 
-export const metadata = { title: "Analytics — ENEM Hub" }
+export const metadata = { title: "Analytics — Vion" }
 
 const AREA_SHORT: Record<string, string> = {
   "ciencias-natureza": "C. Natureza",

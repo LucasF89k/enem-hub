@@ -2,7 +2,7 @@ import { WifiOff } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 
-export const metadata = { title: "Offline — ENEM Hub" }
+export const metadata = { title: "Offline — Vion" }
 
 export default function OfflinePage() {
   return (

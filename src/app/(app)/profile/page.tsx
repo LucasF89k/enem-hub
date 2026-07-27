@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Settings, Flame, Zap, Trophy, Target, Calendar, Clock, BookOpen } from "lucide-react"
 
-export const metadata = { title: "Perfil — ENEM Hub" }
+export const metadata = { title: "Perfil — Vion" }
 
 export default async function ProfilePage() {
   const session = await auth()

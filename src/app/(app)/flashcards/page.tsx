@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Brain, ArrowRight, CheckCircle2, Clock } from "lucide-react"
 import { SubjectBrowser, type BrowserDiscipline } from "./subject-browser"
 
-export const metadata = { title: "Flashcards — ENEM Hub" }
+export const metadata = { title: "Flashcards — Vion" }
 
 export default async function FlashcardsPage() {
   const session = await auth()

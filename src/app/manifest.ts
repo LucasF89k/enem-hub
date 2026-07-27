@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next"
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "ENEM Hub",
-    short_name: "ENEM Hub",
+    name: "Vion",
+    short_name: "Vion",
     description: "Plataforma completa de preparação para o ENEM focada em Medicina.",
     start_url: "/dashboard",
     display: "standalone",

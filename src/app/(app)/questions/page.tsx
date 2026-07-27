@@ -8,7 +8,7 @@ import { CheckCircle2, Heart, ChevronLeft, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { QuestionsFilters } from "./questions-filters"
 
-export const metadata = { title: "Banco de Questões — ENEM Hub" }
+export const metadata = { title: "Banco de Questões — Vion" }
 
 const PAGE_SIZE = 20
 

@@ -6,7 +6,7 @@ import { EssayEditor } from "./essay-editor"
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const essay = await db.essay.findUnique({ where: { id }, select: { title: true } })
-  return { title: essay ? `${essay.title} — ENEM Hub` : "Redação — ENEM Hub" }
+  return { title: essay ? `${essay.title} — Vion` : "Redação — Vion" }
 }
 
 export default async function EssayPage({ params }: { params: Promise<{ id: string }> }) {

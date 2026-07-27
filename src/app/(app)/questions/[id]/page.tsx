@@ -4,7 +4,7 @@ import { db } from "@/lib/db"
 import { FavoriteType } from "@prisma/client"
 import { QuestionResolver } from "./question-resolver"
 
-export const metadata = { title: "Questão — ENEM Hub" }
+export const metadata = { title: "Questão — Vion" }
 
 export default async function QuestionPage({
   params,

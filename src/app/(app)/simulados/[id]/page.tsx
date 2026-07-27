@@ -18,7 +18,7 @@ export async function generateMetadata({
 }) {
   const { id } = await params
   const s = await db.simulado.findUnique({ where: { id }, select: { title: true } })
-  return { title: s ? `${s.title} — ENEM Hub` : "Simulado — ENEM Hub" }
+  return { title: s ? `${s.title} — Vion` : "Simulado — Vion" }
 }
 
 export default async function SimuladoDetailPage({

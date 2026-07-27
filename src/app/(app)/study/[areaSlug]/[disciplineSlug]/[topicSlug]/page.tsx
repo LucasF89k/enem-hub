@@ -19,7 +19,7 @@ export async function generateMetadata({
     where: { slug: topicSlug },
     select: { name: true },
   })
-  return { title: topic ? `${topic.name} — ENEM Hub` : "Tópico — ENEM Hub" }
+  return { title: topic ? `${topic.name} — Vion` : "Tópico — Vion" }
 }
 
 export default async function TopicPage({

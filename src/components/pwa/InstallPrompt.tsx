@@ -33,7 +33,7 @@ export function InstallPrompt() {
           <Download className="h-5 w-5 text-primary" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold">Instalar ENEM Hub</p>
+          <p className="text-sm font-semibold">Instalar Vion</p>
           <p className="text-xs text-muted-foreground mt-0.5">
             Acesse offline e receba notificações de revisão
           </p>

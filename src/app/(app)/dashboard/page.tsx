@@ -24,7 +24,7 @@ import {
   MedicinaSkeleton,
 } from "@/components/dashboard/DashboardSkeletons"
 
-export const metadata = { title: "Dashboard — ENEM Hub" }
+export const metadata = { title: "Dashboard — Vion" }
 
 export default async function DashboardPage() {
   const session = await auth()

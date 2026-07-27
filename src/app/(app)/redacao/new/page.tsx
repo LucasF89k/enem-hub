@@ -7,7 +7,7 @@ import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 import { TEMAS_HISTORICOS } from "@/constants/redacao-bank"
 
-export const metadata = { title: "Nova Redação — ENEM Hub" }
+export const metadata = { title: "Nova Redação — Vion" }
 
 export default function NewEssayPage() {
   return (

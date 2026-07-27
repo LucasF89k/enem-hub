@@ -4,7 +4,7 @@ import { db } from "@/lib/db"
 import { addDays } from "date-fns"
 import { PlannerClient } from "./planner-client"
 
-export const metadata = { title: "Planejador — ENEM Hub" }
+export const metadata = { title: "Planejador — Vion" }
 
 /** Monday of the current week, computed entirely in UTC to avoid tz mismatch. */
 function getThisMondayUTC(): Date {

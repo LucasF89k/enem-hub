@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Clock, FileText, Trophy, ChevronRight, BookOpen } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-export const metadata = { title: "Simulados — ENEM Hub" }
+export const metadata = { title: "Simulados — Vion" }
 
 const TYPE_LABEL: Record<string, string> = {
   FULL: "Completo",

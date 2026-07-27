@@ -23,7 +23,7 @@ export const mimo = new OpenAI(
         // Headers opcionais do OpenRouter (ranking/analytics) — não afetam o custo.
         defaultHeaders: {
           'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL ?? 'https://enem-hub.vercel.app',
-          'X-Title': 'ENEM Hub',
+          'X-Title': 'Vion',
         },
       }
     : {
