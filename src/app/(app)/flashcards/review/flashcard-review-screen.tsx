@@ -9,7 +9,7 @@ import {
   animate,
   type PanInfo,
 } from "framer-motion"
-import { submitFlashcardReview } from "@/app/actions/flashcard.actions"
+import { submitFlashcardReview, recordFlashcardSessionTime } from "@/app/actions/flashcard.actions"
 import { Progress } from "@/components/ui/progress"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -53,8 +53,11 @@ export function FlashcardReviewScreen({ cards }: { cards: ReviewCard[] }) {
   useEffect(() => {
     if (isComplete) {
       confetti({ particleCount: 120, spread: 80, origin: { y: 0.55 } })
+      // Grava o tempo real da sessão (relógio do dispositivo), uma única vez.
+      const elapsedSec = Math.round((Date.now() - startTime) / 1000)
+      recordFlashcardSessionTime(elapsedSec).catch(() => {})
     }
-  }, [isComplete])
+  }, [isComplete, startTime])
 
   const currentCard = cards[currentIndex]
   const progressPct = (currentIndex / cards.length) * 100

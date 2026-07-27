@@ -44,6 +44,21 @@ export async function submitFlashcardReview(
   })
 
   const xpEarned = await awardXP(userId, 5)
-  await recordStudyActivity(userId, 5, "FLASHCARDS")
+  // Registra apenas o streak (0 min); o tempo real da sessão é gravado no fim,
+  // pelo relógio do dispositivo (recordFlashcardSessionTime). Antes contava 5 min
+  // fixos por card, o que inflava o tempo de estudo.
+  await recordStudyActivity(userId, 0, "FLASHCARDS")
   return { xpEarned }
+}
+
+/**
+ * Registra o tempo REAL de uma sessão de flashcards, medido pelo relógio do
+ * dispositivo (Date.now no cliente). Chamado uma vez ao concluir a sessão.
+ */
+export async function recordFlashcardSessionTime(seconds: number): Promise<void> {
+  const session = await auth()
+  if (!session?.user?.id) return
+  const minutes = Math.min(180, Math.round((Number(seconds) || 0) / 60))
+  if (minutes <= 0) return
+  await recordStudyActivity(session.user.id, minutes, "FLASHCARDS")
 }
