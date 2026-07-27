@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
+import rehypeRaw from "rehype-raw"
+import rehypeSanitize from "rehype-sanitize"
 import {
   BookOpen,
   Clock,
@@ -92,7 +94,7 @@ export function TopicTabs({ topicId, content, flashcards, questions, pendingRevi
               <span>~{content.readTime ?? 5} min de leitura</span>
             </div>
             <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:font-semibold prose-p:leading-relaxed">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{content.body}</ReactMarkdown>
+              <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw, rehypeSanitize]}>{content.body}</ReactMarkdown>
             </div>
           </article>
         ) : (
