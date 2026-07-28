@@ -17,26 +17,19 @@ import {
   ChevronRight,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from "@/components/ui/drawer"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
-// Itens diretos da barra. "Estudar" é tratado à parte (abre um menu).
+// Itens diretos da barra. "Estudar" é tratado à parte (abre um balão).
 const NAV_ITEMS = [
   { icon: Home, label: "Início", href: "/dashboard" },
   { icon: BarChart2, label: "Evolução", href: "/analytics" },
   { icon: Calendar, label: "Planner", href: "/planner" },
-  { icon: Trophy, label: "Conquistas", href: "/conquistas" },
   { icon: MessageCircle, label: "Mentor", href: "/mentor" },
+  { icon: Trophy, label: "Conquistas", href: "/conquistas" },
   { icon: User, label: "Perfil", href: "/profile" },
 ] as const
 
-// Opções que abrem no menu "Estudar".
+// Opções que abrem no balão "Estudar".
 const STUDY_OPTIONS = [
   {
     icon: Layers,
@@ -53,7 +46,7 @@ const STUDY_OPTIONS = [
   {
     icon: ClipboardList,
     label: "Simulados",
-    description: "Provas cronometradas no estilo ENEM",
+    description: "Provas no estilo ENEM",
     href: "/simulados",
   },
 ] as const
@@ -73,7 +66,6 @@ export function BottomNav() {
 
   const studyActive = STUDY_ROUTES.some((r) => pathname === r || pathname.startsWith(r + "/"))
 
-  // Insere o botão "Estudar" na segunda posição.
   const before = NAV_ITEMS.slice(0, 1)
   const after = NAV_ITEMS.slice(1)
 
@@ -94,40 +86,40 @@ export function BottomNav() {
           )
         })}
 
-        {/* Botão Estudar — abre o menu */}
-        <Drawer open={open} onOpenChange={setOpen}>
-          <DrawerTrigger asChild>
+        {/* Botão Estudar — abre um balão flutuante */}
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
             <button type="button" className={itemClass(studyActive)} aria-label="Abrir menu de estudo">
               {studyActive && <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-primary" />}
               <BookOpen className="w-5 h-5 shrink-0" strokeWidth={studyActive ? 2.5 : 1.75} />
               <span className="w-full truncate text-center text-[9.5px] font-medium leading-none">Estudar</span>
             </button>
-          </DrawerTrigger>
-          <DrawerContent className="md:hidden">
-            <DrawerHeader className="pb-2 text-left">
-              <DrawerTitle>O que você quer estudar?</DrawerTitle>
-            </DrawerHeader>
-            <div className="space-y-2 px-4 pb-8">
-              {STUDY_OPTIONS.map(({ icon: Icon, label, description, href }) => (
-                <DrawerClose asChild key={href}>
-                  <Link
-                    href={href}
-                    className="flex items-center gap-3 rounded-2xl border p-3.5 transition-colors hover:bg-muted/50 active:scale-[0.99]"
-                  >
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-                      <Icon className="h-5 w-5 text-primary" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold">{label}</p>
-                      <p className="truncate text-xs text-muted-foreground">{description}</p>
-                    </div>
-                    <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  </Link>
-                </DrawerClose>
-              ))}
-            </div>
-          </DrawerContent>
-        </Drawer>
+          </PopoverTrigger>
+          <PopoverContent
+            side="top"
+            align="center"
+            sideOffset={10}
+            className="w-64 rounded-2xl p-1.5 shadow-xl"
+          >
+            {STUDY_OPTIONS.map(({ icon: Icon, label, description, href }) => (
+              <Link
+                key={href}
+                href={href}
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-3 rounded-xl p-2.5 transition-colors hover:bg-muted/60 active:scale-[0.99]"
+              >
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                  <Icon className="h-4 w-4 text-primary" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold leading-tight">{label}</p>
+                  <p className="truncate text-[11px] text-muted-foreground">{description}</p>
+                </div>
+                <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+              </Link>
+            ))}
+          </PopoverContent>
+        </Popover>
 
         {after.map(({ icon: Icon, label, href }) => {
           const active = pathname === href || pathname.startsWith(href + "/")
