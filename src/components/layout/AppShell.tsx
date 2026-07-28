@@ -15,6 +15,8 @@ const EXAM_ROUTE = /^\/simulados\/[^/]+\/[^/]+$/
 export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname()
   const isExam = EXAM_ROUTE.test(pathname)
+  // O Mentor tem cabeçalho próprio — esconde a barra de topo para não empilhar logos.
+  const hideHeader = pathname === "/mentor" || pathname.startsWith("/mentor/")
 
   if (isExam) {
     return <>{children}</>
@@ -24,7 +26,7 @@ export function AppShell({ children }: AppShellProps) {
     <>
       {/* Área de conteúdo principal — barra de navegação embaixo em todos os tamanhos */}
       <div className="min-h-screen flex flex-col">
-        <Header />
+        {!hideHeader && <Header />}
 
         <AnimatePresence mode="wait" initial={false}>
           <motion.main
