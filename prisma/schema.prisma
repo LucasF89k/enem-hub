@@ -530,6 +530,12 @@ model StudyPlan {
   weeklyGoal Int             // minutos por semana
   isActive   Boolean         @default(true)
 
+  // Cache da análise do Mentor (recalibrar?) — evita chamar a IA a cada visita
+  recalCheckedAt DateTime?
+  recalRecommend Boolean     @default(false)
+  recalReason    String?
+  recalSignature String? // "answered:overdue:completed" — muda quando o desempenho muda
+
   items      StudyPlanItem[]
 
   createdAt  DateTime        @default(now())

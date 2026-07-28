@@ -9,6 +9,8 @@ interface Verdict {
   reason: string
 }
 
+const CACHE_TTL_MS = 6 * 60 * 60 * 1000 // 6 horas
+
 export async function POST() {
   const session = await auth()
   if (!session?.user?.id) return new Response("Unauthorized", { status: 401 })
@@ -16,7 +18,14 @@ export async function POST() {
 
   const plan = await db.studyPlan.findFirst({
     where: { userId, isActive: true },
-    select: { id: true, createdAt: true },
+    select: {
+      id: true,
+      createdAt: true,
+      recalCheckedAt: true,
+      recalRecommend: true,
+      recalReason: true,
+      recalSignature: true,
+    },
     orderBy: { createdAt: "desc" },
   })
   if (!plan) {
@@ -25,10 +34,51 @@ export async function POST() {
 
   const todayStart = new Date(new Date().setUTCHours(0, 0, 0, 0))
 
-  const [overdue, answered, planItems] = await Promise.all([
+  // Sinais baratos (contagens) — formam a "assinatura" do desempenho atual.
+  const [answeredSinceCount, overdue, completedCount] = await Promise.all([
+    db.userQuestion.count({ where: { userId, answeredAt: { gt: plan.createdAt } } }),
     db.studyPlanItem.count({
       where: { planId: plan.id, completed: false, scheduledAt: { lt: todayStart } },
     }),
+    db.studyPlanItem.count({ where: { planId: plan.id, completed: true } }),
+  ])
+  const signature = `${answeredSinceCount}:${overdue}:${completedCount}`
+
+  // Cache válido: mesma assinatura e dentro do TTL → reaproveita, sem chamar a IA.
+  const fresh =
+    plan.recalCheckedAt && Date.now() - plan.recalCheckedAt.getTime() < CACHE_TTL_MS
+  if (fresh && plan.recalSignature === signature) {
+    return NextResponse.json({
+      recommend: plan.recalRecommend,
+      reason: plan.recalReason ?? "",
+    } satisfies Verdict)
+  }
+
+  const persist = (v: Verdict) =>
+    db.studyPlan
+      .update({
+        where: { id: plan.id },
+        data: {
+          recalCheckedAt: new Date(),
+          recalSignature: signature,
+          recalRecommend: v.recommend,
+          recalReason: v.reason,
+        },
+      })
+      .catch(() => {})
+
+  // Pré-filtro barato: sem dados suficientes, não chama a IA.
+  if (answeredSinceCount < 8 && overdue < 3) {
+    const v: Verdict = {
+      recommend: false,
+      reason: "Ainda sem desempenho suficiente para reavaliar. Siga o plano.",
+    }
+    await persist(v)
+    return NextResponse.json(v)
+  }
+
+  // Desempenho recente por matéria + foco atual do plano (para a IA analisar).
+  const [answered, planItems] = await Promise.all([
     db.userQuestion.findMany({
       where: { userId, answeredAt: { gt: plan.createdAt } },
       select: {
@@ -44,15 +94,6 @@ export async function POST() {
     }),
   ])
 
-  // Pré-filtro barato: sem dados suficientes, não chama a IA.
-  if (answered.length < 8 && overdue < 3) {
-    return NextResponse.json({
-      recommend: false,
-      reason: "Ainda sem desempenho suficiente para reavaliar. Siga o plano.",
-    } satisfies Verdict)
-  }
-
-  // Acurácia por matéria (desempenho recente).
   const perDisc = new Map<string, { correct: number; total: number }>()
   for (const a of answered) {
     const name = a.question?.topic?.discipline?.name ?? "Outros"
@@ -66,7 +107,6 @@ export async function POST() {
     .map(([name, s]) => `- ${name}: ${Math.round((s.correct / s.total) * 100)}% (${s.total} questões)`)
     .join("\n")
 
-  // Foco atual do plano (matérias mais priorizadas).
   const focoCount = new Map<string, number>()
   for (const it of planItems) {
     const name = it.topic?.discipline?.name
@@ -96,20 +136,20 @@ REGRAS:
 
 Responda SOMENTE JSON: {"recommend": boolean, "reason": "frase curta em português do Brasil, no máximo 140 caracteres, explicando a decisão de forma motivadora"}.`
 
+  let verdict: Verdict
   try {
-    const verdict = await generateJSON<Verdict>(prompt)
-    return NextResponse.json({
-      recommend: !!verdict.recommend,
-      reason: String(verdict.reason ?? "").slice(0, 200),
-    } satisfies Verdict)
+    const raw = await generateJSON<Verdict>(prompt)
+    verdict = { recommend: !!raw.recommend, reason: String(raw.reason ?? "").slice(0, 200) }
   } catch {
-    // Fallback: heurística simples se a IA falhar.
-    const recommend = overdue >= 4 || answered.length >= 15
-    return NextResponse.json({
+    const recommend = overdue >= 4 || answeredSinceCount >= 15
+    verdict = {
       recommend,
       reason: recommend
         ? "Seu desempenho recente sugere reorganizar as prioridades."
         : "Você está no caminho — siga o plano.",
-    } satisfies Verdict)
+    }
   }
+
+  await persist(verdict)
+  return NextResponse.json(verdict)
 }
