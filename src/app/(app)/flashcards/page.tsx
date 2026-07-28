@@ -1,13 +1,11 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { db } from "@/lib/db"
-import { format } from "date-fns"
-import { ptBR } from "date-fns/locale"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Brain, ArrowRight, CheckCircle2 } from "lucide-react"
+import { ArrowRight } from "lucide-react"
 import { SubjectBrowser, type BrowserDiscipline } from "./subject-browser"
 import { CreateFlashcardDialog, type PickTopic } from "@/components/flashcards/CreateFlashcardDialog"
 
@@ -19,18 +17,13 @@ export default async function FlashcardsPage() {
   const userId = session.user.id
   const now = new Date()
 
-  const [decks, nextScheduled] = await Promise.all([
-    db.flashcardDeck.findMany({
-      where: { OR: [{ isPublic: true }, { userId }] },
-      include: { _count: { select: { flashcards: true } } },
-      orderBy: { createdAt: "asc" },
-    }),
-    db.flashcardReview.findFirst({
-      where: { userId, nextReview: { gt: now } },
-      orderBy: { nextReview: "asc" },
-      select: { nextReview: true },
-    }),
-  ])
+  // Só decks do próprio usuário (inclui os criados por ele e pelo Mentor).
+  // Os decks públicos importados não aparecem aqui — seus cards vivem nas matérias.
+  const decks = await db.flashcardDeck.findMany({
+    where: { userId },
+    include: { _count: { select: { flashcards: true } } },
+    orderBy: { createdAt: "asc" },
+  })
 
   // Per-deck due + new counts
   const deckStats = await Promise.all(
@@ -46,10 +39,6 @@ export default async function FlashcardsPage() {
       return { ...deck, due, newCount }
     })
   )
-
-  const totalDue = deckStats.reduce((s, d) => s + d.due, 0)
-  const totalNew = deckStats.reduce((s, d) => s + d.newCount, 0)
-  const totalPending = totalDue + Math.min(totalNew, 20)
 
   // ── Árvore Matéria (disciplina) → Conteúdo (tópico) a partir dos cards com topicId ──
   const topicCounts = await db.flashcard.groupBy({
@@ -119,53 +108,14 @@ export default async function FlashcardsPage() {
         <CreateFlashcardDialog topics={pickTopics} size="sm" />
       </div>
 
-      {/* Resumo da revisão agendada (SM-2) */}
-      {totalPending > 0 ? (
-        <Card className="border-primary/20 bg-primary/5">
-          <CardContent className="flex items-center justify-between py-5">
-            <div className="flex items-center gap-3">
-              <div className="rounded-full bg-primary/10 p-3">
-                <Brain className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{totalPending}</p>
-                <p className="text-xs text-muted-foreground">
-                  {totalDue > 0 && `${totalDue} vencido${totalDue !== 1 ? "s" : ""}`}
-                  {totalDue > 0 && totalNew > 0 && " · "}
-                  {totalNew > 0 && `${Math.min(totalNew, 20)} novo${Math.min(totalNew, 20) !== 1 ? "s" : ""}`}
-                </p>
-              </div>
-            </div>
-            <Button asChild size="lg" className="shrink-0">
-              <Link href="/flashcards/review">
-                Revisar tudo
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="flex items-center gap-3 rounded-2xl border bg-muted/30 px-4 py-4">
-          <CheckCircle2 className="h-6 w-6 shrink-0 text-accent" />
-          <div className="min-w-0">
-            <p className="text-sm font-semibold">Revisão em dia</p>
-            <p className="text-xs text-muted-foreground truncate">
-              {nextScheduled
-                ? `Próxima: ${format(nextScheduled.nextReview, "dd 'de' MMM 'às' HH:mm", { locale: ptBR })}`
-                : "Escolha uma matéria abaixo para estudar novos cards"}
-            </p>
-          </div>
-        </div>
-      )}
-
       {/* ── Navegação por matéria e conteúdo ── */}
       {disciplines.length > 0 && <SubjectBrowser disciplines={disciplines} />}
 
-      {/* ── Decks importados (não mapeados por conteúdo) ── */}
+      {/* ── Seus decks (criados por você ou pelo Mentor) ── */}
       {deckStats.some((d) => d._count.flashcards > 0) && (
         <div className="space-y-3">
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-            Outros decks
+            Seus decks
           </h2>
           {deckStats.map((deck) => {
             const deckPending = deck.due + Math.min(deck.newCount, 10)
