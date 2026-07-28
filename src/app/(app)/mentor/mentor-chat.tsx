@@ -7,7 +7,7 @@ import { useMentorStore } from "@/store/mentor-store"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
-import { Send, Loader2, Trash2, Copy, Check, Bot, User, CalendarCheck, ArrowRight } from "lucide-react"
+import { Send, Loader2, Trash2, Copy, Check, User, CalendarCheck, ArrowRight } from "lucide-react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { toast } from "sonner"
@@ -21,6 +21,34 @@ const QUICK_ACTIONS = [
   { label: "Dicas de redação", text: "Me dê as principais dicas para tirar nota máxima na redação do ENEM." },
   { label: "Estratégia de prova", text: "Como devo gerir meu tempo durante o ENEM? Me dê uma estratégia prática." },
 ]
+
+function MentorAvatar({ className }: { className?: string }) {
+  return (
+    <div
+      className={cn(
+        "flex items-center justify-center overflow-hidden rounded-full bg-primary/15",
+        className,
+      )}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/logo-app.png" alt="Vion" className="h-full w-full object-contain p-1" />
+    </div>
+  )
+}
+
+function TypingDots() {
+  return (
+    <span className="flex items-center gap-1 py-1.5" aria-label="digitando">
+      {[0, 1, 2].map((i) => (
+        <span
+          key={i}
+          className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground/60"
+          style={{ animationDelay: `${i * 0.15}s`, animationDuration: "0.9s" }}
+        />
+      ))}
+    </span>
+  )
+}
 
 const WEEKDAY_LABELS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"]
 const BALANCE_LABELS: Record<string, string> = {
@@ -169,11 +197,14 @@ export function MentorChat() {
   }, [messages])
 
   const sendMessage = useCallback(
-    async (text: string) => {
+    async (text: string, opts?: { fresh?: boolean }) => {
       const trimmed = text.trim()
       if (!trimmed || isLoading) return
 
       setInput("")
+
+      // Início limpo (ex.: entrevista do planner) — descarta histórico anterior
+      if (opts?.fresh) clear()
 
       // Add user message
       addMessage({ role: "user", content: trimmed })
@@ -188,10 +219,14 @@ export function MentorChat() {
 
       try {
         // Build conversation history for API (skip the initial welcome message)
-        const apiMessages = [
-          ...messages.filter((m) => !(m.role === "assistant" && m.content.includes("Sou o **Mentor ENEM**"))),
-          { role: "user" as const, content: trimmed },
-        ]
+        const apiMessages = opts?.fresh
+          ? [{ role: "user" as const, content: trimmed }]
+          : [
+              ...messages.filter(
+                (m) => !(m.role === "assistant" && m.content.includes("Sou o **Mentor ENEM**")),
+              ),
+              { role: "user" as const, content: trimmed },
+            ]
 
         const response = await fetch("/api/mentor", {
           method: "POST",
@@ -226,18 +261,19 @@ export function MentorChat() {
         abortRef.current = null
       }
     },
-    [isLoading, messages, topicId, planner, addMessage, appendToMessage, setLoading]
+    [isLoading, messages, topicId, planner, addMessage, appendToMessage, setLoading, clear]
   )
 
-  // Modo planner: inicia a entrevista automaticamente uma única vez
+  // Modo planner: inicia a entrevista automaticamente uma única vez (começo limpo)
   useEffect(() => {
-    if (planner && !startedRef.current && messages.length === 0) {
+    if (planner && !startedRef.current) {
       startedRef.current = true
       sendMessage(
         "Quero montar minha rotina de estudos com você. Pode me fazer algumas perguntas rápidas e depois montar meu plano?",
+        { fresh: true },
       )
     }
-  }, [planner, messages.length, sendMessage])
+  }, [planner, sendMessage])
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -257,16 +293,14 @@ export function MentorChat() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100dvh-3.5rem)] md:h-[calc(100dvh-0px)]">
+    <div className="flex flex-col -mb-24 md:-mb-8 h-[calc(100dvh-6.5rem)] md:h-[calc(100dvh-3rem)]">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2 border-b shrink-0">
         <div className="flex items-center gap-2">
-          <div className="h-7 w-7 rounded-full bg-primary/20 flex items-center justify-center">
-            <Bot className="h-4 w-4 text-primary" />
-          </div>
+          <MentorAvatar className="h-8 w-8" />
           <div>
             <p className="text-sm font-semibold leading-none">Mentor ENEM</p>
-            <p className="text-[10px] text-muted-foreground">Powered by Gemini</p>
+            <p className="text-[10px] text-muted-foreground">Seu tutor pessoal</p>
           </div>
         </div>
         <Button
@@ -291,11 +325,7 @@ export function MentorChat() {
               msg.role === "user" ? "justify-end" : "justify-start"
             )}
           >
-            {msg.role === "assistant" && (
-              <div className="h-7 w-7 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-0.5">
-                <Bot className="h-4 w-4 text-primary" />
-              </div>
-            )}
+            {msg.role === "assistant" && <MentorAvatar className="h-8 w-8 shrink-0 mt-0.5" />}
 
             <div
               className={cn(
@@ -310,11 +340,13 @@ export function MentorChat() {
                   const { plan, cleaned } = extractVionPlan(msg.content)
                   return (
                     <>
-                      <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-ul:my-1 prose-li:my-0.5 prose-headings:my-1">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                          {cleaned || (isLoading ? "▌" : "")}
-                        </ReactMarkdown>
-                      </div>
+                      {cleaned ? (
+                        <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-ul:my-1 prose-li:my-0.5 prose-headings:my-1">
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>{cleaned}</ReactMarkdown>
+                        </div>
+                      ) : (
+                        <TypingDots />
+                      )}
                       {plan && !isLoading && <ApplyPlanCard plan={plan} />}
                       {cleaned && !isLoading && (
                         <div className="flex justify-end mt-1">
@@ -339,11 +371,9 @@ export function MentorChat() {
 
         {isLoading && messages[messages.length - 1]?.role !== "assistant" && (
           <div className="flex gap-2.5 justify-start">
-            <div className="h-7 w-7 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-              <Bot className="h-4 w-4 text-primary" />
-            </div>
+            <MentorAvatar className="h-8 w-8 shrink-0" />
             <div className="bg-muted rounded-2xl rounded-tl-sm px-4 py-2.5">
-              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              <TypingDots />
             </div>
           </div>
         )}
