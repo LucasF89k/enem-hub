@@ -22,6 +22,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { VideoList } from "@/components/study/VideoList"
+import { CreateFlashcardDialog } from "@/components/flashcards/CreateFlashcardDialog"
 import type { VideoWithWatched } from "@/app/actions/video.actions"
 
 interface TopicContent {
@@ -49,6 +50,7 @@ interface TopicQuestion {
 
 interface Props {
   topicId: string
+  topicName: string
   content: TopicContent | null
   flashcards: TopicFlashcard[]
   questions: TopicQuestion[]
@@ -70,7 +72,7 @@ const DIFFICULTY_CLASS: Record<string, string> = {
   VERY_HARD: "border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-400",
 }
 
-export function TopicTabs({ topicId, content, flashcards, questions, pendingReviews, videos }: Props) {
+export function TopicTabs({ topicId, topicName, content, flashcards, questions, pendingReviews, videos }: Props) {
   return (
     <Tabs defaultValue="teoria">
       <StudyTimer />
@@ -206,12 +208,21 @@ export function TopicTabs({ topicId, content, flashcards, questions, pendingRevi
               <span className="text-warning ml-2">· {pendingReviews} pendentes</span>
             )}
           </div>
-          <Button asChild size="sm">
-            <Link href={`/flashcards?topicId=${topicId}`}>
-              <Brain className="mr-1.5 h-3.5 w-3.5" />
-              Iniciar revisão
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <CreateFlashcardDialog
+              fixedTopicId={topicId}
+              fixedTopicName={topicName}
+              label="Criar"
+              size="sm"
+              variant="outline"
+            />
+            <Button asChild size="sm">
+              <Link href={`/flashcards?topicId=${topicId}`}>
+                <Brain className="mr-1.5 h-3.5 w-3.5" />
+                Iniciar revisão
+              </Link>
+            </Button>
+          </div>
         </div>
 
         {flashcards.length > 0 ? (

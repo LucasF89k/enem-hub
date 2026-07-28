@@ -7,8 +7,9 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Brain, ArrowRight, CheckCircle2, Clock } from "lucide-react"
+import { Brain, ArrowRight, CheckCircle2 } from "lucide-react"
 import { SubjectBrowser, type BrowserDiscipline } from "./subject-browser"
+import { CreateFlashcardDialog, type PickTopic } from "@/components/flashcards/CreateFlashcardDialog"
 
 export const metadata = { title: "Flashcards" }
 
@@ -97,11 +98,25 @@ export default async function FlashcardsPage() {
       topics: d.topics.sort((a, b) => b.cards - a.cards || a.name.localeCompare(b.name)),
     }))
 
+  // Todos os tópicos, para o seletor de "criar flashcard" (permite qualquer matéria)
+  const allTopics = await db.topic.findMany({
+    select: { id: true, name: true, discipline: { select: { name: true } } },
+    orderBy: { name: "asc" },
+  })
+  const pickTopics: PickTopic[] = allTopics.map((t) => ({
+    id: t.id,
+    name: t.name,
+    discipline: t.discipline?.name ?? "Outros",
+  }))
+
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Flashcards</h1>
-        <p className="text-sm text-muted-foreground">Revisão espaçada com algoritmo SM-2</p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">Flashcards</h1>
+          <p className="text-sm text-muted-foreground">Revisão espaçada com algoritmo SM-2</p>
+        </div>
+        <CreateFlashcardDialog topics={pickTopics} size="sm" />
       </div>
 
       {/* Resumo da revisão agendada (SM-2) */}

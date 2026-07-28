@@ -7,7 +7,7 @@ import { GlobalSearch } from "@/components/search/GlobalSearch"
 const PAGE_TITLES: Record<string, string> = {
   "/dashboard": "Início",
   "/study": "Estudar",
-  "/flashcards": "Revisões",
+  "/flashcards": "Flashcards",
   "/questions": "Questões",
   "/simulados": "Simulados",
   "/redacao": "Redação",

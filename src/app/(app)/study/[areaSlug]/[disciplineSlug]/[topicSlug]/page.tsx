@@ -159,6 +159,7 @@ export default async function TopicPage({
       {/* Tabs */}
       <TopicTabs
         topicId={topic.id}
+        topicName={topic.name}
         content={content ? {
           id: content.id,
           summary: content.summary,
