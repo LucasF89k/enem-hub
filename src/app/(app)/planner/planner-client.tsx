@@ -1,11 +1,10 @@
 "use client"
 
-import { useState, useEffect, useTransition } from "react"
+import { useState, useEffect, useMemo, useTransition } from "react"
 import { format, addDays, parseISO } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import {
   Dialog,
   DialogContent,
@@ -19,50 +18,10 @@ import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { cn } from "@/lib/utils"
 import { completePlanItem, generatePlan, recalibratePlan } from "@/app/actions/planner.actions"
-import {
-  BookOpen,
-  HelpCircle,
-  Brain,
-  FileText,
-  PenLine,
-  CheckCircle2,
-  Circle,
-  Wand2,
-  Loader2,
-  CalendarDays,
-  RefreshCw,
-  Sparkles,
-  ArrowRight,
-  ChevronRight,
-} from "lucide-react"
+import { Wand2, Loader2, RefreshCw, Sparkles, ArrowRight } from "lucide-react"
 import Link from "next/link"
-
-const TYPE_ICON: Record<string, React.ReactNode> = {
-  CONTENT: <BookOpen className="h-4 w-4" />,
-  QUESTIONS: <HelpCircle className="h-4 w-4" />,
-  FLASHCARDS: <Brain className="h-4 w-4" />,
-  SIMULADO: <FileText className="h-4 w-4" />,
-  REDACAO: <PenLine className="h-4 w-4" />,
-  REVISION: <Brain className="h-4 w-4" />,
-}
-
-const TYPE_TINT: Record<string, string> = {
-  CONTENT: "bg-blue-500/10 text-blue-500",
-  QUESTIONS: "bg-green-500/10 text-green-500",
-  FLASHCARDS: "bg-purple-500/10 text-purple-500",
-  SIMULADO: "bg-orange-500/10 text-orange-500",
-  REDACAO: "bg-pink-500/10 text-pink-500",
-  REVISION: "bg-yellow-500/10 text-yellow-500",
-}
-
-const TYPE_LABEL: Record<string, string> = {
-  CONTENT: "Teoria",
-  QUESTIONS: "Questões",
-  FLASHCARDS: "Flashcards",
-  SIMULADO: "Simulado",
-  REDACAO: "Redação",
-  REVISION: "Revisão",
-}
+import { WeekDayStrip, type DaySummary } from "@/components/planner/WeekDayStrip"
+import { TopicPlanCard, type PlanItemWithType } from "@/components/planner/TopicPlanCard"
 
 const DAY_LABELS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"]
 const ALL_WEEK_DAYS = [0, 1, 2, 3, 4, 5, 6]
@@ -73,12 +32,13 @@ interface PlanItem {
   description: string | null
   type: string
   scheduledAt: string
+  duration: number
   completed: boolean
   topicId: string | null
   topic: {
     name: string
     slug: string
-    discipline: { slug: string; area: { slug: string } }
+    discipline: { name: string; slug: string; area: { slug: string } }
   } | null
 }
 
@@ -122,10 +82,70 @@ export function PlannerClient({ weekStart, items, hasPlan, dailyGoal }: PlannerC
   const [, startComplete] = useTransition()
   const [isRecalibrating, startRecalibrate] = useTransition()
 
-  // Análise do Mentor: decide se vale recalibrar (com base no desempenho).
+  const todayStr = new Date().toISOString().slice(0, 10)
+
+  // 7 dias da semana
+  const weekDates = useMemo(
+    () => Array.from({ length: 7 }, (_, i) => addDays(weekStartDate, i)),
+    [weekStartDate],
+  )
+
+  // Dia selecionado — inicia em hoje (se estiver na semana), senão no 1º dia
+  const [selectedStr, setSelectedStr] = useState<string>(() => {
+    const inWeek = weekDates.find((d) => d.toISOString().slice(0, 10) === todayStr)
+    return (inWeek ?? weekDates[0]).toISOString().slice(0, 10)
+  })
+  const selectedDate = parseISO(selectedStr)
+
+  // Resumo por dia (para o strip) — recalcula com localItems (reflete conclusões)
+  const days: DaySummary[] = weekDates.map((date) => {
+    const ds = date.toISOString().slice(0, 10)
+    const dayItems = localItems.filter((i) => i.scheduledAt.startsWith(ds))
+    return {
+      date,
+      totalItems: dayItems.length,
+      completedItems: dayItems.filter((i) => i.completed).length,
+      isToday: ds === todayStr,
+    }
+  })
+
+  // Itens do dia selecionado, agrupados por tópico
+  const selectedDayItems = localItems.filter((i) => i.scheduledAt.startsWith(selectedStr))
+  const groups = useMemo(() => {
+    const map = new Map<
+      string,
+      { topicName: string; subjectName: string; items: PlanItemWithType[] }
+    >()
+    for (const item of selectedDayItems) {
+      const key = item.topicId ?? `solo-${item.id}`
+      if (!map.has(key)) {
+        map.set(key, {
+          topicName: item.topic?.name ?? item.title,
+          subjectName: item.topic?.discipline.name ?? "",
+          items: [],
+        })
+      }
+      map.get(key)!.items.push({
+        id: item.id,
+        type: item.type,
+        duration: item.duration,
+        completed: item.completed,
+        href: itemHref(item),
+      })
+    }
+    return [...map.values()]
+  }, [selectedDayItems])
+
+  const dayTotal = selectedDayItems.length
+  const dayDone = selectedDayItems.filter((i) => i.completed).length
+  const dayPct = dayTotal > 0 ? (dayDone / dayTotal) * 100 : 0
+  const isTodaySelected = selectedStr === todayStr
+  const weekdayLabel = format(selectedDate, "EEEE", { locale: ptBR })
+  const weekdayCap = weekdayLabel.charAt(0).toUpperCase() + weekdayLabel.slice(1)
+
+  // Análise do Mentor (recalibrar?)
   const [verdict, setVerdict] = useState<Verdict | null>(null)
   const [analyzing, setAnalyzing] = useState(hasPlan)
-
   useEffect(() => {
     if (!hasPlan) return
     let alive = true
@@ -141,31 +161,21 @@ export function PlannerClient({ weekStart, items, hasPlan, dailyGoal }: PlannerC
       alive = false
     }
   }, [hasPlan])
-
   const recalibrateRecommended = verdict?.recommend ?? false
 
-  const todayStr = new Date().toISOString().slice(0, 10)
-
-  const days = Array.from({ length: 7 }, (_, i) => {
-    const date = addDays(weekStartDate, i)
-    const dateStr = date.toISOString().slice(0, 10)
-    const dayItems = localItems.filter((item) => item.scheduledAt.startsWith(dateStr))
-    return { date, dateStr, items: dayItems }
-  })
-
-  function toggleComplete(item: PlanItem) {
+  function toggleComplete(id: string) {
+    const item = localItems.find((p) => p.id === id)
+    if (!item) return
     const willComplete = !item.completed
-    setLocalItems((prev) =>
-      prev.map((p) => (p.id === item.id ? { ...p, completed: willComplete } : p)),
-    )
+    setLocalItems((prev) => prev.map((p) => (p.id === id ? { ...p, completed: willComplete } : p)))
     startComplete(async () => {
       try {
-        await completePlanItem(item.id)
+        await completePlanItem(id)
         if (willComplete) toast.success("Concluído! 🎉")
       } catch {
         toast.error("Erro ao atualizar item")
         setLocalItems((prev) =>
-          prev.map((p) => (p.id === item.id ? { ...p, completed: !willComplete } : p)),
+          prev.map((p) => (p.id === id ? { ...p, completed: !willComplete } : p)),
         )
       }
     })
@@ -203,7 +213,7 @@ export function PlannerClient({ weekStart, items, hasPlan, dailyGoal }: PlannerC
   const GenerateDialog = () => (
     <Dialog open={showGenDialog} onOpenChange={setShowGenDialog}>
       <DialogTrigger asChild>
-        <Button size="sm" className="gap-1.5">
+        <Button size="sm" className="flex-1 gap-1.5 sm:flex-none">
           <Wand2 className="h-4 w-4" />
           Gerar plano
         </Button>
@@ -213,7 +223,6 @@ export function PlannerClient({ weekStart, items, hasPlan, dailyGoal }: PlannerC
           <DialogTitle>Gerar novo plano</DialogTitle>
         </DialogHeader>
 
-        {/* Opção recomendada: montar com o Mentor */}
         <Link
           href="/mentor?planner=1"
           className="flex items-center gap-3 rounded-2xl border border-primary/30 bg-primary/5 p-3.5 transition-colors hover:bg-primary/10"
@@ -283,22 +292,21 @@ export function PlannerClient({ weekStart, items, hasPlan, dailyGoal }: PlannerC
   )
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-6 space-y-6">
+    <div className="mx-auto max-w-2xl px-4 py-6 space-y-5">
       {/* Cabeçalho */}
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold">Planejador</h1>
-          <p className="text-sm text-muted-foreground">
-            Semana de {format(weekStartDate, "dd 'de' MMM", { locale: ptBR })} a{" "}
-            {format(addDays(weekStartDate, 6), "dd 'de' MMM", { locale: ptBR })}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
+      <div>
+        <h1 className="text-2xl font-bold">Planejador</h1>
+        <p className="text-sm text-muted-foreground">
+          Semana de {format(weekStartDate, "dd 'de' MMM", { locale: ptBR })} a{" "}
+          {format(addDays(weekStartDate, 6), "dd 'de' MMM", { locale: ptBR })}
+        </p>
+
+        <div className="mt-4 flex gap-2">
           {hasPlan && (
             <Button
               variant={recalibrateRecommended ? "default" : "outline"}
               size="sm"
-              className={cn("gap-1.5", !recalibrateRecommended && "text-muted-foreground")}
+              className={cn("flex-1 gap-1.5 sm:flex-none", !recalibrateRecommended && "text-muted-foreground")}
               onClick={handleRecalibrate}
               disabled={!recalibrateRecommended || isRecalibrating || analyzing}
               title={
@@ -314,7 +322,7 @@ export function PlannerClient({ weekStart, items, hasPlan, dailyGoal }: PlannerC
               ) : (
                 <RefreshCw className="h-4 w-4" />
               )}
-              <span className="hidden sm:inline">{analyzing ? "Analisando…" : "Recalibrar"}</span>
+              {analyzing ? "Analisando…" : "Recalibrar"}
             </Button>
           )}
           <GenerateDialog />
@@ -332,7 +340,7 @@ export function PlannerClient({ weekStart, items, hasPlan, dailyGoal }: PlannerC
 
       {!hasPlan && localItems.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border bg-muted/20 py-16 text-center">
-          <CalendarDays className="h-10 w-10 text-muted-foreground/40" />
+          <Wand2 className="h-10 w-10 text-muted-foreground/40" />
           <p className="font-medium">Nenhum plano ativo</p>
           <p className="max-w-xs text-sm text-muted-foreground">
             Gere um plano personalizado para começar a estudar com estratégia
@@ -343,101 +351,56 @@ export function PlannerClient({ weekStart, items, hasPlan, dailyGoal }: PlannerC
           </Button>
         </div>
       ) : (
-        /* Agenda vertical por dia */
-        <div className="space-y-5">
-          {days.map(({ date, dateStr, items: dayItems }) => {
-            const isToday = dateStr === todayStr
-            const done = dayItems.filter((i) => i.completed).length
-            const weekday = format(date, "EEEE", { locale: ptBR })
-            const weekdayCap = weekday.charAt(0).toUpperCase() + weekday.slice(1)
+        <>
+          {/* Tira de dias */}
+          <WeekDayStrip
+            days={days}
+            selectedDate={selectedDate}
+            onSelectDay={(d) => setSelectedStr(d.toISOString().slice(0, 10))}
+          />
 
-            return (
-              <section key={dateStr} className="space-y-2">
-                <div className="flex items-center gap-2 px-0.5">
-                  <h2
-                    className={cn(
-                      "text-sm font-semibold",
-                      isToday ? "text-primary" : "text-foreground",
-                    )}
-                  >
-                    {weekdayCap}
-                  </h2>
-                  <span className="text-xs text-muted-foreground">
-                    {format(date, "dd/MM", { locale: ptBR })}
-                  </span>
-                  {isToday && (
-                    <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
-                      Hoje
-                    </Badge>
-                  )}
-                  {dayItems.length > 0 && (
-                    <span className="ml-auto text-xs text-muted-foreground tabular-nums">
-                      {done}/{dayItems.length}
-                    </span>
-                  )}
-                </div>
+          {/* Cabeçalho do dia + progresso */}
+          <div>
+            <div className="flex items-baseline justify-between">
+              <h2 className="text-base font-semibold">
+                {weekdayCap}
+                {isTodaySelected && <span className="text-muted-foreground"> · Hoje</span>}
+              </h2>
+              {dayTotal > 0 && (
+                <span className="text-xs text-muted-foreground">
+                  <b className="font-medium text-primary">{dayDone}</b>/{dayTotal} concluído
+                </span>
+              )}
+            </div>
+            {dayTotal > 0 && (
+              <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full bg-primary transition-all"
+                  style={{ width: `${dayPct}%` }}
+                />
+              </div>
+            )}
+          </div>
 
-                {dayItems.length === 0 ? (
-                  <p className="rounded-xl border border-dashed px-3.5 py-3 text-xs text-muted-foreground">
-                    Dia livre
-                  </p>
-                ) : (
-                  <div className="space-y-2">
-                    {dayItems.map((item) => (
-                      <div key={item.id} className="flex items-center gap-2">
-                        {/* Marcar como concluído */}
-                        <button
-                          type="button"
-                          onClick={() => toggleComplete(item)}
-                          className="shrink-0 rounded-full p-0.5 text-muted-foreground transition-colors hover:text-primary"
-                          aria-label={item.completed ? "Desmarcar" : "Concluir"}
-                        >
-                          {item.completed ? (
-                            <CheckCircle2 className="h-6 w-6 text-green-500" />
-                          ) : (
-                            <Circle className="h-6 w-6" />
-                          )}
-                        </button>
-
-                        {/* Abre direto a atividade */}
-                        <Link
-                          href={itemHref(item)}
-                          className={cn(
-                            "flex flex-1 items-center gap-3 rounded-xl border p-3 transition-colors hover:bg-muted/40",
-                            item.completed ? "bg-muted/20 opacity-60" : "bg-card",
-                          )}
-                        >
-                          <div
-                            className={cn(
-                              "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
-                              TYPE_TINT[item.type] ?? "bg-muted text-muted-foreground",
-                            )}
-                          >
-                            {TYPE_ICON[item.type]}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p
-                              className={cn(
-                                "truncate text-sm font-medium",
-                                item.completed && "line-through",
-                              )}
-                            >
-                              {item.topic?.name ?? item.title}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {TYPE_LABEL[item.type] ?? item.type}
-                            </p>
-                          </div>
-                          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-                        </Link>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </section>
-            )
-          })}
-        </div>
+          {/* Cards do dia */}
+          {groups.length === 0 ? (
+            <p className="py-14 text-center text-sm text-muted-foreground">
+              Dia livre — aproveite para descansar ou revisar o que quiser. 🌿
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {groups.map((g, i) => (
+                <TopicPlanCard
+                  key={i}
+                  topicName={g.topicName}
+                  subjectName={g.subjectName}
+                  items={g.items}
+                  onToggle={toggleComplete}
+                />
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   )

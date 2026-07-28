@@ -43,13 +43,16 @@ export default async function PlannerPage() {
           description: true,
           type: true,
           scheduledAt: true,
+          duration: true,
           completed: true,
           topicId: true,
           topic: {
             select: {
               name: true,
               slug: true,
-              discipline: { select: { slug: true, area: { select: { slug: true } } } },
+              discipline: {
+                select: { name: true, slug: true, area: { select: { slug: true } } },
+              },
             },
           },
         },
