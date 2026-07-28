@@ -34,6 +34,7 @@ export default async function EssayPage({ params }: { params: Promise<{ id: stri
       comp5Score={essay.comp5Score}
       totalScore={essay.totalScore}
       feedback={essay.feedback}
+      errors={essay.errors}
     />
   )
 }

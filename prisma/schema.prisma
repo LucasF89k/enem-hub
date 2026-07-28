@@ -628,6 +628,7 @@ model Essay {
   totalScore Int?     // Soma (0-1000)
 
   feedback   String?  @db.Text  // feedback da IA
+  errors     String[] @default([]) // erros específicos identificados na correção
   version    Int      @default(1)
   wordCount  Int?
   lineCount  Int?

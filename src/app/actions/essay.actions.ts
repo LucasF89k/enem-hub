@@ -68,6 +68,29 @@ interface EssayEvaluation {
   comp5: number
   feedback: string
   suggestionsPerComp: string[]
+  errors: string[]
+}
+
+/** Gera um tema de redação atual/possível de cair, via IA (como o Mentor). */
+export async function generateEssayTheme(): Promise<{ theme?: string; error?: string }> {
+  const session = await auth()
+  if (!session?.user?.id) return { error: "Não autenticado" }
+
+  const prompt = `Você é um elaborador de provas do ENEM. Proponha UM tema de redação inédito, no estilo ENEM (problema social brasileiro que exige proposta de intervenção), baseado em temas atuais e relevantes da atualidade brasileira que têm chance real de cair na prova.
+Regras:
+- O tema deve ser uma frase única, no formato do ENEM (ex.: "Desafios para..." / "Caminhos para..." / "O papel de... no Brasil").
+- Deve ser socialmente relevante, atual, e permitir proposta de intervenção.
+- NÃO repita temas já cobrados pelo ENEM.
+Responda SOMENTE JSON: {"theme": "<o tema, uma frase>"}.`
+
+  try {
+    const result = await generateJSON<{ theme: string }>(prompt)
+    const theme = String(result.theme ?? "").trim().slice(0, 300)
+    if (theme.length < 8) return { error: "Não foi possível gerar um tema. Tente de novo." }
+    return { theme }
+  } catch {
+    return { error: "Falha ao gerar o tema. Tente novamente." }
+  }
 }
 
 export async function evaluateEssay(essayId: string): Promise<{
@@ -109,8 +132,13 @@ Retorne SOMENTE JSON válido (sem markdown) no formato exato:
     "<sugestão competência 3>",
     "<sugestão competência 4>",
     "<sugestão competência 5>"
+  ],
+  "errors": [
+    "<erro específico cometido, citando o trecho ou o problema — ex.: 'Desvio gramatical: ...', 'Fuga parcial ao tema em ...', 'Falta de conectivo entre parágrafos', 'Proposta de intervenção sem agente/meio'>"
   ]
 }
+
+No campo "errors", liste de 3 a 8 erros concretos e específicos que o aluno cometeu (gramática, coesão, argumentação, tangenciamento, proposta incompleta, etc.), cada um curto e objetivo, como um corretor profissional apontaria. Se a redação for excelente e sem erros relevantes, retorne uma lista vazia.
 
 Competências:
 1. Domínio da modalidade escrita formal da língua portuguesa
@@ -144,6 +172,7 @@ Competências:
         comp5Score: c5,
         totalScore: total,
         feedback: result.feedback + "\n\n" + (result.suggestionsPerComp ?? []).join("\n"),
+        errors: Array.isArray(result.errors) ? result.errors.slice(0, 8).map(String) : [],
       },
     })
 

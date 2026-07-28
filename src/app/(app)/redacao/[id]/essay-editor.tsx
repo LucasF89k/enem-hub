@@ -22,8 +22,21 @@ import {
   CheckCircle2,
   RefreshCw,
   Clock,
+  Timer,
+  AlertTriangle,
+  XCircle,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+
+const ESSAY_DURATION_MS = 2 * 60 * 60 * 1000 // 2 horas
+
+function formatCountdown(ms: number) {
+  const s = Math.max(0, Math.floor(ms / 1000))
+  const h = Math.floor(s / 3600)
+  const m = Math.floor((s % 3600) / 60)
+  const sec = s % 60
+  return `${h}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`
+}
 
 interface EssayEditorProps {
   essayId: string
@@ -37,6 +50,7 @@ interface EssayEditorProps {
   comp5Score: number | null
   totalScore: number | null
   feedback: string | null
+  errors: string[]
 }
 
 const COMP_LABELS = [
@@ -92,6 +106,7 @@ export function EssayEditor({
   comp5Score,
   totalScore,
   feedback,
+  errors,
 }: EssayEditorProps) {
   const [body, setBody] = useState(initialBody)
   const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "unsaved">("saved")
@@ -108,6 +123,22 @@ export function EssayEditor({
   const [evalError, setEvalError] = useState<string | null>(null)
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  // Cronômetro de prova — 2h, contando a partir da primeira vez que abriu esta redação.
+  const [remaining, setRemaining] = useState<number>(ESSAY_DURATION_MS)
+  useEffect(() => {
+    const key = `vion-essay-deadline-${essayId}`
+    let deadline = Number(localStorage.getItem(key))
+    if (!deadline || Number.isNaN(deadline)) {
+      deadline = Date.now() + ESSAY_DURATION_MS
+      localStorage.setItem(key, String(deadline))
+    }
+    const tick = () => setRemaining(deadline - Date.now())
+    tick()
+    const id = setInterval(tick, 1000)
+    return () => clearInterval(id)
+  }, [essayId])
+  const expired = remaining <= 0
 
   const words = countWords(body)
   const lines = countLines(body)
@@ -179,6 +210,23 @@ export function EssayEditor({
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          <span
+            className={cn(
+              "flex items-center gap-1 rounded-md border px-2 py-1 font-mono text-xs font-semibold tabular-nums",
+              expired
+                ? "border-red-500/40 bg-red-500/10 text-red-500"
+                : remaining < 120_000
+                  ? "text-red-500"
+                  : remaining < 600_000
+                    ? "text-amber-500"
+                    : "text-muted-foreground",
+            )}
+            title="Tempo de prova (2h)"
+          >
+            {expired ? <AlertTriangle className="h-3.5 w-3.5" /> : <Timer className="h-3.5 w-3.5" />}
+            <span className="hidden sm:inline">{expired ? "Tempo esgotado" : formatCountdown(remaining)}</span>
+            <span className="sm:hidden">{expired ? "0:00" : formatCountdown(remaining)}</span>
+          </span>
           <SaveStatus status={saveStatus} />
           <Sheet>
             <SheetTrigger asChild>
@@ -330,6 +378,26 @@ export function EssayEditor({
               </div>
             ))}
           </div>
+
+          {errors && errors.length > 0 && (
+            <div className="space-y-2">
+              <p className="flex items-center gap-1.5 text-sm font-semibold text-red-500">
+                <XCircle className="h-4 w-4" />
+                Erros identificados ({errors.length})
+              </p>
+              <ul className="space-y-1.5">
+                {errors.map((err, i) => (
+                  <li
+                    key={i}
+                    className="flex gap-2 rounded-lg border border-red-500/20 bg-red-500/5 px-3 py-2 text-sm"
+                  >
+                    <span className="mt-0.5 text-red-500">•</span>
+                    <span className="text-foreground/90">{err}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {scores.feedback && (
             <div className="rounded-xl bg-muted/40 border p-3 text-sm leading-relaxed whitespace-pre-wrap">
