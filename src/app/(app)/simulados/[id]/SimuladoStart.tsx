@@ -33,10 +33,18 @@ const DAYS = [
 
 export function SimuladoStart({
   simuladoId,
+  isEnem,
+  totalCount,
+  durationMin,
+  fullInProgressId,
   day1,
   day2,
 }: {
   simuladoId: string
+  isEnem: boolean
+  totalCount: number
+  durationMin: number
+  fullInProgressId: string | null
   day1: DayInfo
   day2: DayInfo
 }) {
@@ -46,12 +54,19 @@ export function SimuladoStart({
 
   const info: Record<number, DayInfo> = { 1: day1, 2: day2 }
 
-  function iniciar(day: number) {
-    setStartingDay(day)
+  function iniciar(day: number | null) {
+    setStartingDay(day ?? 0)
     startTransition(async () => {
       await startSimuladoAndRedirect(simuladoId, day, extraTime)
     })
   }
+
+  const totalDurLabel = (() => {
+    const min = durationMin + (extraTime ? 60 : 0)
+    const h = Math.floor(min / 60)
+    const m = min % 60
+    return h > 0 ? (m ? `${h}h${m}` : `${h}h`) : `${m}min`
+  })()
 
   const totalLabel = (baseMin: number) => {
     const min = baseMin + (extraTime ? 60 : 0)
@@ -77,7 +92,45 @@ export function SimuladoStart({
         </div>
       </label>
 
-      {/* Dias */}
+      {/* Vestibular (não-ENEM): simulado único */}
+      {!isEnem ? (
+        <div className="rounded-2xl border bg-card p-4">
+          <div className="mb-3 flex items-start justify-between gap-2">
+            <div>
+              <p className="text-sm font-semibold">Simulado completo</p>
+              <XpBadge label="até +70 XP" className="mt-1.5" />
+            </div>
+            <div className="flex shrink-0 flex-col items-end gap-1 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <FileText className="h-3.5 w-3.5" />
+                {totalCount} questões
+              </span>
+              <span className="flex items-center gap-1 font-medium text-foreground">
+                <Clock className="h-3.5 w-3.5" />
+                {totalDurLabel}
+              </span>
+            </div>
+          </div>
+          {fullInProgressId ? (
+            <Button asChild className="w-full gap-2">
+              <Link href={`/simulados/${simuladoId}/${fullInProgressId}`}>
+                <Play className="h-4 w-4 fill-current" />
+                Continuar tentativa
+              </Link>
+            </Button>
+          ) : (
+            <Button className="w-full gap-2" disabled={isPending} onClick={() => iniciar(null)}>
+              {isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Play className="h-4 w-4 fill-current" />
+              )}
+              {isPending ? "Iniciando…" : "Iniciar simulado"}
+            </Button>
+          )}
+        </div>
+      ) : (
+      /* ENEM: modo oficial em 2 dias */
       <div className="space-y-3">
         {DAYS.map((d) => {
           const di = info[d.day]
@@ -138,6 +191,7 @@ export function SimuladoStart({
           )
         })}
       </div>
+      )}
     </div>
   )
 }

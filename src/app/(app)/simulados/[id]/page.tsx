@@ -63,9 +63,12 @@ export default async function SimuladoDetailPage({
     },
   })
 
-  const inProgressByDay = (day: number) =>
+  const inProgressByDay = (day: number | null) =>
     attempts.find((a) => a.status === "IN_PROGRESS" && a.examDay === day)?.id ?? null
   const completed = attempts.filter((a) => a.status === "COMPLETED")
+
+  // Modo oficial de 2 dias só faz sentido para o ENEM (regular/PPL).
+  const isEnem = /\benem\b/i.test(simulado.title)
   const bestScore = completed.length > 0
     ? Math.max(...completed.map((a) => a.scoreTotal ?? 0))
     : null
@@ -108,7 +111,7 @@ export default async function SimuladoDetailPage({
           </span>
           <span className="flex items-center gap-1">
             <Clock className="h-4 w-4" />
-            2 dias · 5h30 + 5h
+            {isEnem ? "2 dias · 5h30 + 5h" : `${simulado.duration} min`}
           </span>
           {bestScore !== null && (
             <span className="flex items-center gap-1 text-primary font-medium">
@@ -132,9 +135,13 @@ export default async function SimuladoDetailPage({
         </div>
       )}
 
-      {/* CTA — modo oficial em dois dias */}
+      {/* CTA — ENEM: 2 dias oficiais; vestibular: simulado único */}
       <SimuladoStart
         simuladoId={simuladoId}
+        isEnem={isEnem}
+        totalCount={simulado._count.questions}
+        durationMin={simulado.duration}
+        fullInProgressId={inProgressByDay(null)}
         day1={{
           count: (areaCount["linguagens"] ?? 0) + (areaCount["ciencias-humanas"] ?? 0),
           inProgressId: inProgressByDay(1),
