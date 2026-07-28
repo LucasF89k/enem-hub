@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { db } from "@/lib/db"
 import { AppShell } from "@/components/layout/AppShell"
+import { ForceLogout } from "@/components/auth/ForceLogout"
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await auth()
@@ -19,6 +20,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       select: { currentLevel: true, totalXP: true },
     }),
   ])
+
+  // Sessão órfã: o usuário não existe mais no banco (ex.: após reset). Força logout.
+  if (!dbUser) return <ForceLogout />
 
   const user = {
     name: dbUser?.name ?? session.user.name ?? null,
