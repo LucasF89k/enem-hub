@@ -1,105 +1,169 @@
-import { Suspense } from "react"
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { db } from "@/lib/db"
+import Link from "next/link"
+import { startOfDay, addDays, subDays, differenceInDays, format } from "date-fns"
+import { ptBR } from "date-fns/locale"
+import { BarChart2, Calendar, Trophy, ChevronRight } from "lucide-react"
 
-import { MetaCard } from "@/components/dashboard/MetaCard"
-import { StreakCard } from "@/components/dashboard/StreakCard"
-import { TempoHojeCard } from "@/components/dashboard/TempoHojeCard"
-import { RevisoesPendentesCard } from "@/components/dashboard/RevisoesPendentesCard"
-import { EvolucaoAreaChart } from "@/components/dashboard/EvolucaoAreaChart"
-import { PlanoHojeCard } from "@/components/dashboard/PlanoHojeCard"
-import { ProximaSessaoCard } from "@/components/dashboard/ProximaSessaoCard"
-import { TrailBadge } from "@/components/dashboard/TrailBadge"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { detectTrail } from "@/lib/trail"
+import { FocusRing } from "@/components/dashboard/FocusRing"
+import { LevelBadge } from "@/components/dashboard/LevelBadge"
+import { NextTaskCard, type NextTask } from "@/components/dashboard/NextTaskCard"
+import { QuietStatsRow } from "@/components/dashboard/QuietStatsRow"
+import { TrailNote } from "@/components/dashboard/TrailNote"
 import { MedicinaWidget } from "@/components/dashboard/MedicinaWidget"
-import {
-  MetaSkeleton,
-  StreakSkeleton,
-  TempoSkeleton,
-  RevisoesSkeleton,
-  ChartSkeleton,
-  PlanoSkeleton,
-  ProximaSessaoSkeleton,
-  TrailSkeleton,
-  MedicinaSkeleton,
-} from "@/components/dashboard/DashboardSkeletons"
 
 export const metadata = { title: "Dashboard" }
+
+/** Próxima tarefa recomendada: tópico prioritário ainda não estudado nos últimos 7 dias. */
+async function getNextTask(userId: string): Promise<NextTask | null> {
+  const recent = await db.studySession.findMany({
+    where: { userId, date: { gte: subDays(new Date(), 7) }, topicId: { not: null } },
+    select: { topicId: true },
+    distinct: ["topicId"],
+  })
+  const recentIds = recent.map((s) => s.topicId).filter((id): id is string => id !== null)
+
+  const topic = await db.topic.findFirst({
+    where: recentIds.length > 0 ? { id: { notIn: recentIds } } : {},
+    orderBy: [{ importance: "desc" }, { frequency: "desc" }],
+    include: { discipline: { include: { area: { select: { slug: true } } } } },
+  })
+  if (!topic) return null
+
+  return {
+    title: topic.name,
+    type: "Teoria",
+    duration: 25,
+    href: `/study/${topic.discipline.area.slug}/${topic.discipline.slug}/${topic.slug}`,
+  }
+}
 
 export default async function DashboardPage() {
   const session = await auth()
   if (!session?.user?.id) redirect("/login")
-
   const userId = session.user.id
 
-  const profile = await db.userProfile.findUnique({
-    where: { userId },
-    select: { targetCourse: true },
-  })
+  const todayStart = startOfDay(new Date())
+  const tomorrowStart = addDays(todayStart, 1)
+
+  const [profile, todayAgg, task] = await Promise.all([
+    db.userProfile.findUnique({
+      where: { userId },
+      select: {
+        currentLevel: true,
+        totalXP: true,
+        streak: true,
+        examDate: true,
+        estimatedScore: true,
+        dailyStudyGoal: true,
+        targetCourse: true,
+      },
+    }),
+    db.studySession.aggregate({
+      where: { userId, date: { gte: todayStart, lt: tomorrowStart } },
+      _sum: { duration: true },
+    }),
+    getNextTask(userId),
+  ])
+
+  const minutesToday = todayAgg._sum.duration ?? 0
+  const dailyGoal = profile?.dailyStudyGoal ?? 120
+  const level = profile?.currentLevel ?? 1
+  const totalXP = profile?.totalXP ?? 0
+  const streak = profile?.streak ?? 0
+  const estimatedScore = profile?.estimatedScore ?? 0
+  const daysUntilExam = profile?.examDate
+    ? Math.max(0, differenceInDays(profile.examDate, new Date()))
+    : null
+  const trail = detectTrail(profile?.examDate)
+  const firstName = session.user.name?.split(" ")[0] ?? ""
+  const initials = session.user.name
+    ? session.user.name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase()
+    : "U"
 
   const isMedicina =
-    !profile?.targetCourse ||
-    profile.targetCourse.toLowerCase().includes("medicina")
+    !profile?.targetCourse || profile.targetCourse.toLowerCase().includes("medicina")
 
   return (
-    <div className="space-y-6 px-4 py-6 max-w-7xl mx-auto">
-      <div>
-        <h1 className="text-2xl font-bold">
-          Olá{session.user.name ? `, ${session.user.name.split(" ")[0]}` : ""}! 👋
-        </h1>
-        <p className="text-sm text-muted-foreground">Seu resumo de estudos de hoje</p>
+    <div className="mx-auto w-full max-w-[480px] px-6 pb-16 pt-4 sm:px-8">
+      {/* Topbar */}
+      <div className="flex items-center justify-between">
+        <LevelBadge level={level} totalXP={totalXP} />
+        <Avatar className="h-8 w-8">
+          <AvatarImage src={session.user.image ?? undefined} alt={session.user.name ?? "Avatar"} />
+          <AvatarFallback className="bg-primary/15 text-[11px] font-medium text-primary">
+            {initials}
+          </AvatarFallback>
+        </Avatar>
       </div>
+      <p className="mt-3 text-[12.5px] tracking-wide text-muted-foreground">
+        {format(new Date(), "EEEE, d 'de' MMMM", { locale: ptBR })}
+      </p>
 
-      {/* Trail banner — full width */}
-      <Suspense fallback={<TrailSkeleton />}>
-        <TrailBadge userId={userId} />
-      </Suspense>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {/* Row 1: Meta, Streak, Tempo hoje */}
-        <Suspense fallback={<MetaSkeleton />}>
-          <MetaCard userId={userId} />
-        </Suspense>
-
-        <Suspense fallback={<StreakSkeleton />}>
-          <StreakCard userId={userId} />
-        </Suspense>
-
-        <Suspense fallback={<TempoSkeleton />}>
-          <TempoHojeCard userId={userId} />
-        </Suspense>
-
-        {/* Row 2: Chart (2 cols), Revisões */}
-        <div className="sm:col-span-2">
-          <Suspense fallback={<ChartSkeleton />}>
-            <EvolucaoAreaChart userId={userId} />
-          </Suspense>
+      {/* Conteúdo — coluna de foco centralizada */}
+      <div className="flex flex-col items-center">
+        <div className="mt-7 text-center">
+          <h1 className="text-lg font-light text-foreground">
+            Olá, <b className="font-medium">{firstName}</b>
+          </h1>
         </div>
 
-        <Suspense fallback={<RevisoesSkeleton />}>
-          <RevisoesPendentesCard userId={userId} />
-        </Suspense>
-
-        {/* Row 3: Plano hoje (2 cols), Próxima sessão */}
-        <div className="sm:col-span-2">
-          <Suspense fallback={<PlanoSkeleton />}>
-            <PlanoHojeCard userId={userId} />
-          </Suspense>
+        <div className="my-7">
+          <FocusRing minutesToday={minutesToday} dailyGoalMinutes={dailyGoal} />
         </div>
 
-        <Suspense fallback={<ProximaSessaoSkeleton />}>
-          <ProximaSessaoCard userId={userId} />
-        </Suspense>
+        <NextTaskCard task={task} />
 
-        {/* Medicina widget — full width, shown when targetCourse is Medicina (or default) */}
-        {isMedicina && (
-          <div className="sm:col-span-2 lg:col-span-3">
-            <Suspense fallback={<MedicinaSkeleton />}>
-              <MedicinaWidget userId={userId} />
-            </Suspense>
-          </div>
+        {task && (
+          <Link
+            href={task.href}
+            className="mt-6 rounded-full bg-primary px-11 py-3.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+          >
+            Começar agora
+          </Link>
         )}
+
+        <div className="my-9 h-px w-full bg-border" />
+
+        <QuietStatsRow streak={streak} estimatedScore={estimatedScore} daysUntilExam={daysUntilExam} />
+
+        <TrailNote trail={trail} />
       </div>
+
+      {/* Mais detalhes — mantém acesso ao resto sem a grade densa antiga */}
+      <details className="group mt-14">
+        <summary className="flex cursor-pointer list-none items-center justify-center gap-1.5 text-xs uppercase tracking-[0.1em] text-muted-foreground">
+          Mais detalhes
+          <ChevronRight className="h-3.5 w-3.5 transition-transform group-open:rotate-90" />
+        </summary>
+
+        <div className="mt-6 space-y-4">
+          {isMedicina && <MedicinaWidget userId={userId} />}
+
+          <div className="divide-y rounded-2xl border">
+            {[
+              { icon: BarChart2, label: "Analytics e evolução", href: "/analytics" },
+              { icon: Calendar, label: "Plano de estudos completo", href: "/planner" },
+              { icon: Trophy, label: "Conquistas", href: "/conquistas" },
+            ].map(({ icon: Icon, label, href }) => (
+              <Link
+                key={href}
+                href={href}
+                className="flex items-center justify-between px-4 py-3.5 text-sm hover:bg-muted/40"
+              >
+                <span className="flex items-center gap-3">
+                  <Icon className="h-4 w-4 text-muted-foreground" />
+                  {label}
+                </span>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </Link>
+            ))}
+          </div>
+        </div>
+      </details>
     </div>
   )
 }
