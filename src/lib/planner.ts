@@ -144,10 +144,29 @@ export async function generateStudyPlan(params: GeneratePlanParams): Promise<str
   const itemsToCreate: ItemPayload[] = []
   let topicIdx = 0
 
+  // Um dia inteiro por semana só para simulado (dia de prova, estilo ENEM).
+  // Usa o último dia de estudo da semana; só reserva se houver >= 3 dias/semana.
+  const simuladoWeekday = weekDays.length >= 3 ? Math.max(...weekDays) : -1
+
   for (let d = 0; d < daysCount; d++) {
     const day = addDays(startOfDay(startDate), d)
     // getUTCDay(): startDate is UTC midnight; getDay() would use local tz and give wrong weekday
     if (!weekDays.includes(day.getUTCDay())) continue
+
+    // Dia de prova: só um simulado completo cronometrado, nada mais.
+    if (day.getUTCDay() === simuladoWeekday) {
+      itemsToCreate.push({
+        planId: plan.id,
+        topicId: null,
+        title: "Simulado completo — dia de prova",
+        description: "Prova cronometrada no estilo ENEM (~5h30). Simule as condições reais.",
+        type: "SIMULADO",
+        scheduledAt: day,
+        duration: 330,
+        priority: 1,
+      })
+      continue
+    }
 
     let slot = 0
     const alloc = {
@@ -182,26 +201,10 @@ export async function generateStudyPlan(params: GeneratePlanParams): Promise<str
       slot += alloc.flashcards
     }
 
-    // 2. Simulado block (only on INTENSIVA/SPRINT, and only on some days)
-    const doSimulado = (trail === "SPRINT" && d % 3 === 0) ||
-      (trail === "INTENSIVA" && d % 5 === 0)
-    if (doSimulado && alloc.simulado >= 15) {
-      itemsToCreate.push({
-        planId: plan.id,
-        topicId: null,
-        title: "Praticar simulado",
-        description: "Resolva um simulado ou questões cronometradas",
-        type: "SIMULADO",
-        scheduledAt: new Date(day.getTime() + slot * 60 * 1000),
-        duration: alloc.simulado,
-        priority: 2,
-      })
-      slot += alloc.simulado
-    }
-
-    // 3. Content + questions blocks from scored topics
-    let contentBudget = alloc.content + (doSimulado ? 0 : alloc.simulado)
-    let questionBudget = alloc.questions
+    // 2. Content + questions blocks from scored topics
+    // (o simulado agora tem dia próprio; sua fatia de tempo vira teoria/questões)
+    let contentBudget = alloc.content + Math.ceil(alloc.simulado / 2)
+    let questionBudget = alloc.questions + Math.floor(alloc.simulado / 2)
 
     while ((contentBudget >= 15 || questionBudget >= 15) && topicIdx < scoredTopics.length * 3) {
       const topic = scoredTopics[topicIdx % scoredTopics.length]

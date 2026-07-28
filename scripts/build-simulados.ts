@@ -31,7 +31,8 @@ async function main() {
       orderBy: { id: "asc" },
     })
     const description = `Prova ${source} — ${qs.length} questões`
-    const duration = Math.min(360, qs.length * 3)
+    // Tempo real de prova: ~3,7 min/questão (90 questões ≈ 5h30, como o ENEM), teto 6h
+    const duration = Math.min(360, Math.round(qs.length * 3.7))
 
     let sim = await db.simulado.findFirst({ where: { title: source } })
     if (!sim) {

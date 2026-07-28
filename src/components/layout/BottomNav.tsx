@@ -15,6 +15,7 @@ import {
   MessageCircle,
   User,
   Layers,
+  PenLine,
   ChevronRight,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -51,9 +52,15 @@ const STUDY_OPTIONS = [
     description: "Provas no estilo ENEM",
     href: "/simulados",
   },
+  {
+    icon: PenLine,
+    label: "Redação",
+    description: "Escreva e receba correção",
+    href: "/redacao",
+  },
 ] as const
 
-const STUDY_ROUTES = ["/study", "/flashcards", "/simulados"]
+const STUDY_ROUTES = ["/study", "/flashcards", "/simulados", "/redacao"]
 
 function itemClass(active: boolean) {
   return cn(
