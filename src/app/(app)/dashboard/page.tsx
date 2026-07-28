@@ -2,14 +2,13 @@ import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { db } from "@/lib/db"
 import Link from "next/link"
-import { startOfDay, addDays, subDays, differenceInDays, format } from "date-fns"
-import { ptBR } from "date-fns/locale"
+import { startOfDay, addDays, differenceInDays } from "date-fns"
+import { CalendarDays } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { detectTrail, getTrailConfig } from "@/lib/trail"
 import { FocusRing } from "@/components/dashboard/FocusRing"
 import { LevelBadge } from "@/components/dashboard/LevelBadge"
-import { NextTaskCard, type NextTask } from "@/components/dashboard/NextTaskCard"
 import { QuietStatsRow } from "@/components/dashboard/QuietStatsRow"
 import { TargetInstitutionCard } from "@/components/dashboard/TargetInstitutionCard"
 import { NotasCorteBoard } from "@/components/dashboard/NotasCorteBoard"
@@ -19,30 +18,6 @@ import { findCurso } from "@/constants/cursos"
 
 export const metadata = { title: "Dashboard" }
 
-/** Próxima tarefa recomendada: tópico prioritário ainda não estudado nos últimos 7 dias. */
-async function getNextTask(userId: string): Promise<NextTask | null> {
-  const recent = await db.studySession.findMany({
-    where: { userId, date: { gte: subDays(new Date(), 7) }, topicId: { not: null } },
-    select: { topicId: true },
-    distinct: ["topicId"],
-  })
-  const recentIds = recent.map((s) => s.topicId).filter((id): id is string => id !== null)
-
-  const topic = await db.topic.findFirst({
-    where: recentIds.length > 0 ? { id: { notIn: recentIds } } : {},
-    orderBy: [{ importance: "desc" }, { frequency: "desc" }],
-    include: { discipline: { include: { area: { select: { slug: true } } } } },
-  })
-  if (!topic) return null
-
-  return {
-    title: topic.name,
-    type: "Teoria",
-    duration: 25,
-    href: `/study/${topic.discipline.area.slug}/${topic.discipline.slug}/${topic.slug}`,
-  }
-}
-
 export default async function DashboardPage() {
   const session = await auth()
   if (!session?.user?.id) redirect("/login")
@@ -51,7 +26,7 @@ export default async function DashboardPage() {
   const todayStart = startOfDay(new Date())
   const tomorrowStart = addDays(todayStart, 1)
 
-  const [profile, todayAgg, task] = await Promise.all([
+  const [profile, todayAgg] = await Promise.all([
     db.userProfile.findUnique({
       where: { userId },
       select: {
@@ -69,7 +44,6 @@ export default async function DashboardPage() {
       where: { userId, date: { gte: todayStart, lt: tomorrowStart } },
       _sum: { duration: true },
     }),
-    getNextTask(userId),
   ])
 
   const minutesToday = todayAgg._sum.duration ?? 0
@@ -92,47 +66,44 @@ export default async function DashboardPage() {
   const examDateISO = profile?.examDate ? profile.examDate.toISOString() : null
 
   return (
-    <div className="mx-auto flex w-full max-w-[460px] flex-col px-6 pb-16 pt-5 sm:min-h-[calc(100vh-11rem)] sm:justify-center sm:px-8 sm:pt-6 md:min-h-[calc(100vh-9rem)]">
-      {/* Topbar */}
+    <div className="mx-auto flex w-full max-w-[460px] flex-col px-6 pb-16 pt-4 sm:px-8">
+      {/* Topbar — nível/XP à esquerda, avatar à direita */}
       <div className="flex items-center justify-between">
         <LevelBadge level={level} totalXP={totalXP} />
-        <Avatar className="h-8 w-8">
-          <AvatarImage src={session.user.image ?? undefined} alt={session.user.name ?? "Avatar"} />
-          <AvatarFallback className="bg-primary/15 text-[11px] font-medium text-primary">
-            {initials}
-          </AvatarFallback>
-        </Avatar>
+        <Link href="/profile">
+          <Avatar className="h-8 w-8">
+            <AvatarImage src={session.user.image ?? undefined} alt={session.user.name ?? "Avatar"} />
+            <AvatarFallback className="bg-primary/15 text-[11px] font-medium text-primary">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+        </Link>
       </div>
-      <p className="mt-3 text-[12.5px] tracking-wide text-muted-foreground">
-        {format(new Date(), "EEEE, d 'de' MMMM", { locale: ptBR })}
-      </p>
 
       {/* Conteúdo — coluna de foco centralizada */}
       <div className="flex flex-col items-center">
-        <div className="mt-7 text-center">
+        <div className="mt-5 text-center">
           <h1 className="text-lg font-light text-foreground">
             Olá, <b className="font-medium">{firstName}</b>
           </h1>
         </div>
 
-        <div className="my-7">
+        <div className="my-6">
           <FocusRing minutesToday={minutesToday} dailyGoalMinutes={dailyGoal} />
         </div>
 
-        <NextTaskCard task={task} />
+        {/* Um único CTA — o próximo passo vive dentro do Planner */}
+        <Link
+          href="/planner"
+          className="flex items-center gap-2 rounded-full bg-primary px-10 py-3.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+        >
+          <CalendarDays className="h-4 w-4" />
+          Ver plano de estudos
+        </Link>
 
-        {task && (
-          <Link
-            href={task.href}
-            className="mt-6 rounded-full bg-primary px-11 py-3.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
-          >
-            Começar agora
-          </Link>
-        )}
+        <div className="my-8 h-px w-full bg-border" />
 
-        <div className="my-9 h-px w-full bg-border" />
-
-        {/* Contador regressivo do ENEM — em destaque, com a trilha embutida */}
+        {/* Contador regressivo do ENEM — com a trilha embutida */}
         <div className="w-full max-w-[360px]">
           <ExamCountdown
             examDate={examDateISO}
