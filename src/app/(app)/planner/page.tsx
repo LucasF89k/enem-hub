@@ -56,22 +56,6 @@ export default async function PlannerPage() {
       })
     : []
 
-  // Recomenda recalibrar quando o desempenho recente mudou as prioridades:
-  // muitos itens atrasados sem concluir OU questões suficientes respondidas após o plano.
-  let recalibrateRecommended = false
-  if (activePlan) {
-    const todayStart = new Date(new Date().setUTCHours(0, 0, 0, 0))
-    const [overdue, answeredSince] = await Promise.all([
-      db.studyPlanItem.count({
-        where: { planId: activePlan.id, completed: false, scheduledAt: { lt: todayStart } },
-      }),
-      db.userQuestion.count({
-        where: { userId, answeredAt: { gt: activePlan.createdAt } },
-      }),
-    ])
-    recalibrateRecommended = overdue >= 4 || answeredSince >= 15
-  }
-
   const profile = await db.userProfile.findUnique({
     where: { userId },
     select: { dailyStudyGoal: true },
@@ -86,7 +70,6 @@ export default async function PlannerPage() {
       }))}
       hasPlan={!!activePlan}
       dailyGoal={activePlan?.dailyGoal ?? profile?.dailyStudyGoal ?? 120}
-      recalibrateRecommended={recalibrateRecommended}
     />
   )
 }

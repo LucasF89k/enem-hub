@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useState, useEffect, useTransition } from "react"
 import { format, addDays, parseISO } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { toast } from "sonner"
@@ -87,7 +87,11 @@ interface PlannerClientProps {
   items: PlanItem[]
   hasPlan: boolean
   dailyGoal: number
-  recalibrateRecommended: boolean
+}
+
+interface Verdict {
+  recommend: boolean
+  reason: string
 }
 
 /** Destino da atividade — abre direto a aba/matéria correspondente. */
@@ -110,19 +114,35 @@ function itemHref(item: PlanItem): string {
   }
 }
 
-export function PlannerClient({
-  weekStart,
-  items,
-  hasPlan,
-  dailyGoal,
-  recalibrateRecommended,
-}: PlannerClientProps) {
+export function PlannerClient({ weekStart, items, hasPlan, dailyGoal }: PlannerClientProps) {
   const weekStartDate = parseISO(weekStart)
   const [localItems, setLocalItems] = useState<PlanItem[]>(items)
   const [showGenDialog, setShowGenDialog] = useState(!hasPlan)
   const [isGenerating, startGenerate] = useTransition()
   const [, startComplete] = useTransition()
   const [isRecalibrating, startRecalibrate] = useTransition()
+
+  // Análise do Mentor: decide se vale recalibrar (com base no desempenho).
+  const [verdict, setVerdict] = useState<Verdict | null>(null)
+  const [analyzing, setAnalyzing] = useState(hasPlan)
+
+  useEffect(() => {
+    if (!hasPlan) return
+    let alive = true
+    setAnalyzing(true)
+    fetch("/api/planner/recalibration-check", { method: "POST" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((v: Verdict | null) => {
+        if (alive && v) setVerdict(v)
+      })
+      .catch(() => {})
+      .finally(() => alive && setAnalyzing(false))
+    return () => {
+      alive = false
+    }
+  }, [hasPlan])
+
+  const recalibrateRecommended = verdict?.recommend ?? false
 
   const todayStr = new Date().toISOString().slice(0, 10)
 
@@ -280,31 +300,32 @@ export function PlannerClient({
               size="sm"
               className={cn("gap-1.5", !recalibrateRecommended && "text-muted-foreground")}
               onClick={handleRecalibrate}
-              disabled={!recalibrateRecommended || isRecalibrating}
+              disabled={!recalibrateRecommended || isRecalibrating || analyzing}
               title={
-                recalibrateRecommended
-                  ? "O Mentor sugere recalibrar com base no seu desempenho recente"
-                  : "Sem necessidade de recalibrar por enquanto"
+                analyzing
+                  ? "O Mentor está analisando seu desempenho…"
+                  : recalibrateRecommended
+                    ? "O Mentor sugere recalibrar com base no seu desempenho recente"
+                    : "Sem necessidade de recalibrar por enquanto"
               }
             >
-              {isRecalibrating ? (
+              {isRecalibrating || analyzing ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <RefreshCw className="h-4 w-4" />
               )}
-              <span className="hidden sm:inline">Recalibrar</span>
+              <span className="hidden sm:inline">{analyzing ? "Analisando…" : "Recalibrar"}</span>
             </Button>
           )}
           <GenerateDialog />
         </div>
       </div>
 
-      {recalibrateRecommended && hasPlan && (
+      {recalibrateRecommended && hasPlan && verdict?.reason && (
         <div className="flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/5 px-3.5 py-2.5 text-sm">
           <Sparkles className="h-4 w-4 shrink-0 text-primary" />
           <span className="text-muted-foreground">
-            O Mentor recomenda <b className="text-foreground">recalibrar</b> — seu desempenho recente
-            mudou as prioridades.
+            <b className="text-foreground">Mentor:</b> {verdict.reason}
           </span>
         </div>
       )}
