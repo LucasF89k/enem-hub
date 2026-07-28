@@ -7,12 +7,13 @@ import { BottomNav } from "./BottomNav"
 
 interface AppShellProps {
   children: React.ReactNode
+  user?: { name?: string | null; image?: string | null; level?: number; totalXP?: number }
 }
 
 // Matches /simulados/[id]/[attemptId] (exactly 3 segments, no trailing /result)
 const EXAM_ROUTE = /^\/simulados\/[^/]+\/[^/]+$/
 
-export function AppShell({ children }: AppShellProps) {
+export function AppShell({ children, user }: AppShellProps) {
   const pathname = usePathname()
   const isExam = EXAM_ROUTE.test(pathname)
   // O Mentor tem cabeçalho próprio — esconde a barra de topo para não empilhar logos.
@@ -26,7 +27,7 @@ export function AppShell({ children }: AppShellProps) {
     <>
       {/* Área de conteúdo principal — barra de navegação embaixo em todos os tamanhos */}
       <div className="min-h-screen flex flex-col">
-        {!hideHeader && <Header />}
+        {!hideHeader && <Header user={user} />}
 
         <AnimatePresence mode="wait" initial={false}>
           <motion.main

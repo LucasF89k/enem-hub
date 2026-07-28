@@ -4,16 +4,17 @@ export function LevelBadge({ level, totalXP }: { level: number; totalXP: number 
   const pct = Math.min(100, Math.max(0, Math.round(((totalXP - base) / 500) * 100)))
 
   return (
-    <div className="flex items-center gap-2.5">
+    <div className="flex shrink-0 items-center gap-2">
       <div
-        className="relative flex h-[34px] w-[34px] items-center justify-center rounded-full"
+        className="relative flex h-[32px] w-[32px] items-center justify-center rounded-full"
         style={{ background: `conic-gradient(var(--primary) ${pct}%, var(--border) 0)` }}
       >
-        <span className="flex h-[27px] w-[27px] items-center justify-center rounded-full bg-background text-[11px] font-medium text-primary">
+        <span className="flex h-[25px] w-[25px] items-center justify-center rounded-full bg-background text-[11px] font-medium text-primary">
           {level}
         </span>
       </div>
-      <div className="leading-tight">
+      {/* Texto só no desktop — no mobile mostra apenas o anel */}
+      <div className="hidden leading-tight sm:block">
         <p className="text-[9.5px] tracking-wide text-muted-foreground">nível</p>
         <p className="text-[12.5px] text-foreground">{totalXP.toLocaleString("pt-BR")} XP</p>
       </div>
