@@ -5,11 +5,11 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Clock, FileText, Trophy, ArrowLeft, Play } from "lucide-react"
+import { Clock, FileText, Trophy, ArrowLeft } from "lucide-react"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { cn } from "@/lib/utils"
-import { StartSimuladoButton } from "./start-button"
+import { SimuladoStart } from "./SimuladoStart"
 
 export async function generateMetadata({
   params,
@@ -51,6 +51,7 @@ export default async function SimuladoDetailPage({
     select: {
       id: true,
       status: true,
+      examDay: true,
       scoreTotal: true,
       scoreCN: true,
       scoreCH: true,
@@ -62,7 +63,8 @@ export default async function SimuladoDetailPage({
     },
   })
 
-  const inProgress = attempts.find((a) => a.status === "IN_PROGRESS")
+  const inProgressByDay = (day: number) =>
+    attempts.find((a) => a.status === "IN_PROGRESS" && a.examDay === day)?.id ?? null
   const completed = attempts.filter((a) => a.status === "COMPLETED")
   const bestScore = completed.length > 0
     ? Math.max(...completed.map((a) => a.scoreTotal ?? 0))
@@ -106,7 +108,7 @@ export default async function SimuladoDetailPage({
           </span>
           <span className="flex items-center gap-1">
             <Clock className="h-4 w-4" />
-            {simulado.duration} min
+            2 dias · 5h30 + 5h
           </span>
           {bestScore !== null && (
             <span className="flex items-center gap-1 text-primary font-medium">
@@ -130,26 +132,18 @@ export default async function SimuladoDetailPage({
         </div>
       )}
 
-      {/* CTA */}
-      <div className="space-y-2">
-        {inProgress ? (
-          <>
-            <div className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-700 dark:text-yellow-400 mb-2">
-              Você tem uma tentativa em andamento desde{" "}
-              {format(inProgress.startedAt, "dd 'de' MMM 'às' HH:mm", { locale: ptBR })}
-            </div>
-            <Button asChild className="w-full gap-2" size="lg">
-              <Link href={`/simulados/${simuladoId}/${inProgress.id}`}>
-                <Play className="h-4 w-4 fill-current" />
-                Continuar tentativa
-              </Link>
-            </Button>
-            <StartSimuladoButton simuladoId={simuladoId} label="Iniciar nova tentativa" variant="outline" />
-          </>
-        ) : (
-          <StartSimuladoButton simuladoId={simuladoId} label="Iniciar simulado" />
-        )}
-      </div>
+      {/* CTA — modo oficial em dois dias */}
+      <SimuladoStart
+        simuladoId={simuladoId}
+        day1={{
+          count: (areaCount["linguagens"] ?? 0) + (areaCount["ciencias-humanas"] ?? 0),
+          inProgressId: inProgressByDay(1),
+        }}
+        day2={{
+          count: (areaCount["matematica"] ?? 0) + (areaCount["ciencias-natureza"] ?? 0),
+          inProgressId: inProgressByDay(2),
+        }}
+      />
 
       {/* Past attempts */}
       {completed.length > 0 && (

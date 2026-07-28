@@ -18,7 +18,14 @@ export default async function SimuladoExamPage({
 
   const attempt = await db.userSimulado.findFirst({
     where: { id: attemptId, userId },
-    select: { id: true, status: true, startedAt: true, simuladoId: true },
+    select: {
+      id: true,
+      status: true,
+      startedAt: true,
+      simuladoId: true,
+      examDay: true,
+      extraTime: true,
+    },
   })
 
   if (!attempt) notFound()
@@ -66,13 +73,28 @@ export default async function SimuladoExamPage({
     }
   }
 
+  // Modo oficial ENEM: filtra questões e duração pelo dia da tentativa
+  const DAY_AREAS: Record<number, string[]> = {
+    1: ["linguagens", "ciencias-humanas"],
+    2: ["matematica", "ciencias-natureza"],
+  }
+  const dayAreas = attempt.examDay ? DAY_AREAS[attempt.examDay] : null
+
+  const filtered = dayAreas
+    ? questions.filter((sq) => dayAreas.includes(sq.question.areaSlug ?? ""))
+    : questions
+
+  const baseMin =
+    attempt.examDay === 1 ? 330 : attempt.examDay === 2 ? 300 : simulado.duration
+  const durationMin = baseMin + (attempt.extraTime ? 60 : 0)
+
   const elapsedSeconds = Math.floor(
     (Date.now() - attempt.startedAt.getTime()) / 1000
   )
-  const totalSeconds = simulado.duration * 60
+  const totalSeconds = durationMin * 60
   const initialTimeLeft = Math.max(0, totalSeconds - elapsedSeconds)
 
-  const examQuestions = questions.map((sq) => ({
+  const examQuestions = filtered.map((sq) => ({
     id: sq.question.id,
     statement: sq.question.statement,
     images: sq.question.images,

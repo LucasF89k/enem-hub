@@ -7,26 +7,35 @@ import { checkAchievements, type NewAchievement } from "@/lib/achievements"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 
-export async function startSimulado(simuladoId: string): Promise<{ attemptId: string }> {
+export async function startSimulado(
+  simuladoId: string,
+  examDay: number | null = null,
+  extraTime = false,
+): Promise<{ attemptId: string }> {
   const session = await auth()
   if (!session?.user?.id) throw new Error("Unauthorized")
   const userId = session.user.id
 
+  // Reaproveita tentativa em andamento do MESMO dia
   const existing = await db.userSimulado.findFirst({
-    where: { userId, simuladoId, status: "IN_PROGRESS" },
+    where: { userId, simuladoId, status: "IN_PROGRESS", examDay },
     select: { id: true },
   })
   if (existing) return { attemptId: existing.id }
 
   const attempt = await db.userSimulado.create({
-    data: { userId, simuladoId, status: "IN_PROGRESS" },
+    data: { userId, simuladoId, status: "IN_PROGRESS", examDay, extraTime },
     select: { id: true },
   })
   return { attemptId: attempt.id }
 }
 
-export async function startSimuladoAndRedirect(simuladoId: string) {
-  const { attemptId } = await startSimulado(simuladoId)
+export async function startSimuladoAndRedirect(
+  simuladoId: string,
+  examDay: number | null = null,
+  extraTime = false,
+) {
+  const { attemptId } = await startSimulado(simuladoId, examDay, extraTime)
   redirect(`/simulados/${simuladoId}/${attemptId}`)
 }
 

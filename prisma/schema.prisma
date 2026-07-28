@@ -446,6 +446,10 @@ model UserSimulado {
 
   status     SimuladoStatus @default(IN_PROGRESS)
 
+  // Modo oficial ENEM: dia 1 (Ling+Hum, 5h30) ou dia 2 (Mat+Nat, 5h); null = completo/antigo
+  examDay    Int?
+  extraTime  Boolean        @default(false) // 1h adicional (atendimento especializado)
+
   // Resultado
   scoreTotal Float?
   scoreCN    Float?         // Ciências da Natureza
