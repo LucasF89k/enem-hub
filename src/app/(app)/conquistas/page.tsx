@@ -1,12 +1,21 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { db } from "@/lib/db"
-import { ACHIEVEMENT_DEFS } from "@/lib/achievements"
+import { ACHIEVEMENT_DEFS, PROGRESS_METRICS, getUserStats } from "@/lib/achievements"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import type { AchievementCategory } from "@prisma/client"
 
 export const metadata = { title: "Conquistas" }
+
+/** Formata um valor de métrica (minutos de estudo viram horas). */
+function fmtMetric(metric: string, v: number): string {
+  if (metric === "totalStudyMinutes") {
+    const h = v / 60
+    return `${Number.isInteger(h) ? h : Math.round(h * 10) / 10}h`
+  }
+  return String(v)
+}
 
 const CATEGORY_LABELS: Record<AchievementCategory, string> = {
   STREAK: "Sequência",
@@ -25,13 +34,16 @@ export default async function ConquistasPage() {
 
   const userId = session.user.id
 
-  const earned = await db.userAchievement.findMany({
-    where: { userId },
-    select: {
-      earnedAt: true,
-      achievement: { select: { condition: true } },
-    },
-  })
+  const [earned, stats] = await Promise.all([
+    db.userAchievement.findMany({
+      where: { userId },
+      select: {
+        earnedAt: true,
+        achievement: { select: { condition: true } },
+      },
+    }),
+    getUserStats(userId),
+  ])
 
   const earnedMap = new Map(
     earned.map((e) => [
@@ -82,37 +94,76 @@ export default async function ConquistasPage() {
                 const date = earnedMap.get(def.key)
                 const isEarned = !!date
 
+                const pm = PROGRESS_METRICS[def.key]
+                const current = pm ? (stats[pm.metric] as number) : 0
+                const target = pm?.target ?? 0
+                const ratio = isEarned
+                  ? 1
+                  : pm && target > 0
+                    ? Math.min(1, current / target)
+                    : 0
+                const showBar = !!pm && !isEarned
+
                 return (
                   <div
                     key={def.key}
                     className={cn(
                       "flex items-center gap-3 rounded-lg border p-3 transition-colors",
-                      isEarned
-                        ? "bg-card border-primary/20"
-                        : "bg-muted/30 border-transparent opacity-60"
+                      isEarned ? "bg-card border-primary/20" : "bg-muted/20 border-transparent"
                     )}
                   >
-                    <span
-                      className={cn(
-                        "text-3xl w-10 h-10 flex items-center justify-center rounded-full shrink-0",
-                        isEarned ? "bg-primary/10" : "bg-muted grayscale"
-                      )}
-                    >
-                      {def.icon}
-                    </span>
+                    {/* Anel de progresso — vai "enchendo" e colorindo conforme avança */}
+                    <div className="relative h-12 w-12 shrink-0">
+                      <div
+                        className="absolute inset-0 rounded-full"
+                        style={{
+                          background: `conic-gradient(var(--primary) ${ratio * 360}deg, var(--border) 0)`,
+                        }}
+                      />
+                      <div className="absolute inset-[3px] flex items-center justify-center rounded-full bg-background">
+                        <span
+                          className="text-2xl leading-none"
+                          style={{
+                            filter: isEarned ? "none" : `grayscale(${(1 - ratio) * 100}%)`,
+                            opacity: isEarned ? 1 : 0.45 + ratio * 0.55,
+                          }}
+                        >
+                          {def.icon}
+                        </span>
+                      </div>
+                    </div>
+
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className="font-semibold text-sm truncate">{def.name}</p>
-                        {isEarned && (
-                          <Badge variant="secondary" className="text-[10px] shrink-0">
-                            +{def.xpReward} XP
-                          </Badge>
-                        )}
+                        <p className={cn("font-semibold text-sm truncate", !isEarned && "text-muted-foreground")}>
+                          {def.name}
+                        </p>
+                        <Badge
+                          variant="secondary"
+                          className={cn("text-[10px] shrink-0", !isEarned && "opacity-60")}
+                        >
+                          +{def.xpReward} XP
+                        </Badge>
                       </div>
                       <p className="text-xs text-muted-foreground">{def.description}</p>
+
+                      {showBar && (
+                        <div className="mt-1.5 flex items-center gap-2">
+                          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+                            <div
+                              className="h-full rounded-full bg-primary transition-all"
+                              style={{ width: `${ratio * 100}%` }}
+                            />
+                          </div>
+                          <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground">
+                            {fmtMetric(pm.metric, current)}/{fmtMetric(pm.metric, target)}
+                          </span>
+                        </div>
+                      )}
+
                       {isEarned && date && (
                         <p className="text-[10px] text-muted-foreground mt-0.5">
-                          {new Date(date).toLocaleDateString("pt-BR")}
+                          Desbloqueada em {new Date(date).toLocaleDateString("pt-BR")}
                         </p>
                       )}
                     </div>

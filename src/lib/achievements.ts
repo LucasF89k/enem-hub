@@ -276,7 +276,38 @@ export const ACHIEVEMENT_DEFS: AchievementDef[] = [
   },
 ]
 
-async function getUserStats(userId: string): Promise<UserStats> {
+/**
+ * Métrica e alvo de cada conquista baseada em limiar — usado para mostrar o
+ * progresso (barra/anel que vai "enchendo") na tela de Conquistas.
+ * Conquistas sem entrada aqui (ex.: precisão, todas as áreas) não têm barra.
+ */
+export const PROGRESS_METRICS: Record<string, { metric: keyof UserStats; target: number }> = {
+  streak_3: { metric: "streak", target: 3 },
+  streak_7: { metric: "streak", target: 7 },
+  streak_30: { metric: "streak", target: 30 },
+  streak_100: { metric: "streak", target: 100 },
+  study_60: { metric: "totalStudyMinutes", target: 60 },
+  study_600: { metric: "totalStudyMinutes", target: 600 },
+  study_3000: { metric: "totalStudyMinutes", target: 3000 },
+  questions_1: { metric: "totalQuestions", target: 1 },
+  questions_10: { metric: "totalQuestions", target: 10 },
+  questions_100: { metric: "totalQuestions", target: 100 },
+  questions_500: { metric: "totalQuestions", target: 500 },
+  questions_1000: { metric: "totalQuestions", target: 1000 },
+  flashcards_50: { metric: "totalFlashcards", target: 50 },
+  flashcards_500: { metric: "totalFlashcards", target: 500 },
+  simulado_first: { metric: "totalSimulados", target: 1 },
+  simulado_5: { metric: "totalSimulados", target: 5 },
+  simulado_score_700: { metric: "bestSimuladoScore", target: 700 },
+  simulado_score_800: { metric: "bestSimuladoScore", target: 800 },
+  essay_first: { metric: "totalEssays", target: 1 },
+  essay_10: { metric: "totalEssays", target: 10 },
+  level_5: { metric: "currentLevel", target: 5 },
+  level_10: { metric: "currentLevel", target: 10 },
+  level_20: { metric: "currentLevel", target: 20 },
+}
+
+export async function getUserStats(userId: string): Promise<UserStats> {
   const [profile, studySessions, userQuestions, flashcardReviews, simulados, essays] =
     await Promise.all([
       db.userProfile.findUnique({
