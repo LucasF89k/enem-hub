@@ -27,6 +27,7 @@ import {
   XCircle,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { XpBadge } from "@/components/gamification/XpBadge"
 
 const ESSAY_DURATION_MS = 2 * 60 * 60 * 1000 // 2 horas
 
@@ -329,6 +330,7 @@ export function EssayEditor({
           )}
         </div>
         <div className="flex items-center gap-2">
+          <XpBadge xp={20} />
           <Button variant="outline" size="sm" onClick={handleSaveNow} disabled={saveStatus === "saved"}>
             Salvar agora
           </Button>

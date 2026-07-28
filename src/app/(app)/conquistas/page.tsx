@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { db } from "@/lib/db"
 import { ACHIEVEMENT_DEFS, PROGRESS_METRICS, getUserStats } from "@/lib/achievements"
-import { Badge } from "@/components/ui/badge"
+import { XpBadge } from "@/components/gamification/XpBadge"
 import { cn } from "@/lib/utils"
 import type { AchievementCategory } from "@prisma/client"
 
@@ -138,12 +138,7 @@ export default async function ConquistasPage() {
                         <p className={cn("font-semibold text-sm truncate", !isEarned && "text-muted-foreground")}>
                           {def.name}
                         </p>
-                        <Badge
-                          variant="secondary"
-                          className={cn("text-[10px] shrink-0", !isEarned && "opacity-60")}
-                        >
-                          +{def.xpReward} XP
-                        </Badge>
+                        <XpBadge xp={def.xpReward} className={cn("shrink-0", !isEarned && "opacity-60")} />
                       </div>
                       <p className="text-xs text-muted-foreground">{def.description}</p>
 

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Play, Loader2, Clock, FileText } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { XpBadge } from "@/components/gamification/XpBadge"
 import { startSimuladoAndRedirect } from "@/app/actions/simulado.actions"
 
 interface DayInfo {
@@ -94,6 +95,7 @@ export function SimuladoStart({
                 <div>
                   <p className="text-sm font-semibold">{d.title}</p>
                   <p className="text-xs text-muted-foreground">{d.areas}</p>
+                  <XpBadge label="até +70 XP" className="mt-1.5" />
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-1 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1">

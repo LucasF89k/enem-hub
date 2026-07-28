@@ -2,7 +2,15 @@ import { Zap } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 /** Badge padrão de recompensa em XP — usado em toda a app. */
-export function XpBadge({ xp, className }: { xp: number; className?: string }) {
+export function XpBadge({
+  xp,
+  label,
+  className,
+}: {
+  xp?: number
+  label?: string
+  className?: string
+}) {
   return (
     <span
       className={cn(
@@ -10,7 +18,8 @@ export function XpBadge({ xp, className }: { xp: number; className?: string }) {
         className,
       )}
     >
-      <Zap className="h-3 w-3 fill-current" />+{xp} XP
+      <Zap className="h-3 w-3 fill-current" />
+      {label ?? `+${xp} XP`}
     </span>
   )
 }

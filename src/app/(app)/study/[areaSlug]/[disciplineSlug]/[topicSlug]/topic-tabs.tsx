@@ -22,6 +22,7 @@ import Link from "next/link"
 import { VideoList } from "@/components/study/VideoList"
 import { CreateFlashcardDialog } from "@/components/flashcards/CreateFlashcardDialog"
 import { TopicQuestionsInline, type InlineQuestion } from "@/components/study/TopicQuestionsInline"
+import { XpBadge } from "@/components/gamification/XpBadge"
 import type { VideoWithWatched } from "@/app/actions/video.actions"
 
 interface TopicContent {
@@ -182,11 +183,17 @@ export function TopicTabs({ topicId, topicName, content, flashcards, questions, 
       <TabsContent value="flashcards" className="mt-4 space-y-4">
         <div className="flex items-center justify-between">
           <div className="text-sm">
-            <span className="font-semibold">{flashcards.length}</span>
-            <span className="text-muted-foreground"> flashcards</span>
-            {pendingReviews > 0 && (
-              <span className="text-warning ml-2">· {pendingReviews} pendentes</span>
-            )}
+            <div>
+              <span className="font-semibold">{flashcards.length}</span>
+              <span className="text-muted-foreground"> flashcards</span>
+              {pendingReviews > 0 && (
+                <span className="text-warning ml-2">· {pendingReviews} pendentes</span>
+              )}
+            </div>
+            <div className="mt-1 flex items-center gap-1.5">
+              <XpBadge xp={5} />
+              <span className="text-[11px] text-muted-foreground">por card</span>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <CreateFlashcardDialog
@@ -229,12 +236,20 @@ export function TopicTabs({ topicId, topicName, content, flashcards, questions, 
       </TabsContent>
 
       {/* ── Questões (respondidas aqui mesmo) ── */}
-      <TabsContent value="questoes" className="mt-4">
+      <TabsContent value="questoes" className="mt-4 space-y-3">
+        <div className="flex items-center gap-1.5">
+          <XpBadge xp={10} />
+          <span className="text-[11px] text-muted-foreground">por acerto · +2 XP por tentativa</span>
+        </div>
         <TopicQuestionsInline questions={questions} />
       </TabsContent>
 
       {/* ── Vídeos ── */}
-      <TabsContent value="videos" className="mt-4">
+      <TabsContent value="videos" className="mt-4 space-y-3">
+        <div className="flex items-center gap-1.5">
+          <XpBadge xp={15} />
+          <span className="text-[11px] text-muted-foreground">por vídeo assistido</span>
+        </div>
         <VideoList topicId={topicId} initialVideos={videos} />
       </TabsContent>
     </Tabs>
