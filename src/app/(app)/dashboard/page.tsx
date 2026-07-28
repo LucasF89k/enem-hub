@@ -4,7 +4,6 @@ import { db } from "@/lib/db"
 import Link from "next/link"
 import { startOfDay, addDays, subDays, differenceInDays, format } from "date-fns"
 import { ptBR } from "date-fns/locale"
-import { BarChart2, Calendar, Trophy, ChevronRight } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { detectTrail } from "@/lib/trail"
@@ -164,36 +163,6 @@ export default async function DashboardPage() {
           estimatedScore={estimatedScore}
         />
       </section>
-
-      {/* Mais detalhes — mantém acesso ao resto sem a grade densa antiga */}
-      <details className="group mt-10">
-        <summary className="flex cursor-pointer list-none items-center justify-center gap-1.5 text-xs uppercase tracking-[0.1em] text-muted-foreground">
-          Mais detalhes
-          <ChevronRight className="h-3.5 w-3.5 transition-transform group-open:rotate-90" />
-        </summary>
-
-        <div className="mt-6 space-y-4">
-          <div className="divide-y rounded-2xl border">
-            {[
-              { icon: BarChart2, label: "Analytics e evolução", href: "/analytics" },
-              { icon: Calendar, label: "Plano de estudos completo", href: "/planner" },
-              { icon: Trophy, label: "Conquistas", href: "/conquistas" },
-            ].map(({ icon: Icon, label, href }) => (
-              <Link
-                key={href}
-                href={href}
-                className="flex items-center justify-between px-4 py-3.5 text-sm hover:bg-muted/40"
-              >
-                <span className="flex items-center gap-3">
-                  <Icon className="h-4 w-4 text-muted-foreground" />
-                  {label}
-                </span>
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              </Link>
-            ))}
-          </div>
-        </div>
-      </details>
     </div>
   )
 }
