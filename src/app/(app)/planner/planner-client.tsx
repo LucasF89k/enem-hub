@@ -5,13 +5,7 @@ import { format, addDays, parseISO } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet"
+import { Badge } from "@/components/ui/badge"
 import {
   Dialog,
   DialogContent,
@@ -24,40 +18,50 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { cn } from "@/lib/utils"
-import { completePlanItem, removePlanItem, generatePlan, recalibratePlan } from "@/app/actions/planner.actions"
+import { completePlanItem, generatePlan, recalibratePlan } from "@/app/actions/planner.actions"
 import {
   BookOpen,
   HelpCircle,
   Brain,
   FileText,
+  PenLine,
   CheckCircle2,
   Circle,
-  Trash2,
   Wand2,
   Loader2,
   CalendarDays,
   RefreshCw,
   Sparkles,
   ArrowRight,
+  ChevronRight,
 } from "lucide-react"
 import Link from "next/link"
 
-const SESSION_ICON: Record<string, React.ReactNode> = {
-  CONTENT: <BookOpen className="h-3.5 w-3.5" />,
-  QUESTIONS: <HelpCircle className="h-3.5 w-3.5" />,
-  FLASHCARDS: <Brain className="h-3.5 w-3.5" />,
-  SIMULADO: <FileText className="h-3.5 w-3.5" />,
-  REDACAO: <FileText className="h-3.5 w-3.5" />,
-  REVISION: <Brain className="h-3.5 w-3.5" />,
+const TYPE_ICON: Record<string, React.ReactNode> = {
+  CONTENT: <BookOpen className="h-4 w-4" />,
+  QUESTIONS: <HelpCircle className="h-4 w-4" />,
+  FLASHCARDS: <Brain className="h-4 w-4" />,
+  SIMULADO: <FileText className="h-4 w-4" />,
+  REDACAO: <PenLine className="h-4 w-4" />,
+  REVISION: <Brain className="h-4 w-4" />,
 }
 
-const SESSION_COLOR: Record<string, string> = {
-  CONTENT: "text-blue-500",
-  QUESTIONS: "text-green-500",
-  FLASHCARDS: "text-purple-500",
-  SIMULADO: "text-orange-500",
-  REDACAO: "text-pink-500",
-  REVISION: "text-yellow-500",
+const TYPE_TINT: Record<string, string> = {
+  CONTENT: "bg-blue-500/10 text-blue-500",
+  QUESTIONS: "bg-green-500/10 text-green-500",
+  FLASHCARDS: "bg-purple-500/10 text-purple-500",
+  SIMULADO: "bg-orange-500/10 text-orange-500",
+  REDACAO: "bg-pink-500/10 text-pink-500",
+  REVISION: "bg-yellow-500/10 text-yellow-500",
+}
+
+const TYPE_LABEL: Record<string, string> = {
+  CONTENT: "Teoria",
+  QUESTIONS: "Questões",
+  FLASHCARDS: "Flashcards",
+  SIMULADO: "Simulado",
+  REDACAO: "Redação",
+  REVISION: "Revisão",
 }
 
 const DAY_LABELS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"]
@@ -69,7 +73,6 @@ interface PlanItem {
   description: string | null
   type: string
   scheduledAt: string
-  duration: number
   completed: boolean
   topicId: string | null
   topic: {
@@ -84,55 +87,66 @@ interface PlannerClientProps {
   items: PlanItem[]
   hasPlan: boolean
   dailyGoal: number
+  recalibrateRecommended: boolean
 }
 
-export function PlannerClient({ weekStart, items, hasPlan, dailyGoal }: PlannerClientProps) {
+/** Destino da atividade — abre direto a aba/matéria correspondente. */
+function itemHref(item: PlanItem): string {
+  const t = item.topic
+  const base = t ? `/study/${t.discipline.area.slug}/${t.discipline.slug}/${t.slug}` : null
+  switch (item.type) {
+    case "CONTENT":
+      return base ? `${base}?tab=teoria` : "/study"
+    case "QUESTIONS":
+      return base ? `${base}?tab=questoes` : "/study"
+    case "FLASHCARDS":
+      return base ? `${base}?tab=flashcards` : "/flashcards"
+    case "SIMULADO":
+      return "/simulados"
+    case "REDACAO":
+      return "/redacao"
+    default:
+      return base ?? "/study"
+  }
+}
+
+export function PlannerClient({
+  weekStart,
+  items,
+  hasPlan,
+  dailyGoal,
+  recalibrateRecommended,
+}: PlannerClientProps) {
   const weekStartDate = parseISO(weekStart)
   const [localItems, setLocalItems] = useState<PlanItem[]>(items)
-  const [selectedItem, setSelectedItem] = useState<PlanItem | null>(null)
   const [showGenDialog, setShowGenDialog] = useState(!hasPlan)
   const [isGenerating, startGenerate] = useTransition()
-  const [isCompleting, startComplete] = useTransition()
+  const [, startComplete] = useTransition()
   const [isRecalibrating, startRecalibrate] = useTransition()
 
-  // Group items by day of week
+  const todayStr = new Date().toISOString().slice(0, 10)
+
   const days = Array.from({ length: 7 }, (_, i) => {
     const date = addDays(weekStartDate, i)
-    // Use UTC date string so comparison matches ISO scheduledAt strings from server
     const dateStr = date.toISOString().slice(0, 10)
-    const dayItems = localItems.filter((item) =>
-      item.scheduledAt.startsWith(dateStr)
-    )
-    // getUTCDay() — scheduledAt is stored as UTC midnight; getDay() would return
-    // the LOCAL day (e.g. Brazil UTC-3 turns Monday UTC into Sunday night locally)
-    return { date, label: DAY_LABELS[date.getUTCDay()], items: dayItems }
+    const dayItems = localItems.filter((item) => item.scheduledAt.startsWith(dateStr))
+    return { date, dateStr, items: dayItems }
   })
 
-  function handleComplete(item: PlanItem) {
+  function toggleComplete(item: PlanItem) {
     const willComplete = !item.completed
     setLocalItems((prev) =>
-      prev.map((p) => (p.id === item.id ? { ...p, completed: !p.completed } : p))
+      prev.map((p) => (p.id === item.id ? { ...p, completed: willComplete } : p)),
     )
-    setSelectedItem(null)
     startComplete(async () => {
       try {
         await completePlanItem(item.id)
-        if (willComplete) toast.success("Item marcado como concluído!")
+        if (willComplete) toast.success("Concluído! 🎉")
       } catch {
         toast.error("Erro ao atualizar item")
-      }
-    })
-  }
-
-  function handleRemove(item: PlanItem) {
-    setLocalItems((prev) => prev.filter((p) => p.id !== item.id))
-    setSelectedItem(null)
-    startComplete(async () => {
-      try {
-        await removePlanItem(item.id)
-        toast.success("Item removido")
-      } catch {
-        toast.error("Erro ao remover item")
+        setLocalItems((prev) =>
+          prev.map((p) => (p.id === item.id ? { ...p, completed: !willComplete } : p)),
+        )
       }
     })
   }
@@ -150,6 +164,7 @@ export function PlannerClient({ weekStart, items, hasPlan, dailyGoal }: PlannerC
   }
 
   function handleRecalibrate() {
+    if (!recalibrateRecommended) return
     startRecalibrate(async () => {
       try {
         const result = await recalibratePlan()
@@ -168,7 +183,7 @@ export function PlannerClient({ weekStart, items, hasPlan, dailyGoal }: PlannerC
   const GenerateDialog = () => (
     <Dialog open={showGenDialog} onOpenChange={setShowGenDialog}>
       <DialogTrigger asChild>
-        <Button size="sm" className="gap-1">
+        <Button size="sm" className="gap-1.5">
           <Wand2 className="h-4 w-4" />
           Gerar plano
         </Button>
@@ -178,7 +193,7 @@ export function PlannerClient({ weekStart, items, hasPlan, dailyGoal }: PlannerC
           <DialogTitle>Gerar novo plano</DialogTitle>
         </DialogHeader>
 
-        {/* Opção recomendada: montar com o Mentor (entrevista + rotina automática) */}
+        {/* Opção recomendada: montar com o Mentor */}
         <Link
           href="/mentor?planner=1"
           className="flex items-center gap-3 rounded-2xl border border-primary/30 bg-primary/5 p-3.5 transition-colors hover:bg-primary/10"
@@ -204,11 +219,9 @@ export function PlannerClient({ weekStart, items, hasPlan, dailyGoal }: PlannerC
         </div>
 
         <form
-          action={handleGenerate as unknown as string}
           onSubmit={(e) => {
             e.preventDefault()
-            const formData = new FormData(e.currentTarget)
-            handleGenerate(formData)
+            handleGenerate(new FormData(e.currentTarget))
           }}
           className="space-y-5"
         >
@@ -218,7 +231,14 @@ export function PlannerClient({ weekStart, items, hasPlan, dailyGoal }: PlannerC
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="dailyGoalMinutes">Meta diária (minutos)</Label>
-            <Input id="dailyGoalMinutes" name="dailyGoalMinutes" type="number" defaultValue={dailyGoal} min={30} max={720} />
+            <Input
+              id="dailyGoalMinutes"
+              name="dailyGoalMinutes"
+              type="number"
+              defaultValue={dailyGoal}
+              min={30}
+              max={720}
+            />
           </div>
           <div className="space-y-2">
             <Label>Dias disponíveis</Label>
@@ -232,7 +252,7 @@ export function PlannerClient({ weekStart, items, hasPlan, dailyGoal }: PlannerC
             </div>
           </div>
           <DialogFooter>
-            <Button type="submit" disabled={isGenerating} className="gap-1">
+            <Button type="submit" disabled={isGenerating} className="gap-1.5">
               {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
               {isGenerating ? "Gerando…" : "Gerar plano"}
             </Button>
@@ -243,24 +263,29 @@ export function PlannerClient({ weekStart, items, hasPlan, dailyGoal }: PlannerC
   )
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-6 space-y-5">
-      <div className="flex items-center justify-between gap-3">
+    <div className="mx-auto max-w-2xl px-4 py-6 space-y-6">
+      {/* Cabeçalho */}
+      <div className="flex items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">Planejador</h1>
           <p className="text-sm text-muted-foreground">
-            Semana de {format(weekStartDate, "dd MMM", { locale: ptBR })} a{" "}
-            {format(addDays(weekStartDate, 6), "dd MMM yyyy", { locale: ptBR })}
+            Semana de {format(weekStartDate, "dd 'de' MMM", { locale: ptBR })} a{" "}
+            {format(addDays(weekStartDate, 6), "dd 'de' MMM", { locale: ptBR })}
           </p>
         </div>
         <div className="flex items-center gap-2">
           {hasPlan && (
             <Button
-              variant="outline"
+              variant={recalibrateRecommended ? "default" : "outline"}
               size="sm"
-              className="gap-1"
+              className={cn("gap-1.5", !recalibrateRecommended && "text-muted-foreground")}
               onClick={handleRecalibrate}
-              disabled={isRecalibrating || isGenerating}
-              title="Recalcula prioridades com base no seu desempenho atual"
+              disabled={!recalibrateRecommended || isRecalibrating}
+              title={
+                recalibrateRecommended
+                  ? "O Mentor sugere recalibrar com base no seu desempenho recente"
+                  : "Sem necessidade de recalibrar por enquanto"
+              }
             >
               {isRecalibrating ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -274,137 +299,125 @@ export function PlannerClient({ weekStart, items, hasPlan, dailyGoal }: PlannerC
         </div>
       </div>
 
+      {recalibrateRecommended && hasPlan && (
+        <div className="flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/5 px-3.5 py-2.5 text-sm">
+          <Sparkles className="h-4 w-4 shrink-0 text-primary" />
+          <span className="text-muted-foreground">
+            O Mentor recomenda <b className="text-foreground">recalibrar</b> — seu desempenho recente
+            mudou as prioridades.
+          </span>
+        </div>
+      )}
+
       {!hasPlan && localItems.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-xl border bg-muted/20 py-16 gap-3 text-center">
+        <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border bg-muted/20 py-16 text-center">
           <CalendarDays className="h-10 w-10 text-muted-foreground/40" />
           <p className="font-medium">Nenhum plano ativo</p>
-          <p className="text-sm text-muted-foreground">
+          <p className="max-w-xs text-sm text-muted-foreground">
             Gere um plano personalizado para começar a estudar com estratégia
           </p>
-          <Button onClick={() => setShowGenDialog(true)} className="mt-2 gap-1">
+          <Button onClick={() => setShowGenDialog(true)} className="mt-2 gap-1.5">
             <Wand2 className="h-4 w-4" />
             Gerar meu primeiro plano
           </Button>
         </div>
       ) : (
-        /* Weekly calendar */
-        <div className="grid grid-cols-1 sm:grid-cols-7 gap-2">
-          {days.map(({ date, label, items: dayItems }) => {
-            const isToday = date.toISOString().slice(0, 10) === new Date().toISOString().slice(0, 10)
-            const completedCount = dayItems.filter((i) => i.completed).length
-            const totalMins = dayItems.reduce((s, i) => s + i.duration, 0)
+        /* Agenda vertical por dia */
+        <div className="space-y-5">
+          {days.map(({ date, dateStr, items: dayItems }) => {
+            const isToday = dateStr === todayStr
+            const done = dayItems.filter((i) => i.completed).length
+            const weekday = format(date, "EEEE", { locale: ptBR })
+            const weekdayCap = weekday.charAt(0).toUpperCase() + weekday.slice(1)
 
             return (
-              <div
-                key={label}
-                className={cn(
-                  "rounded-xl border bg-card p-2 space-y-1.5 min-h-[80px]",
-                  isToday && "border-primary/40 bg-primary/5"
-                )}
-              >
-                <div className="flex items-center justify-between px-1">
-                  <span className={cn("text-xs font-semibold", isToday ? "text-primary" : "text-muted-foreground")}>
-                    {label}
-                  </span>
-                  <span className="text-[10px] text-muted-foreground">
-                    {date.toISOString().slice(8, 10)}/{date.toISOString().slice(5, 7)}
-                  </span>
-                </div>
-                {totalMins > 0 && (
-                  <p className="text-[10px] text-muted-foreground px-1">
-                    {completedCount}/{dayItems.length} · {totalMins}min
-                  </p>
-                )}
-
-                {dayItems.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => setSelectedItem(item)}
+              <section key={dateStr} className="space-y-2">
+                <div className="flex items-center gap-2 px-0.5">
+                  <h2
                     className={cn(
-                      "w-full rounded-lg px-2 py-1.5 text-left transition-colors",
-                      item.completed
-                        ? "bg-muted/40 opacity-60"
-                        : "bg-muted/60 hover:bg-muted"
+                      "text-sm font-semibold",
+                      isToday ? "text-primary" : "text-foreground",
                     )}
                   >
-                    <div className="flex items-center gap-1.5">
-                      <span className={cn("shrink-0", SESSION_COLOR[item.type] ?? "text-muted-foreground")}>
-                        {SESSION_ICON[item.type]}
-                      </span>
-                      <span className="text-[11px] font-medium leading-tight line-clamp-2 flex-1">
-                        {item.title}
-                      </span>
-                      {item.completed && <CheckCircle2 className="h-3 w-3 shrink-0 text-green-500" />}
-                    </div>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">{item.duration}min</p>
-                  </button>
-                ))}
+                    {weekdayCap}
+                  </h2>
+                  <span className="text-xs text-muted-foreground">
+                    {format(date, "dd/MM", { locale: ptBR })}
+                  </span>
+                  {isToday && (
+                    <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
+                      Hoje
+                    </Badge>
+                  )}
+                  {dayItems.length > 0 && (
+                    <span className="ml-auto text-xs text-muted-foreground tabular-nums">
+                      {done}/{dayItems.length}
+                    </span>
+                  )}
+                </div>
 
-                {dayItems.length === 0 && (
-                  <p className="text-[10px] text-muted-foreground px-1">Dia livre</p>
+                {dayItems.length === 0 ? (
+                  <p className="rounded-xl border border-dashed px-3.5 py-3 text-xs text-muted-foreground">
+                    Dia livre
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {dayItems.map((item) => (
+                      <div key={item.id} className="flex items-center gap-2">
+                        {/* Marcar como concluído */}
+                        <button
+                          type="button"
+                          onClick={() => toggleComplete(item)}
+                          className="shrink-0 rounded-full p-0.5 text-muted-foreground transition-colors hover:text-primary"
+                          aria-label={item.completed ? "Desmarcar" : "Concluir"}
+                        >
+                          {item.completed ? (
+                            <CheckCircle2 className="h-6 w-6 text-green-500" />
+                          ) : (
+                            <Circle className="h-6 w-6" />
+                          )}
+                        </button>
+
+                        {/* Abre direto a atividade */}
+                        <Link
+                          href={itemHref(item)}
+                          className={cn(
+                            "flex flex-1 items-center gap-3 rounded-xl border p-3 transition-colors hover:bg-muted/40",
+                            item.completed ? "bg-muted/20 opacity-60" : "bg-card",
+                          )}
+                        >
+                          <div
+                            className={cn(
+                              "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
+                              TYPE_TINT[item.type] ?? "bg-muted text-muted-foreground",
+                            )}
+                          >
+                            {TYPE_ICON[item.type]}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p
+                              className={cn(
+                                "truncate text-sm font-medium",
+                                item.completed && "line-through",
+                              )}
+                            >
+                              {item.topic?.name ?? item.title}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {TYPE_LABEL[item.type] ?? item.type}
+                            </p>
+                          </div>
+                          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        </Link>
+                      </div>
+                    ))}
+                  </div>
                 )}
-              </div>
+              </section>
             )
           })}
         </div>
       )}
-
-      {/* Item detail sheet */}
-      <Sheet open={!!selectedItem} onOpenChange={(o) => !o && setSelectedItem(null)}>
-        <SheetContent side="bottom" className="rounded-t-2xl">
-          {selectedItem && (
-            <>
-              <SheetHeader className="pb-3">
-                <SheetTitle className="flex items-center gap-2">
-                  <span className={cn(SESSION_COLOR[selectedItem.type] ?? "")}>
-                    {SESSION_ICON[selectedItem.type]}
-                  </span>
-                  {selectedItem.title}
-                </SheetTitle>
-              </SheetHeader>
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center justify-between text-muted-foreground">
-                  <span>{format(parseISO(selectedItem.scheduledAt), "EEEE, dd 'de' MMM", { locale: ptBR })}</span>
-                  <span>{selectedItem.duration} minutos</span>
-                </div>
-                {selectedItem.description && (
-                  <p className="text-muted-foreground">{selectedItem.description}</p>
-                )}
-              </div>
-              <div className="flex gap-2 mt-5">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1 gap-1"
-                  onClick={() => handleRemove(selectedItem)}
-                  disabled={isCompleting}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                  Remover
-                </Button>
-                <Button
-                  size="sm"
-                  className="flex-1 gap-1"
-                  onClick={() => handleComplete(selectedItem)}
-                  disabled={isCompleting}
-                >
-                  {selectedItem.completed ? (
-                    <>
-                      <Circle className="h-3.5 w-3.5" />
-                      Desmarcar
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle2 className="h-3.5 w-3.5" />
-                      Concluir
-                    </>
-                  )}
-                </Button>
-              </div>
-            </>
-          )}
-        </SheetContent>
-      </Sheet>
     </div>
   )
 }

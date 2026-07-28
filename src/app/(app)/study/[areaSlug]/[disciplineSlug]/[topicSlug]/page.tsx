@@ -22,16 +22,22 @@ export async function generateMetadata({
   return { title: topic ? `${topic.name} — Vion` : "Tópico" }
 }
 
+const VALID_TABS = ["teoria", "resumo", "flashcards", "questoes", "videos"]
+
 export default async function TopicPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ areaSlug: string; disciplineSlug: string; topicSlug: string }>
+  searchParams: Promise<{ tab?: string }>
 }) {
   const session = await auth()
   if (!session?.user?.id) redirect("/login")
   const userId = session.user.id
 
   const { areaSlug, disciplineSlug, topicSlug } = await params
+  const { tab } = await searchParams
+  const defaultTab = tab && VALID_TABS.includes(tab) ? tab : "teoria"
 
   const topic = await db.topic.findUnique({
     where: { slug: topicSlug },
@@ -172,6 +178,7 @@ export default async function TopicPage({
       <TopicTabs
         topicId={topic.id}
         topicName={topic.name}
+        defaultTab={defaultTab}
         content={content ? {
           id: content.id,
           summary: content.summary,

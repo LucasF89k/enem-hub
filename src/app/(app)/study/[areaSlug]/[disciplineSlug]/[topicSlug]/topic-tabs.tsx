@@ -49,11 +49,12 @@ interface Props {
   questions: InlineQuestion[]
   pendingReviews: number
   videos: VideoWithWatched[]
+  defaultTab?: string
 }
 
-export function TopicTabs({ topicId, topicName, content, flashcards, questions, pendingReviews, videos }: Props) {
+export function TopicTabs({ topicId, topicName, content, flashcards, questions, pendingReviews, videos, defaultTab }: Props) {
   return (
-    <Tabs defaultValue="teoria">
+    <Tabs defaultValue={defaultTab ?? "teoria"}>
       <StudyTimer />
       <TabsList className="w-full grid grid-cols-5">
         <TabsTrigger value="teoria" className="text-xs sm:text-sm">Teoria</TabsTrigger>
