@@ -1,6 +1,7 @@
 "use client"
 
 import { usePathname } from "next/navigation"
+import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { GlobalSearch } from "@/components/search/GlobalSearch"
 
@@ -41,6 +42,13 @@ export function Header({ actions, className }: HeaderProps) {
         className
       )}
     >
+      {/* Logo Vion — desktop */}
+      <Link href="/dashboard" className="hidden md:flex items-center gap-2 shrink-0">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/logo-app.png" alt="Vion" className="h-7 w-7 object-contain" />
+        <span className="text-lg font-bold tracking-tight">Vion</span>
+      </Link>
+
       {/* Page title — mobile only */}
       <h1 className="text-base font-semibold text-foreground truncate md:hidden flex-1">
         {getPageTitle(pathname)}

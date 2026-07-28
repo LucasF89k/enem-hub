@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
-import { mimo, MIMO_MODEL } from '@/lib/mimo'
+import { geminiChatModel } from '@/lib/gemini'
 import { findCurso, estimateCutoff, cursoMedia } from '@/constants/cursos'
 import { findUniversidade } from '@/constants/universidades'
 
@@ -125,27 +125,20 @@ Regras do JSON:
 
     const finalSystem = planner ? systemPrompt + plannerInstructions : systemPrompt
 
-    const formattedMessages = messages.map((m: { role: string; content: string }) => ({
-      role: m.role as 'user' | 'assistant',
-      content: m.content,
+    // Gemini exige roles 'user'/'model' e histórico alternado começando por 'user'.
+    const contents = (messages as { role: string; content: string }[]).map((m) => ({
+      role: m.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: m.content }],
     }))
 
-    const stream = await mimo.chat.completions.create({
-      model: MIMO_MODEL,
-      messages: [
-        { role: 'system', content: finalSystem },
-        ...formattedMessages,
-      ],
-      stream: true,
-      max_tokens: 1024,
-      temperature: 0.7,
-    })
+    const model = geminiChatModel(finalSystem)
+    const result = await model.generateContentStream({ contents })
 
     const readable = new ReadableStream({
       async start(controller) {
         try {
-          for await (const chunk of stream) {
-            const text = chunk.choices[0]?.delta?.content ?? ''
+          for await (const chunk of result.stream) {
+            const text = chunk.text()
             if (text) controller.enqueue(new TextEncoder().encode(text))
           }
         } finally {
@@ -158,10 +151,10 @@ Regras do JSON:
       headers: { 'Content-Type': 'text/plain; charset=utf-8' },
     })
   } catch (error) {
-    console.error('[Mentor MiMo Error]:', error)
+    console.error('[Mentor Gemini Error]:', error)
     const message = error instanceof Error ? error.message : 'Erro desconhecido'
     return new Response(
-      `Erro ao chamar MiMo: ${message}`,
+      `Erro ao chamar o Mentor: ${message}`,
       { status: 500 }
     )
   }

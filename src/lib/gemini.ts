@@ -18,6 +18,18 @@ export const geminiPro = genAI.getGenerativeModel({
   },
 })
 
+/** Modelo de chat com instrução de sistema (para o Mentor, com streaming). */
+export function geminiChatModel(systemInstruction: string) {
+  return genAI.getGenerativeModel({
+    model: "gemini-2.5-flash",
+    systemInstruction,
+    generationConfig: {
+      temperature: 0.7,
+      maxOutputTokens: 2048,
+    },
+  })
+}
+
 export async function generateText(prompt: string): Promise<string> {
   const result = await gemini.generateContent(prompt)
   return result.response.text()
