@@ -3,7 +3,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai"
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 
 export const gemini = genAI.getGenerativeModel({
-  model: "gemini-2.5-flash",
+  model: "gemini-2.0-flash",
   generationConfig: {
     temperature: 0.7,
     maxOutputTokens: 2048,
@@ -11,7 +11,7 @@ export const gemini = genAI.getGenerativeModel({
 })
 
 export const geminiPro = genAI.getGenerativeModel({
-  model: "gemini-2.5-flash",
+  model: "gemini-2.0-flash",
   generationConfig: {
     temperature: 0.5,
     maxOutputTokens: 8192,
@@ -21,7 +21,7 @@ export const geminiPro = genAI.getGenerativeModel({
 /** Modelo de chat com instrução de sistema (para o Mentor, com streaming). */
 export function geminiChatModel(systemInstruction: string) {
   return genAI.getGenerativeModel({
-    model: "gemini-2.5-flash",
+    model: "gemini-2.0-flash",
     systemInstruction,
     generationConfig: {
       temperature: 0.7,

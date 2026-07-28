@@ -159,9 +159,12 @@ Regras do JSON:
   } catch (error) {
     console.error('[Mentor Gemini Error]:', error)
     const message = error instanceof Error ? error.message : 'Erro desconhecido'
+    const isQuota = /429|quota|rate.?limit|RESOURCE_EXHAUSTED|Too Many Requests/i.test(message)
     return new Response(
-      `Erro ao chamar o Mentor: ${message}`,
-      { status: 500 }
+      isQuota
+        ? '⚠️ O Mentor atingiu o limite de uso gratuito por enquanto. Tente novamente em alguns minutos.'
+        : `Erro ao chamar o Mentor. Tente novamente.`,
+      { status: isQuota ? 429 : 500 },
     )
   }
 }
