@@ -5,7 +5,12 @@ import { NewEssayForm } from "./NewEssayForm"
 
 export const metadata = { title: "Nova Redação" }
 
-export default function NewEssayPage() {
+export default async function NewEssayPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tema?: string }>
+}) {
+  const { tema } = await searchParams
   return (
     <div className="max-w-xl mx-auto px-4 py-6 space-y-6">
       <div className="flex items-center gap-2">
@@ -22,7 +27,7 @@ export default function NewEssayPage() {
         <p className="text-sm text-muted-foreground">Escolha, gere com o Mentor ou escreva um tema</p>
       </div>
 
-      <NewEssayForm />
+      <NewEssayForm initialTheme={tema ?? ""} />
     </div>
   )
 }

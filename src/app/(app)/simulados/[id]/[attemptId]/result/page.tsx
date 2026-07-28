@@ -4,12 +4,13 @@ import { db } from "@/lib/db"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { ArrowLeft, Trophy, Clock, CheckCircle2, XCircle } from "lucide-react"
+import { ArrowLeft, Clock, CheckCircle2, XCircle, PenLine, ArrowRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { SimuladoScoreChart } from "@/components/simulado/SimuladoScoreChart"
 import { AchievementToast } from "@/components/achievements/AchievementToast"
+import { TEMAS_HISTORICOS } from "@/constants/redacao-bank"
 
 export const metadata = { title: "Resultado" }
 
@@ -97,6 +98,12 @@ export default async function SimuladoResultPage({
   const mins = timeSpent ? Math.floor(timeSpent / 60) : null
   const secs = timeSpent ? timeSpent % 60 : null
 
+  // 1º dia do ENEM inclui a redação — sugere o tema do ano do simulado
+  const yearMatch = attempt.simulado.title.match(/(19|20)\d{2}/)
+  const simYear = yearMatch ? parseInt(yearMatch[0]) : null
+  const redacaoTema = TEMAS_HISTORICOS.find((t) => t.ano === simYear)?.tema ?? ""
+  const showRedacaoCta = attempt.examDay === 1
+
   const areaScores = [
     { slug: "ciencias-natureza", score: attempt.scoreCN },
     { slug: "ciencias-humanas", score: attempt.scoreCH },
@@ -166,6 +173,25 @@ export default async function SimuladoResultPage({
           </div>
         </CardContent>
       </Card>
+
+      {/* Redação — completa o 1º dia */}
+      {showRedacaoCta && (
+        <Link
+          href={`/redacao/new${redacaoTema ? `?tema=${encodeURIComponent(redacaoTema)}` : ""}`}
+          className="flex items-center gap-3 rounded-2xl border border-primary/30 bg-primary/5 p-4 transition-colors hover:bg-primary/10"
+        >
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/15">
+            <PenLine className="h-5 w-5 text-primary" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold">Falta a redação!</p>
+            <p className="text-xs text-muted-foreground">
+              No 1º dia do ENEM você também escreve a redação. Faça agora com 2h de cronômetro.
+            </p>
+          </div>
+          <ArrowRight className="h-4 w-4 shrink-0 text-primary" />
+        </Link>
+      )}
 
       {/* Per-area scores */}
       {areaScores.length > 0 && (

@@ -10,9 +10,9 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Sparkles, Loader2 } from "lucide-react"
 import { TEMAS_HISTORICOS } from "@/constants/redacao-bank"
 
-export function NewEssayForm() {
-  const [theme, setTheme] = useState("")
-  const [title, setTitle] = useState("")
+export function NewEssayForm({ initialTheme = "" }: { initialTheme?: string }) {
+  const [theme, setTheme] = useState(initialTheme)
+  const [title, setTitle] = useState(initialTheme ? "Redação — dia de prova" : "")
   const [generating, startGenerate] = useTransition()
 
   function gerarTema() {
