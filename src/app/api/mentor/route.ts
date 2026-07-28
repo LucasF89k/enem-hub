@@ -2,6 +2,8 @@ import { NextRequest } from 'next/server'
 import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { mimo, MIMO_MODEL } from '@/lib/mimo'
+import { findCurso, estimateCutoff, cursoMedia } from '@/constants/cursos'
+import { findUniversidade } from '@/constants/universidades'
 
 export async function POST(req: NextRequest) {
   try {
@@ -18,6 +20,7 @@ export async function POST(req: NextRequest) {
         select: {
           targetScore: true,
           targetCourse: true,
+          targetInstitution: true,
           trail: true,
           streak: true,
           totalXP: true,
@@ -67,12 +70,21 @@ export async function POST(req: NextRequest) {
       SPRINT: 'Trilha Sprint — foque APENAS em questões e revisão. Zero teoria nova.',
     }
 
-    const systemPrompt = `Você é o Mentor ENEM, tutor especializado em preparação para o ENEM com foco em Medicina.
+    const curso = findCurso(profile?.targetCourse) ?? findCurso('medicina')!
+    const uni = findUniversidade(profile?.targetInstitution)
+    const metaFaculdade = uni
+      ? `${uni.sigla} (${uni.cidade}/${uni.uf}) — nota de corte estimada ~${estimateCutoff(curso, uni)}`
+      : `ainda não definida (corte típico de ${curso.nome} ~${cursoMedia(curso)})`
+
+    const systemPrompt = `Você é o Mentor ENEM, tutor especializado em preparação para o ENEM com foco no curso de ${curso.nome}.
+Adapte todos os conselhos, prioridades de estudo e exemplos ao curso de ${curso.nome} e às competências mais cobradas para essa carreira.
 Seja didático, direto e motivador. Use exemplos práticos. Responda sempre em português brasileiro.
 Use markdown quando útil (listas, negrito). Seja conciso (máx 300 palavras).
 
 ${profile ? `PERFIL DO ALUNO:
-- Meta: ${profile.targetScore} pontos em ${profile.targetCourse ?? 'Medicina'}
+- Curso desejado: ${curso.nome}
+- Universidade-alvo: ${metaFaculdade}
+- Meta de nota: ${profile.targetScore} pontos
 - ${profile.trail ? trailMessages[profile.trail] ?? profile.trail : ''}
 - Streak: ${profile.streak} dias | XP: ${profile.totalXP}
 ${profile.examDate ? `- ENEM: ${new Date(profile.examDate).toLocaleDateString('pt-BR')}` : ''}` : ''}

@@ -14,7 +14,7 @@ import { Separator } from "@/components/ui/separator"
 import { ArrowLeft, Loader2, LogOut, Save } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { FaculdadeCombobox } from "@/components/settings/FaculdadeCombobox"
+import { CursoUniSelectors } from "@/components/settings/CursoUniSelectors"
 
 interface ProfileData {
   name: string
@@ -122,26 +122,11 @@ export default function SettingsPage() {
                 step={10}
               />
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="targetCourse">Curso desejado</Label>
-              <Input
-                id="targetCourse"
-                name="targetCourse"
-                defaultValue={data?.targetCourse ?? "Medicina"}
-                placeholder="Ex: Medicina, Direito, Engenharia"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Faculdade-alvo (Medicina)</Label>
-              <FaculdadeCombobox
-                key={data?.targetInstitution ?? "empty"}
-                defaultValue={data?.targetInstitution}
-              />
-              <p className="text-xs text-muted-foreground">
-                Federais, estaduais e particulares de todo o Brasil. Também dá pra escolher direto no
-                início.
-              </p>
-            </div>
+            <CursoUniSelectors
+              key={`${data?.targetCourse ?? ""}|${data?.targetInstitution ?? ""}`}
+              defaultCourse={data?.targetCourse}
+              defaultInstitution={data?.targetInstitution}
+            />
             <div className="space-y-1.5">
               <Label htmlFor="examDate">Data do ENEM</Label>
               <Input

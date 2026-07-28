@@ -14,8 +14,10 @@ import { NextTaskCard, type NextTask } from "@/components/dashboard/NextTaskCard
 import { QuietStatsRow } from "@/components/dashboard/QuietStatsRow"
 import { TargetInstitutionCard } from "@/components/dashboard/TargetInstitutionCard"
 import { NotasCorteBoard } from "@/components/dashboard/NotasCorteBoard"
+import { ExamCountdown } from "@/components/dashboard/ExamCountdown"
 import { TrailNote } from "@/components/dashboard/TrailNote"
-import { findFaculdade } from "@/constants/faculdades-medicina"
+import { findUniversidade } from "@/constants/universidades"
+import { findCurso } from "@/constants/cursos"
 
 export const metadata = { title: "Dashboard" }
 
@@ -87,9 +89,9 @@ export default async function DashboardPage() {
     ? session.user.name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase()
     : "U"
 
-  const isMedicina =
-    !profile?.targetCourse || profile.targetCourse.toLowerCase().includes("medicina")
-  const selectedFacId = findFaculdade(profile?.targetInstitution)?.id ?? null
+  const curso = findCurso(profile?.targetCourse) ?? findCurso("medicina")!
+  const selectedUniId = findUniversidade(profile?.targetInstitution)?.id ?? null
+  const examDateISO = profile?.examDate ? profile.examDate.toISOString() : null
 
   return (
     <div className="mx-auto flex w-full max-w-[460px] flex-col px-6 pb-16 pt-5 sm:min-h-[calc(100vh-11rem)] sm:justify-center sm:px-8 sm:pt-6 md:min-h-[calc(100vh-9rem)]">
@@ -132,22 +134,36 @@ export default async function DashboardPage() {
 
         <div className="my-9 h-px w-full bg-border" />
 
-        <QuietStatsRow streak={streak} estimatedScore={estimatedScore} daysUntilExam={daysUntilExam} />
+        {/* Contador regressivo do ENEM — em destaque */}
+        <div className="w-full max-w-[360px]">
+          <ExamCountdown examDate={examDateISO} />
+        </div>
+
+        <div className="mt-8 w-full">
+          <QuietStatsRow
+            streak={streak}
+            estimatedScore={estimatedScore}
+            daysUntilExam={daysUntilExam}
+          />
+        </div>
 
         <TargetInstitutionCard
           institution={profile?.targetInstitution}
+          cursoSlug={curso.slug}
           estimatedScore={estimatedScore}
         />
 
         <TrailNote trail={trail} />
       </div>
 
-      {/* Notas de corte — visível no fluxo principal, com todas as faculdades */}
-      {isMedicina && (
-        <section className="mt-10">
-          <NotasCorteBoard selectedId={selectedFacId} estimatedScore={estimatedScore} />
-        </section>
-      )}
+      {/* Notas de corte — visível no fluxo principal, adaptado ao curso */}
+      <section className="mt-10">
+        <NotasCorteBoard
+          cursoSlug={curso.slug}
+          selectedUniId={selectedUniId}
+          estimatedScore={estimatedScore}
+        />
+      </section>
 
       {/* Mais detalhes — mantém acesso ao resto sem a grade densa antiga */}
       <details className="group mt-10">
