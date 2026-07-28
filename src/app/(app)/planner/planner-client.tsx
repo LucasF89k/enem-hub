@@ -37,7 +37,10 @@ import {
   Loader2,
   CalendarDays,
   RefreshCw,
+  Sparkles,
+  ArrowRight,
 } from "lucide-react"
+import Link from "next/link"
 
 const SESSION_ICON: Record<string, React.ReactNode> = {
   CONTENT: <BookOpen className="h-3.5 w-3.5" />,
@@ -174,6 +177,32 @@ export function PlannerClient({ weekStart, items, hasPlan, dailyGoal }: PlannerC
         <DialogHeader>
           <DialogTitle>Gerar novo plano</DialogTitle>
         </DialogHeader>
+
+        {/* Opção recomendada: montar com o Mentor (entrevista + rotina automática) */}
+        <Link
+          href="/mentor?planner=1"
+          className="flex items-center gap-3 rounded-2xl border border-primary/30 bg-primary/5 p-3.5 transition-colors hover:bg-primary/10"
+        >
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/15">
+            <Sparkles className="h-5 w-5 text-primary" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold">Montar com o Mentor</p>
+            <p className="text-xs text-muted-foreground">
+              Responda algumas perguntas e o Mentor cria a rotina ideal pra você
+            </p>
+          </div>
+          <ArrowRight className="h-4 w-4 shrink-0 text-primary" />
+        </Link>
+
+        <div className="flex items-center gap-3 py-1">
+          <div className="h-px flex-1 bg-border" />
+          <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
+            ou gere manualmente
+          </span>
+          <div className="h-px flex-1 bg-border" />
+        </div>
+
         <form
           action={handleGenerate as unknown as string}
           onSubmit={(e) => {

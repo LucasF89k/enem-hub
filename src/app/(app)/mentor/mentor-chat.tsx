@@ -7,8 +7,11 @@ import { useMentorStore } from "@/store/mentor-store"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
-import { Send, Loader2, Trash2, Copy, Check, Bot, User } from "lucide-react"
+import { Send, Loader2, Trash2, Copy, Check, Bot, User, CalendarCheck, ArrowRight } from "lucide-react"
 import { useSearchParams } from "next/navigation"
+import Link from "next/link"
+import { toast } from "sonner"
+import { applyMentorPlan } from "@/app/actions/planner.actions"
 
 const QUICK_ACTIONS = [
   { label: "Meus pontos fracos", text: "Quais são meus principais pontos fracos com base nas minhas questões erradas? Me dê um plano focado." },
@@ -18,6 +21,101 @@ const QUICK_ACTIONS = [
   { label: "Dicas de redação", text: "Me dê as principais dicas para tirar nota máxima na redação do ENEM." },
   { label: "Estratégia de prova", text: "Como devo gerir meu tempo durante o ENEM? Me dê uma estratégia prática." },
 ]
+
+const WEEKDAY_LABELS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"]
+const BALANCE_LABELS: Record<string, string> = {
+  teoria: "Mais teoria",
+  equilibrado: "Equilibrado",
+  questoes: "Mais questões",
+}
+
+interface VionPlan {
+  daysCount?: number
+  dailyGoalMinutes?: number
+  weekDays?: number[]
+  focusDisciplines?: string[]
+  balance?: "teoria" | "equilibrado" | "questoes"
+  resumo?: string
+}
+
+/** Extrai o bloco ```vion-plan``` de uma mensagem; remove-o do texto exibido. */
+function extractVionPlan(content: string): { plan: VionPlan | null; cleaned: string } {
+  const closed = /```vion-plan\s*([\s\S]*?)```/i
+  const m = content.match(closed)
+  if (m) {
+    let plan: VionPlan | null = null
+    try {
+      plan = JSON.parse(m[1].trim())
+    } catch {
+      plan = null
+    }
+    return { plan, cleaned: content.replace(closed, "").trim() }
+  }
+  // Bloco ainda em streaming (sem fechamento) — oculta a cauda crua
+  const open = content.search(/```vion-plan/i)
+  if (open >= 0) return { plan: null, cleaned: content.slice(0, open).trim() }
+  return { plan: null, cleaned: content }
+}
+
+function ApplyPlanCard({ plan }: { plan: VionPlan }) {
+  const [state, setState] = useState<"idle" | "loading" | "done">("idle")
+
+  async function apply() {
+    setState("loading")
+    const res = await applyMentorPlan(plan)
+    if (res.success) {
+      setState("done")
+      toast.success("Rotina aplicada no seu Planner!")
+    } else {
+      setState("idle")
+      toast.error(res.error ?? "Não foi possível aplicar o plano")
+    }
+  }
+
+  const days = (plan.weekDays ?? []).map((d) => WEEKDAY_LABELS[d]).join(" · ")
+
+  return (
+    <div className="mt-2 rounded-2xl border bg-background p-4">
+      <div className="mb-3 flex items-center gap-2">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+          <CalendarCheck className="h-4 w-4 text-primary" />
+        </div>
+        <p className="text-sm font-semibold">Rotina proposta</p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
+        <span className="text-muted-foreground">Dias</span>
+        <span className="text-right font-medium">{days || "—"}</span>
+        <span className="text-muted-foreground">Tempo/dia</span>
+        <span className="text-right font-medium">{plan.dailyGoalMinutes} min</span>
+        <span className="text-muted-foreground">Duração</span>
+        <span className="text-right font-medium">{plan.daysCount} dias</span>
+        <span className="text-muted-foreground">Ênfase</span>
+        <span className="text-right font-medium">{BALANCE_LABELS[plan.balance ?? "equilibrado"]}</span>
+        {plan.focusDisciplines && plan.focusDisciplines.length > 0 && (
+          <>
+            <span className="text-muted-foreground">Foco</span>
+            <span className="text-right font-medium">{plan.focusDisciplines.join(", ")}</span>
+          </>
+        )}
+      </div>
+
+      {state === "done" ? (
+        <Button asChild className="mt-4 w-full gap-1.5">
+          <Link href="/planner">
+            Ver no Planner
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </Button>
+      ) : (
+        <Button onClick={apply} disabled={state === "loading"} className="mt-4 w-full gap-1.5">
+          {state === "loading" ? <Loader2 className="h-4 w-4 animate-spin" /> : <CalendarCheck className="h-4 w-4" />}
+          Aplicar esta rotina
+        </Button>
+      )}
+    </div>
+  )
+}
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false)
@@ -42,6 +140,7 @@ function CopyButton({ text }: { text: string }) {
 export function MentorChat() {
   const searchParams = useSearchParams()
   const topicId = searchParams.get("topicId") ?? undefined
+  const planner = searchParams.get("planner") === "1"
 
   const { messages, isLoading, addMessage, appendToMessage, setLoading, clear } =
     useMentorStore()
@@ -50,14 +149,15 @@ export function MentorChat() {
   const bottomRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const abortRef = useRef<AbortController | null>(null)
+  const startedRef = useRef(false)
 
-  // Show welcome message on first render
+  // Show welcome message on first render (fora do modo planner)
   useEffect(() => {
-    if (messages.length === 0) {
+    if (messages.length === 0 && !planner) {
       addMessage({
         role: "assistant",
         content:
-          "Olá! Sou o **Mentor ENEM**, seu professor particular para Medicina. 🎯\n\nEstou aqui para te ajudar com dúvidas de conteúdo, analisar seus pontos fracos, criar flashcards e muito mais.\n\nO que você precisa hoje?",
+          "Olá! Sou o **Mentor ENEM**, seu professor particular. 🎯\n\nEstou aqui para te ajudar com dúvidas de conteúdo, analisar seus pontos fracos, criar flashcards e muito mais.\n\nO que você precisa hoje?",
       })
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -96,7 +196,7 @@ export function MentorChat() {
         const response = await fetch("/api/mentor", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ messages: apiMessages, topicId }),
+          body: JSON.stringify({ messages: apiMessages, topicId, planner }),
           signal: controller.signal,
         })
 
@@ -126,8 +226,18 @@ export function MentorChat() {
         abortRef.current = null
       }
     },
-    [isLoading, messages, topicId, addMessage, appendToMessage, setLoading]
+    [isLoading, messages, topicId, planner, addMessage, appendToMessage, setLoading]
   )
+
+  // Modo planner: inicia a entrevista automaticamente uma única vez
+  useEffect(() => {
+    if (planner && !startedRef.current && messages.length === 0) {
+      startedRef.current = true
+      sendMessage(
+        "Quero montar minha rotina de estudos com você. Pode me fazer algumas perguntas rápidas e depois montar meu plano?",
+      )
+    }
+  }, [planner, messages.length, sendMessage])
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -196,19 +306,26 @@ export function MentorChat() {
               )}
             >
               {msg.role === "assistant" ? (
-                <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-ul:my-1 prose-li:my-0.5 prose-headings:my-1">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {msg.content || "▌"}
-                  </ReactMarkdown>
-                </div>
+                (() => {
+                  const { plan, cleaned } = extractVionPlan(msg.content)
+                  return (
+                    <>
+                      <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-ul:my-1 prose-li:my-0.5 prose-headings:my-1">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {cleaned || (isLoading ? "▌" : "")}
+                        </ReactMarkdown>
+                      </div>
+                      {plan && !isLoading && <ApplyPlanCard plan={plan} />}
+                      {cleaned && !isLoading && (
+                        <div className="flex justify-end mt-1">
+                          <CopyButton text={cleaned} />
+                        </div>
+                      )}
+                    </>
+                  )
+                })()
               ) : (
                 <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
-              )}
-
-              {msg.role === "assistant" && msg.content && !isLoading && (
-                <div className="flex justify-end mt-1">
-                  <CopyButton text={msg.content} />
-                </div>
               )}
             </div>
 

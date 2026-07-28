@@ -53,6 +53,52 @@ export async function generatePlan(
   }
 }
 
+const mentorPlanSchema = z.object({
+  daysCount: z.coerce.number().int().min(1).max(120).default(14),
+  dailyGoalMinutes: z.coerce.number().int().min(30).max(720).default(120),
+  weekDays: z.array(z.coerce.number().int().min(0).max(6)).min(1).default([1, 2, 3, 4, 5]),
+  focusDisciplines: z.array(z.string().min(1).max(60)).max(15).optional().default([]),
+  balance: z.enum(["teoria", "equilibrado", "questoes"]).optional().default("equilibrado"),
+})
+
+export type MentorPlanInput = z.input<typeof mentorPlanSchema>
+
+/** Aplica a rotina estruturada montada pelo Mentor (fluxo de entrevista). */
+export async function applyMentorPlan(
+  input: MentorPlanInput,
+): Promise<{ success: boolean; planId?: string; error?: string }> {
+  const session = await auth()
+  if (!session?.user?.id) return { success: false, error: "Não autenticado" }
+  const userId = session.user.id
+
+  const parsed = mentorPlanSchema.safeParse(input)
+  if (!parsed.success) return { success: false, error: "Plano inválido" }
+  const { daysCount, dailyGoalMinutes, weekDays, focusDisciplines, balance } = parsed.data
+
+  try {
+    // Sincroniza a meta diária com o que foi combinado na entrevista
+    await db.userProfile.update({
+      where: { userId },
+      data: { dailyStudyGoal: dailyGoalMinutes },
+    }).catch(() => {})
+
+    const planId = await generateStudyPlan({
+      userId,
+      startDate: getThisMondayUTC(),
+      daysCount,
+      dailyGoalMinutes,
+      weekDays,
+      focusDisciplines,
+      balance,
+    })
+    revalidatePath("/planner")
+    revalidatePath("/dashboard")
+    return { success: true, planId }
+  } catch {
+    return { success: false, error: "Falha ao gerar o plano" }
+  }
+}
+
 export async function completePlanItem(itemId: string): Promise<void> {
   const session = await auth()
   if (!session?.user?.id) throw new Error("Unauthorized")

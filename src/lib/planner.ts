@@ -8,6 +8,14 @@ export interface GeneratePlanParams {
   daysCount: number
   dailyGoalMinutes: number
   weekDays: number[]
+  /** Disciplinas (nomes) a priorizar — coletadas na entrevista do Mentor. */
+  focusDisciplines?: string[]
+  /** Ênfase do plano: mais teoria, equilibrado ou mais questões. */
+  balance?: "teoria" | "equilibrado" | "questoes"
+}
+
+function norm(s: string) {
+  return s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
 }
 
 /**
@@ -28,7 +36,9 @@ export async function syncTrail(userId: string): Promise<TrailType> {
 }
 
 export async function generateStudyPlan(params: GeneratePlanParams): Promise<string> {
-  const { userId, startDate, daysCount, dailyGoalMinutes, weekDays } = params
+  const { userId, startDate, daysCount, dailyGoalMinutes, weekDays, focusDisciplines, balance } =
+    params
+  const focusNorm = (focusDisciplines ?? []).map(norm).filter(Boolean)
 
   // Deactivate existing plan
   await db.studyPlan.updateMany({
@@ -96,7 +106,15 @@ export async function generateStudyPlan(params: GeneratePlanParams): Promise<str
     .map((t) => {
       const acc = topicAccuracy[t.id] ?? 0.5
       const errorRate = 1 - acc
-      const score = t.frequency * 0.4 + errorRate * 0.4 + t.importance * 0.2
+      let score = t.frequency * 0.4 + errorRate * 0.4 + t.importance * 0.2
+      // Prioriza disciplinas escolhidas na entrevista do Mentor
+      if (focusNorm.length > 0) {
+        const disc = norm(t.discipline?.name ?? "")
+        const area = norm(t.discipline?.area?.name ?? "")
+        if (focusNorm.some((f) => disc.includes(f) || f.includes(disc) || area.includes(f))) {
+          score += 1
+        }
+      }
       return { topicId: t.id, score, name: t.name }
     })
     .sort((a, b) => b.score - a.score)
@@ -137,6 +155,16 @@ export async function generateStudyPlan(params: GeneratePlanParams): Promise<str
       simulado: simuladosMins(dailyGoalMinutes),
       content: contentMins(dailyGoalMinutes),
       questions: questionsMins(dailyGoalMinutes),
+    }
+    // Ênfase escolhida na entrevista: desloca ~35% entre teoria e questões
+    if (balance === "teoria") {
+      const shift = Math.floor(alloc.questions * 0.35)
+      alloc.questions -= shift
+      alloc.content += shift
+    } else if (balance === "questoes") {
+      const shift = Math.floor(alloc.content * 0.35)
+      alloc.content -= shift
+      alloc.questions += shift
     }
 
     // 1. Flashcard review block
