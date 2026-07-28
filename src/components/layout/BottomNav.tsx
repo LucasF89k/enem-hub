@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, BookOpen, Brain, HelpCircle, ClipboardList, User } from "lucide-react"
+import { Home, BookOpen, Brain, HelpCircle, ClipboardList, MessageCircle, User } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const NAV_ITEMS = [
@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { icon: Brain, label: "Flashcards", href: "/flashcards" },
   { icon: HelpCircle, label: "Questões", href: "/questions" },
   { icon: ClipboardList, label: "Simulados", href: "/simulados" },
+  { icon: MessageCircle, label: "Mentor", href: "/mentor" },
   { icon: User, label: "Perfil", href: "/profile" },
 ] as const
 
@@ -30,7 +31,7 @@ export function BottomNav() {
               key={href}
               href={href}
               className={cn(
-                "flex flex-1 flex-col items-center justify-center gap-0.5 transition-colors relative",
+                "flex flex-1 flex-col items-center justify-center gap-0.5 transition-colors relative min-w-0 px-0.5",
                 "min-h-[56px]", // área de toque mínima
                 active ? "text-primary" : "text-muted-foreground hover:text-foreground"
               )}
@@ -39,8 +40,10 @@ export function BottomNav() {
               {active && (
                 <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-primary" />
               )}
-              <Icon className="w-5 h-5" strokeWidth={active ? 2.5 : 1.75} />
-              <span className="text-[10px] font-medium leading-none">{label}</span>
+              <Icon className="w-5 h-5 shrink-0" strokeWidth={active ? 2.5 : 1.75} />
+              <span className="w-full truncate text-center text-[9.5px] font-medium leading-none">
+                {label}
+              </span>
             </Link>
           )
         })}
