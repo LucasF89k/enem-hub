@@ -14,11 +14,7 @@ import { Separator } from "@/components/ui/separator"
 import { ArrowLeft, Loader2, LogOut, Save } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import {
-  FACULDADES_MEDICINA_RANK,
-  faculdadeLabel,
-  TIPO_LABEL,
-} from "@/constants/faculdades-medicina"
+import { FaculdadeCombobox } from "@/components/settings/FaculdadeCombobox"
 
 interface ProfileData {
   name: string
@@ -136,25 +132,14 @@ export default function SettingsPage() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="targetInstitution">Faculdade-alvo (Medicina)</Label>
-              <Input
-                id="targetInstitution"
-                name="targetInstitution"
-                list="faculdades-list"
-                defaultValue={data?.targetInstitution ?? ""}
-                placeholder="Busque: USP, UnB, ESCS, UFRJ…"
-                autoComplete="off"
+              <Label>Faculdade-alvo (Medicina)</Label>
+              <FaculdadeCombobox
+                key={data?.targetInstitution ?? "empty"}
+                defaultValue={data?.targetInstitution}
               />
-              <datalist id="faculdades-list">
-                {FACULDADES_MEDICINA_RANK.map((f) => (
-                  <option key={f.id} value={faculdadeLabel(f)}>
-                    {TIPO_LABEL[f.tipo]} · corte ~{Math.round(f.notaCorte)}
-                  </option>
-                ))}
-              </datalist>
               <p className="text-xs text-muted-foreground">
-                {FACULDADES_MEDICINA_RANK.length} faculdades — federais, estaduais e particulares de
-                todo o Brasil. Digite para buscar.
+                Federais, estaduais e particulares de todo o Brasil. Também dá pra escolher direto no
+                início.
               </p>
             </div>
             <div className="space-y-1.5">

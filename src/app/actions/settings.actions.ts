@@ -16,6 +16,22 @@ const settingsSchema = z.object({
   theme: z.enum(["dark", "light"]).default("dark"),
 })
 
+/** Define a faculdade-alvo direto do dashboard (clique na lista de notas de corte). */
+export async function setTargetInstitution(institutionId: string | null) {
+  const session = await auth()
+  if (!session?.user?.id) throw new Error("Unauthorized")
+
+  await db.userProfile.update({
+    where: { userId: session.user.id },
+    data: { targetInstitution: institutionId || null },
+  })
+
+  revalidatePath("/dashboard")
+  revalidatePath("/profile")
+  revalidatePath("/profile/settings")
+  return { success: true }
+}
+
 export async function updateUserSettings(formData: FormData) {
   const session = await auth()
   if (!session?.user?.id) throw new Error("Unauthorized")

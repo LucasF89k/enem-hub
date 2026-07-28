@@ -13,8 +13,9 @@ import { LevelBadge } from "@/components/dashboard/LevelBadge"
 import { NextTaskCard, type NextTask } from "@/components/dashboard/NextTaskCard"
 import { QuietStatsRow } from "@/components/dashboard/QuietStatsRow"
 import { TargetInstitutionCard } from "@/components/dashboard/TargetInstitutionCard"
+import { NotasCorteBoard } from "@/components/dashboard/NotasCorteBoard"
 import { TrailNote } from "@/components/dashboard/TrailNote"
-import { MedicinaWidget } from "@/components/dashboard/MedicinaWidget"
+import { findFaculdade } from "@/constants/faculdades-medicina"
 
 export const metadata = { title: "Dashboard" }
 
@@ -88,6 +89,7 @@ export default async function DashboardPage() {
 
   const isMedicina =
     !profile?.targetCourse || profile.targetCourse.toLowerCase().includes("medicina")
+  const selectedFacId = findFaculdade(profile?.targetInstitution)?.id ?? null
 
   return (
     <div className="mx-auto flex w-full max-w-[460px] flex-col px-6 pb-16 pt-5 sm:min-h-[calc(100vh-11rem)] sm:justify-center sm:px-8 sm:pt-6 md:min-h-[calc(100vh-9rem)]">
@@ -140,16 +142,21 @@ export default async function DashboardPage() {
         <TrailNote trail={trail} />
       </div>
 
+      {/* Notas de corte — visível no fluxo principal, com todas as faculdades */}
+      {isMedicina && (
+        <section className="mt-10">
+          <NotasCorteBoard selectedId={selectedFacId} estimatedScore={estimatedScore} />
+        </section>
+      )}
+
       {/* Mais detalhes — mantém acesso ao resto sem a grade densa antiga */}
-      <details className="group mt-14">
+      <details className="group mt-10">
         <summary className="flex cursor-pointer list-none items-center justify-center gap-1.5 text-xs uppercase tracking-[0.1em] text-muted-foreground">
           Mais detalhes
           <ChevronRight className="h-3.5 w-3.5 transition-transform group-open:rotate-90" />
         </summary>
 
         <div className="mt-6 space-y-4">
-          {isMedicina && <MedicinaWidget userId={userId} />}
-
           <div className="divide-y rounded-2xl border">
             {[
               { icon: BarChart2, label: "Analytics e evolução", href: "/analytics" },
