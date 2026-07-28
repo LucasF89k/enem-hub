@@ -71,10 +71,10 @@ export function BottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 md:hidden border-t border-border bg-background/90 backdrop-blur-md"
+      className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/90 backdrop-blur-md"
       aria-label="Navegação principal"
     >
-      <div className="flex items-stretch h-14 safe-area-bottom">
+      <div className="mx-auto flex max-w-2xl items-stretch h-14 safe-area-bottom">
         {before.map(({ icon: Icon, label, href }) => {
           const active = pathname === href || pathname.startsWith(href + "/")
           return (
