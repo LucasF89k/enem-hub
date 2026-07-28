@@ -18,6 +18,7 @@ export async function GET() {
       select: {
         targetScore: true,
         targetCourse: true,
+        targetInstitution: true,
         examDate: true,
         dailyStudyGoal: true,
         theme: true,
@@ -30,6 +31,7 @@ export async function GET() {
     email: user?.email ?? "",
     targetScore: profile?.targetScore ?? 950,
     targetCourse: profile?.targetCourse ?? "Medicina",
+    targetInstitution: profile?.targetInstitution ?? "",
     examDate: profile?.examDate?.toISOString() ?? "",
     dailyStudyGoal: profile?.dailyStudyGoal ?? 120,
     theme: profile?.theme ?? "dark",

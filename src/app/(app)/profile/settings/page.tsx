@@ -14,12 +14,18 @@ import { Separator } from "@/components/ui/separator"
 import { ArrowLeft, Loader2, LogOut, Save } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
+import {
+  FACULDADES_MEDICINA_RANK,
+  faculdadeLabel,
+  TIPO_LABEL,
+} from "@/constants/faculdades-medicina"
 
 interface ProfileData {
   name: string
   email: string
   targetScore: number
   targetCourse: string
+  targetInstitution: string
   examDate: string
   dailyStudyGoal: number
   theme: string
@@ -128,6 +134,28 @@ export default function SettingsPage() {
                 defaultValue={data?.targetCourse ?? "Medicina"}
                 placeholder="Ex: Medicina, Direito, Engenharia"
               />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="targetInstitution">Faculdade-alvo (Medicina)</Label>
+              <Input
+                id="targetInstitution"
+                name="targetInstitution"
+                list="faculdades-list"
+                defaultValue={data?.targetInstitution ?? ""}
+                placeholder="Busque: USP, UnB, ESCS, UFRJ…"
+                autoComplete="off"
+              />
+              <datalist id="faculdades-list">
+                {FACULDADES_MEDICINA_RANK.map((f) => (
+                  <option key={f.id} value={faculdadeLabel(f)}>
+                    {TIPO_LABEL[f.tipo]} · corte ~{Math.round(f.notaCorte)}
+                  </option>
+                ))}
+              </datalist>
+              <p className="text-xs text-muted-foreground">
+                {FACULDADES_MEDICINA_RANK.length} faculdades — federais, estaduais e particulares de
+                todo o Brasil. Digite para buscar.
+              </p>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="examDate">Data do ENEM</Label>

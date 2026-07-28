@@ -12,6 +12,7 @@ import { FocusRing } from "@/components/dashboard/FocusRing"
 import { LevelBadge } from "@/components/dashboard/LevelBadge"
 import { NextTaskCard, type NextTask } from "@/components/dashboard/NextTaskCard"
 import { QuietStatsRow } from "@/components/dashboard/QuietStatsRow"
+import { TargetInstitutionCard } from "@/components/dashboard/TargetInstitutionCard"
 import { TrailNote } from "@/components/dashboard/TrailNote"
 import { MedicinaWidget } from "@/components/dashboard/MedicinaWidget"
 
@@ -60,6 +61,7 @@ export default async function DashboardPage() {
         estimatedScore: true,
         dailyStudyGoal: true,
         targetCourse: true,
+        targetInstitution: true,
       },
     }),
     db.studySession.aggregate({
@@ -129,6 +131,11 @@ export default async function DashboardPage() {
         <div className="my-9 h-px w-full bg-border" />
 
         <QuietStatsRow streak={streak} estimatedScore={estimatedScore} daysUntilExam={daysUntilExam} />
+
+        <TargetInstitutionCard
+          institution={profile?.targetInstitution}
+          estimatedScore={estimatedScore}
+        />
 
         <TrailNote trail={trail} />
       </div>

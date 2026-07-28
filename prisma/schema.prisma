@@ -52,10 +52,11 @@ model UserProfile {
   user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Goals
-  targetScore    Float     @default(950)
-  targetCourse   String    @default("Medicina")
-  examDate       DateTime?
-  dailyStudyGoal Int       @default(120) // minutos
+  targetScore       Float     @default(950)
+  targetCourse      String    @default("Medicina")
+  targetInstitution String? // faculdade-alvo (ver src/constants/faculdades-medicina.ts)
+  examDate          DateTime?
+  dailyStudyGoal    Int       @default(120) // minutos
 
   // Gamification
   currentLevel   Int       @default(1)
