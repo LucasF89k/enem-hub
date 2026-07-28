@@ -27,14 +27,14 @@ export default function manifest(): MetadataRoute.Manifest {
     ],
     shortcuts: [
       {
-        name: "Questões",
-        url: "/questions",
-        description: "Praticar questões ENEM",
-      },
-      {
-        name: "Revisões",
+        name: "Flashcards",
         url: "/flashcards",
         description: "Revisar flashcards pendentes",
+      },
+      {
+        name: "Simulados",
+        url: "/simulados",
+        description: "Fazer um simulado no estilo ENEM",
       },
       {
         name: "Mentor IA",

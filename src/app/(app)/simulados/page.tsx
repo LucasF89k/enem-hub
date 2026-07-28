@@ -73,7 +73,7 @@ export default async function SimuladosPage() {
             </p>
           </div>
           <Button asChild variant="outline" size="sm">
-            <Link href="/questions">Praticar questões avulsas</Link>
+            <Link href="/study">Ir para o conteúdo</Link>
           </Button>
         </div>
       )}

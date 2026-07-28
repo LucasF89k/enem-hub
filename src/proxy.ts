@@ -5,7 +5,6 @@ const protectedRoutes = [
   "/dashboard",
   "/study",
   "/flashcards",
-  "/questions",
   "/simulados",
   "/redacao",
   "/planner",

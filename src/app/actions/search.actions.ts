@@ -52,6 +52,12 @@ export async function searchAll(query: string): Promise<SearchResult[]> {
         source: true,
         year: true,
         areaSlug: true,
+        topic: {
+          select: {
+            slug: true,
+            discipline: { select: { slug: true, area: { select: { slug: true } } } },
+          },
+        },
       },
       take: 5,
     }),
@@ -117,12 +123,17 @@ export async function searchAll(query: string): Promise<SearchResult[]> {
   }
 
   for (const q2 of questions) {
+    const qArea = q2.topic?.discipline?.area?.slug
+    const qDisc = q2.topic?.discipline?.slug
+    const qTopic = q2.topic?.slug
+    const qHref =
+      qArea && qDisc && qTopic ? `/study/${qArea}/${qDisc}/${qTopic}` : "/study"
     results.push({
       id: q2.id,
       type: "question",
       title: q2.statement.slice(0, 80) + (q2.statement.length > 80 ? "…" : ""),
       subtitle: [q2.source, q2.year].filter(Boolean).join(" · ") || undefined,
-      href: `/questions/${q2.id}`,
+      href: qHref,
     })
   }
 
