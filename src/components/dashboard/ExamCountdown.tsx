@@ -17,7 +17,15 @@ function diff(target: number) {
 }
 
 /** Contador regressivo, ao vivo, até a data do ENEM. */
-export function ExamCountdown({ examDate }: { examDate: string | null }) {
+export function ExamCountdown({
+  examDate,
+  trailLabel,
+  trailPeriod,
+}: {
+  examDate: string | null
+  trailLabel?: string
+  trailPeriod?: string
+}) {
   const target = examDate ? new Date(examDate).getTime() : null
   const [t, setT] = useState(() => (target ? diff(target) : null))
 
@@ -65,6 +73,13 @@ export function ExamCountdown({ examDate }: { examDate: string | null }) {
           </div>
         ))}
       </div>
+
+      {trailLabel && (
+        <p className="mt-3 border-t pt-2.5 text-center text-[11px] text-muted-foreground">
+          Trilha <b className="font-medium text-primary">{trailLabel}</b>
+          {trailPeriod ? ` · ${trailPeriod}` : ""}
+        </p>
+      )}
     </div>
   )
 }

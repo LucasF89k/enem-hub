@@ -6,7 +6,7 @@ import { startOfDay, addDays, subDays, differenceInDays, format } from "date-fns
 import { ptBR } from "date-fns/locale"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { detectTrail } from "@/lib/trail"
+import { detectTrail, getTrailConfig } from "@/lib/trail"
 import { FocusRing } from "@/components/dashboard/FocusRing"
 import { LevelBadge } from "@/components/dashboard/LevelBadge"
 import { NextTaskCard, type NextTask } from "@/components/dashboard/NextTaskCard"
@@ -14,7 +14,6 @@ import { QuietStatsRow } from "@/components/dashboard/QuietStatsRow"
 import { TargetInstitutionCard } from "@/components/dashboard/TargetInstitutionCard"
 import { NotasCorteBoard } from "@/components/dashboard/NotasCorteBoard"
 import { ExamCountdown } from "@/components/dashboard/ExamCountdown"
-import { TrailNote } from "@/components/dashboard/TrailNote"
 import { findUniversidade } from "@/constants/universidades"
 import { findCurso } from "@/constants/cursos"
 
@@ -82,7 +81,7 @@ export default async function DashboardPage() {
   const daysUntilExam = profile?.examDate
     ? Math.max(0, differenceInDays(profile.examDate, new Date()))
     : null
-  const trail = detectTrail(profile?.examDate)
+  const trailConfig = getTrailConfig(detectTrail(profile?.examDate))
   const firstName = session.user.name?.split(" ")[0] ?? ""
   const initials = session.user.name
     ? session.user.name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase()
@@ -133,9 +132,13 @@ export default async function DashboardPage() {
 
         <div className="my-9 h-px w-full bg-border" />
 
-        {/* Contador regressivo do ENEM — em destaque */}
+        {/* Contador regressivo do ENEM — em destaque, com a trilha embutida */}
         <div className="w-full max-w-[360px]">
-          <ExamCountdown examDate={examDateISO} />
+          <ExamCountdown
+            examDate={examDateISO}
+            trailLabel={trailConfig.label}
+            trailPeriod={trailConfig.description}
+          />
         </div>
 
         <div className="mt-8 w-full">
@@ -151,8 +154,6 @@ export default async function DashboardPage() {
           cursoSlug={curso.slug}
           estimatedScore={estimatedScore}
         />
-
-        <TrailNote trail={trail} />
       </div>
 
       {/* Notas de corte — visível no fluxo principal, adaptado ao curso */}
