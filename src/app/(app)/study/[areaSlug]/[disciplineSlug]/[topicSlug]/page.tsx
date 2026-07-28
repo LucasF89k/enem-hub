@@ -45,7 +45,15 @@ export default async function TopicPage({
         orderBy: { createdAt: "asc" },
       },
       questions: {
-        select: { id: true, statement: true, difficulty: true },
+        select: {
+          id: true,
+          statement: true,
+          difficulty: true,
+          images: true,
+          explanation: true,
+          correctId: true,
+          options: { orderBy: { order: "asc" }, select: { id: true, letter: true, text: true } },
+        },
         orderBy: [{ difficulty: "asc" }, { createdAt: "asc" }],
         take: 20,
       },
@@ -97,6 +105,10 @@ export default async function TopicPage({
     id: q.id,
     statement: q.statement,
     difficulty: q.difficulty as string,
+    images: q.images,
+    explanation: q.explanation,
+    correctId: q.correctId,
+    options: q.options.map((o) => ({ id: o.id, letter: o.letter, text: o.text })),
   }))
 
   return (

@@ -4,7 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
-  Home, BookOpen, Brain, HelpCircle, User,
+  Home, BookOpen, Brain, User,
   BarChart2, Calendar, FileText, MessageCircle, Settings, Trophy,
   ChevronLeft, ChevronRight,
 } from "lucide-react"
@@ -15,7 +15,6 @@ const PRIMARY_NAV = [
   { icon: Home, label: "Início", href: "/dashboard" },
   { icon: BookOpen, label: "Estudar", href: "/study" },
   { icon: Brain, label: "Flashcards", href: "/flashcards" },
-  { icon: HelpCircle, label: "Questões", href: "/questions" },
   { icon: FileText, label: "Simulados", href: "/simulados" },
   { icon: User, label: "Perfil", href: "/profile" },
 ] as const

@@ -16,13 +16,12 @@ import {
   Star,
   Code2,
   Brain,
-  HelpCircle,
-  ArrowRight,
   Play,
 } from "lucide-react"
 import Link from "next/link"
 import { VideoList } from "@/components/study/VideoList"
 import { CreateFlashcardDialog } from "@/components/flashcards/CreateFlashcardDialog"
+import { TopicQuestionsInline, type InlineQuestion } from "@/components/study/TopicQuestionsInline"
 import type { VideoWithWatched } from "@/app/actions/video.actions"
 
 interface TopicContent {
@@ -42,34 +41,14 @@ interface TopicFlashcard {
   type: string
 }
 
-interface TopicQuestion {
-  id: string
-  statement: string
-  difficulty: string
-}
-
 interface Props {
   topicId: string
   topicName: string
   content: TopicContent | null
   flashcards: TopicFlashcard[]
-  questions: TopicQuestion[]
+  questions: InlineQuestion[]
   pendingReviews: number
   videos: VideoWithWatched[]
-}
-
-const DIFFICULTY_LABEL: Record<string, string> = {
-  EASY: "Fácil",
-  MEDIUM: "Médio",
-  HARD: "Difícil",
-  VERY_HARD: "Muito difícil",
-}
-
-const DIFFICULTY_CLASS: Record<string, string> = {
-  EASY:      "border-green-500/30 bg-green-500/10 text-green-700 dark:text-green-400",
-  MEDIUM:    "border-yellow-500/30 bg-yellow-500/10 text-yellow-700 dark:text-yellow-400",
-  HARD:      "border-orange-500/30 bg-orange-500/10 text-orange-700 dark:text-orange-400",
-  VERY_HARD: "border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-400",
 }
 
 export function TopicTabs({ topicId, topicName, content, flashcards, questions, pendingReviews, videos }: Props) {
@@ -248,47 +227,9 @@ export function TopicTabs({ topicId, topicName, content, flashcards, questions, 
         )}
       </TabsContent>
 
-      {/* ── Questões ── */}
-      <TabsContent value="questoes" className="mt-4 space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="text-sm">
-            <span className="font-semibold">{questions.length}</span>
-            <span className="text-muted-foreground"> questões</span>
-          </div>
-          <Button asChild size="sm" variant="outline">
-            <Link href={`/questions?topicId=${topicId}`}>
-              Praticar questões
-              <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
-            </Link>
-          </Button>
-        </div>
-
-        {questions.length > 0 ? (
-          <div className="space-y-2">
-            {questions.map((question) => (
-              <Link
-                key={question.id}
-                href={`/questions/${question.id}`}
-                className="block rounded-xl border bg-card px-4 py-3 hover:shadow-sm transition-all"
-              >
-                <p className="text-sm line-clamp-2 mb-2">{question.statement}</p>
-                <Badge
-                  variant="outline"
-                  className={["text-[10px]", DIFFICULTY_CLASS[question.difficulty] ?? ""].join(" ")}
-                >
-                  {DIFFICULTY_LABEL[question.difficulty] ?? question.difficulty}
-                </Badge>
-              </Link>
-            ))}
-          </div>
-        ) : (
-          <div className="flex flex-col items-center gap-3 py-8 text-center">
-            <HelpCircle className="h-10 w-10 text-muted-foreground/40" />
-            <p className="text-sm text-muted-foreground">
-              Nenhuma questão neste tópico ainda
-            </p>
-          </div>
-        )}
+      {/* ── Questões (respondidas aqui mesmo) ── */}
+      <TabsContent value="questoes" className="mt-4">
+        <TopicQuestionsInline questions={questions} />
       </TabsContent>
 
       {/* ── Vídeos ── */}
