@@ -88,7 +88,7 @@ export default async function DashboardPage() {
     !profile?.targetCourse || profile.targetCourse.toLowerCase().includes("medicina")
 
   return (
-    <div className="mx-auto w-full max-w-[480px] px-6 pb-16 pt-4 sm:px-8">
+    <div className="mx-auto flex w-full max-w-[460px] flex-col px-6 pb-16 pt-5 sm:min-h-[calc(100vh-11rem)] sm:justify-center sm:px-8 sm:pt-6 md:min-h-[calc(100vh-9rem)]">
       {/* Topbar */}
       <div className="flex items-center justify-between">
         <LevelBadge level={level} totalXP={totalXP} />
