@@ -1,5 +1,5 @@
 import { db } from "@/lib/db"
-import { startOfDay, subDays } from "date-fns"
+import { startOfDayBR, addDaysBR } from "@/lib/date-br"
 
 export function calcLevel(totalXP: number): number {
   return Math.min(99, Math.floor(totalXP / 500) + 1)
@@ -32,8 +32,8 @@ export async function recordStudyActivity(
   minutes: number = 5,
   type: "QUESTIONS" | "FLASHCARDS" | "SIMULADO" | "CONTENT" | "REDACAO" | "REVISION" = "QUESTIONS"
 ): Promise<void> {
-  const today = startOfDay(new Date())
-  const yesterday = subDays(today, 1)
+  const today = startOfDayBR()
+  const yesterday = addDaysBR(today, -1)
 
   // Upsert today's study session for this type
   const existing = await db.studySession.findFirst({
@@ -63,7 +63,7 @@ export async function recordStudyActivity(
 
   if (!profile) return
 
-  const lastStudyDay = profile.lastStudyDate ? startOfDay(profile.lastStudyDate) : null
+  const lastStudyDay = profile.lastStudyDate ? startOfDayBR(profile.lastStudyDate) : null
 
   // Already counted today
   if (lastStudyDay && lastStudyDay.getTime() === today.getTime()) return

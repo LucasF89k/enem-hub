@@ -2,7 +2,8 @@ import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { db } from "@/lib/db"
 import Link from "next/link"
-import { startOfDay, addDays, differenceInDays } from "date-fns"
+import { differenceInDays } from "date-fns"
+import { startOfDayBR, addDaysBR } from "@/lib/date-br"
 import { CalendarDays } from "lucide-react"
 
 import { detectTrail, getTrailConfig } from "@/lib/trail"
@@ -21,8 +22,8 @@ export default async function DashboardPage() {
   if (!session?.user?.id) redirect("/login")
   const userId = session.user.id
 
-  const todayStart = startOfDay(new Date())
-  const tomorrowStart = addDays(todayStart, 1)
+  const todayStart = startOfDayBR()
+  const tomorrowStart = addDaysBR(todayStart, 1)
 
   const [profile, todayAgg] = await Promise.all([
     db.userProfile.findUnique({
