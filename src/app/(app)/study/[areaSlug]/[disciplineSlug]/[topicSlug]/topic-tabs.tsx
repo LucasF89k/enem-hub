@@ -197,7 +197,7 @@ export function TopicTabs({ topicId, topicName, content, flashcards, questions, 
               variant="outline"
             />
             <Button asChild size="sm">
-              <Link href={`/flashcards?topicId=${topicId}`}>
+              <Link href={`/flashcards/review?topicId=${topicId}`}>
                 <Brain className="mr-1.5 h-3.5 w-3.5" />
                 Iniciar revisão
               </Link>
