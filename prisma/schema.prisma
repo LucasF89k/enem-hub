@@ -44,6 +44,43 @@ model User {
   favorites        Favorite[]
   flashcardDecks   FlashcardDeck[]
   agentInsights    AgentInsight[]
+  rankingGroupsOwned  RankingGroup[]       @relation("GroupOwner")
+  rankingMemberships  RankingGroupMember[]
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expires   DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
+}
+
+model RankingGroup {
+  id        String   @id @default(cuid())
+  name      String
+  code      String   @unique // código de convite curto
+  ownerId   String
+  owner     User     @relation("GroupOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  members   RankingGroupMember[]
+
+  @@index([ownerId])
+}
+
+model RankingGroupMember {
+  id       String       @id @default(cuid())
+  groupId  String
+  group    RankingGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt DateTime     @default(now())
+
+  @@unique([groupId, userId])
+  @@index([userId])
 }
 
 model UserProfile {

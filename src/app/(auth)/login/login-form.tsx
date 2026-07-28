@@ -80,6 +80,14 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
           {errors.password && (
             <p className="text-xs text-destructive">{errors.password.message}</p>
           )}
+          <div className="text-right">
+            <Link
+              href="/forgot-password"
+              className="text-xs text-muted-foreground hover:text-primary hover:underline"
+            >
+              Esqueci a senha
+            </Link>
+          </div>
         </div>
 
         {serverError && (
