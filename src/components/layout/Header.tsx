@@ -17,6 +17,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/profile": "Perfil",
   "/mentor": "Mentor ENEM",
   "/conquistas": "Conquistas",
+  "/ranking": "Ranking",
   "/onboarding": "Boas-vindas",
 }
 

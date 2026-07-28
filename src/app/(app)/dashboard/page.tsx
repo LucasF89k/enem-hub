@@ -13,6 +13,7 @@ import { QuietStatsRow } from "@/components/dashboard/QuietStatsRow"
 import { TargetInstitutionCard } from "@/components/dashboard/TargetInstitutionCard"
 import { NotasCorteBoard } from "@/components/dashboard/NotasCorteBoard"
 import { ExamCountdown } from "@/components/dashboard/ExamCountdown"
+import { DailyQuests, type Quest } from "@/components/dashboard/DailyQuests"
 import { findUniversidade } from "@/constants/universidades"
 import { findCurso } from "@/constants/cursos"
 
@@ -26,7 +27,7 @@ export default async function DashboardPage() {
   const todayStart = startOfDay(new Date())
   const tomorrowStart = addDays(todayStart, 1)
 
-  const [profile, todayAgg] = await Promise.all([
+  const [profile, todayAgg, questionsToday, flashcardsToday] = await Promise.all([
     db.userProfile.findUnique({
       where: { userId },
       select: {
@@ -43,6 +44,10 @@ export default async function DashboardPage() {
     db.studySession.aggregate({
       where: { userId, date: { gte: todayStart, lt: tomorrowStart } },
       _sum: { duration: true },
+    }),
+    db.userQuestion.count({ where: { userId, answeredAt: { gte: todayStart, lt: tomorrowStart } } }),
+    db.flashcardReview.count({
+      where: { userId, reviewedAt: { gte: todayStart, lt: tomorrowStart } },
     }),
   ])
 
@@ -64,6 +69,12 @@ export default async function DashboardPage() {
   const curso = findCurso(profile?.targetCourse) ?? findCurso("medicina")!
   const selectedUniId = findUniversidade(profile?.targetInstitution)?.id ?? null
   const examDateISO = profile?.examDate ? profile.examDate.toISOString() : null
+
+  const quests: Quest[] = [
+    { kind: "time", label: `Estude ${dailyGoal} min hoje`, current: minutesToday, target: dailyGoal, xp: 30 },
+    { kind: "questions", label: "Responda 10 questões", current: questionsToday, target: 10, xp: 20 },
+    { kind: "flashcards", label: "Revise 20 flashcards", current: flashcardsToday, target: 20, xp: 20 },
+  ]
 
   return (
     <div className="mx-auto flex w-full max-w-[460px] flex-col px-6 pb-16 pt-4 sm:px-8">
@@ -126,6 +137,11 @@ export default async function DashboardPage() {
           estimatedScore={estimatedScore}
         />
       </div>
+
+      {/* Missões diárias */}
+      <section className="mt-8">
+        <DailyQuests quests={quests} />
+      </section>
 
       {/* Notas de corte — visível no fluxo principal, adaptado ao curso */}
       <section className="mt-10">

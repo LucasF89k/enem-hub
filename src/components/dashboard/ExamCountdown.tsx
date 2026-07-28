@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { CalendarClock } from "lucide-react"
+import { CalendarClock, Route } from "lucide-react"
 
 function diff(target: number) {
   const ms = Math.max(0, target - Date.now())
@@ -75,10 +75,13 @@ export function ExamCountdown({
       </div>
 
       {trailLabel && (
-        <p className="mt-3 border-t pt-2.5 text-center text-[11px] text-muted-foreground">
-          Trilha <b className="font-medium text-primary">{trailLabel}</b>
-          {trailPeriod ? ` · ${trailPeriod}` : ""}
-        </p>
+        <div className="mt-3 flex items-center justify-center gap-2 rounded-xl bg-primary/10 py-2">
+          <Route className="h-4 w-4 text-primary" />
+          <span className="text-[13px] font-semibold text-primary">Trilha {trailLabel}</span>
+          {trailPeriod && (
+            <span className="text-[11px] text-muted-foreground">· {trailPeriod}</span>
+          )}
+        </div>
       )}
     </div>
   )

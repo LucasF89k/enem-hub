@@ -16,6 +16,7 @@ export default function robots(): MetadataRoute.Robots {
           "/planner",
           "/mentor",
           "/conquistas",
+          "/ranking",
           "/onboarding",
           "/api/",
         ],

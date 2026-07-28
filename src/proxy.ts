@@ -12,6 +12,7 @@ const protectedRoutes = [
   "/analytics",
   "/profile",
   "/mentor",
+  "/ranking",
   "/onboarding",
 ]
 

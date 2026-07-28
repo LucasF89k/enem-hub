@@ -11,6 +11,7 @@ import {
   BarChart2,
   Calendar,
   Trophy,
+  Medal,
   MessageCircle,
   User,
   Layers,
@@ -25,6 +26,7 @@ const NAV_ITEMS = [
   { icon: BarChart2, label: "Evolução", href: "/analytics" },
   { icon: Calendar, label: "Planner", href: "/planner" },
   { icon: MessageCircle, label: "Mentor", href: "/mentor" },
+  { icon: Medal, label: "Ranking", href: "/ranking" },
   { icon: Trophy, label: "Conquistas", href: "/conquistas" },
   { icon: User, label: "Perfil", href: "/profile" },
 ] as const
