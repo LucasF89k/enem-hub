@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import type { AchievementCategory } from "@prisma/client"
 
-export const metadata = { title: "Conquistas — Vion" }
+export const metadata = { title: "Conquistas" }
 
 const CATEGORY_LABELS: Record<AchievementCategory, string> = {
   STREAK: "Sequência",

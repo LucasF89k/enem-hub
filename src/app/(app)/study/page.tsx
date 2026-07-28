@@ -12,7 +12,7 @@ import {
   type LucideIcon,
 } from "lucide-react"
 
-export const metadata = { title: "Estudar — Vion" }
+export const metadata = { title: "Estudar" }
 
 const AREA_ICON: Record<string, LucideIcon> = {
   "ciencias-natureza": FlaskConical,

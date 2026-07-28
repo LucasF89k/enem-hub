@@ -11,7 +11,7 @@ import { ptBR } from "date-fns/locale"
 import { SimuladoScoreChart } from "@/components/simulado/SimuladoScoreChart"
 import { AchievementToast } from "@/components/achievements/AchievementToast"
 
-export const metadata = { title: "Resultado — Vion" }
+export const metadata = { title: "Resultado" }
 
 const AREA_INFO: Record<string, { label: string; color: string }> = {
   "ciencias-natureza": { label: "Ciências da Natureza", color: "text-green-500" },

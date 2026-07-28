@@ -27,7 +27,7 @@ import {
 export async function generateMetadata({ params }: { params: Promise<{ areaSlug: string }> }) {
   const { areaSlug } = await params
   const area = await db.area.findUnique({ where: { slug: areaSlug }, select: { name: true } })
-  return { title: area ? `${area.name} — Vion` : "Área — Vion" }
+  return { title: area ? `${area.name} — Vion` : "Área" }
 }
 
 const AREA_ICON: Record<string, LucideIcon> = {

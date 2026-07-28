@@ -3,7 +3,7 @@ import { redirect, notFound } from "next/navigation"
 import { db } from "@/lib/db"
 import { SimuladoResolver } from "./simulado-resolver"
 
-export const metadata = { title: "Simulado em andamento — Vion" }
+export const metadata = { title: "Simulado em andamento" }
 
 export default async function SimuladoExamPage({
   params,

@@ -8,7 +8,6 @@ import {
   BarChart2, Calendar, FileText, MessageCircle, Settings, Trophy,
   ChevronLeft, ChevronRight,
 } from "lucide-react"
-import { VionLogo } from "@/components/VionLogo"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
 
@@ -56,7 +55,8 @@ export function Sidebar({ user }: SidebarProps) {
           expanded ? "gap-2.5" : "justify-center"
         )}
       >
-        <VionLogo className="w-8 h-8 shrink-0" />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/logo-app.png" alt="Vion" className="h-9 w-auto shrink-0 object-contain" />
         {expanded && (
           <span className="text-sm font-bold text-foreground truncate">Vion</span>
         )}

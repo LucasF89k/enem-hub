@@ -15,7 +15,7 @@ export async function generateMetadata({
     where: { slug: disciplineSlug },
     select: { name: true },
   })
-  return { title: discipline ? `${discipline.name} — Vion` : "Disciplina — Vion" }
+  return { title: discipline ? `${discipline.name} — Vion` : "Disciplina" }
 }
 
 export default async function DisciplinePage({
