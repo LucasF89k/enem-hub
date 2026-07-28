@@ -8,6 +8,57 @@ import { revalidatePath } from "next/cache"
 import { z } from "zod"
 
 const PERSONAL_DECK = "Meus flashcards"
+const MENTOR_DECK = "Flashcards do Mentor"
+
+const mentorCardsSchema = z
+  .array(
+    z.object({
+      front: z.string().trim().min(1).max(1000),
+      back: z.string().trim().min(1).max(2000),
+    }),
+  )
+  .min(1)
+  .max(30)
+
+/** Salva os flashcards gerados pelo Mentor num deck próprio do usuário. */
+export async function saveMentorFlashcards(
+  cards: { front: string; back: string }[],
+): Promise<{ success: boolean; count?: number; error?: string }> {
+  const session = await auth()
+  if (!session?.user?.id) return { success: false, error: "Não autenticado" }
+
+  const parsed = mentorCardsSchema.safeParse(cards)
+  if (!parsed.success) return { success: false, error: "Flashcards inválidos" }
+
+  let deck = await db.flashcardDeck.findFirst({
+    where: { userId: session.user.id, name: MENTOR_DECK },
+    select: { id: true },
+  })
+  if (!deck) {
+    deck = await db.flashcardDeck.create({
+      data: {
+        userId: session.user.id,
+        name: MENTOR_DECK,
+        description: "Flashcards gerados pelo Mentor",
+        isPublic: false,
+      },
+      select: { id: true },
+    })
+  }
+
+  await db.flashcard.createMany({
+    data: parsed.data.map((c) => ({
+      deckId: deck!.id,
+      front: c.front,
+      back: c.back,
+      type: "BASIC" as const,
+      tags: ["mentor"],
+    })),
+  })
+
+  revalidatePath("/flashcards")
+  return { success: true, count: parsed.data.length }
+}
 
 const createSchema = z.object({
   front: z.string().trim().min(1, "Escreva a frente do card").max(1000),

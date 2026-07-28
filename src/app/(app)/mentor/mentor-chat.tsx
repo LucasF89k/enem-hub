@@ -7,11 +7,12 @@ import { useMentorStore } from "@/store/mentor-store"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
-import { Send, Loader2, Trash2, Copy, Check, User, CalendarCheck, ArrowRight } from "lucide-react"
+import { Send, Loader2, Trash2, Copy, Check, User, CalendarCheck, ArrowRight, Layers } from "lucide-react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { toast } from "sonner"
 import { applyMentorPlan } from "@/app/actions/planner.actions"
+import { saveMentorFlashcards } from "@/app/actions/flashcard.actions"
 
 const QUICK_ACTIONS = [
   { label: "Meus pontos fracos", text: "Quais são meus principais pontos fracos com base nas minhas questões erradas? Me dê um plano focado." },
@@ -76,6 +77,75 @@ function extractVionPlan(content: string): { plan: VionPlan | null; cleaned: str
   const open = content.search(/```vion-plan/i)
   if (open >= 0) return { plan: null, cleaned: content.slice(0, open).trim() }
   return { plan: null, cleaned: content }
+}
+
+interface FlashcardDraft {
+  front: string
+  back: string
+}
+
+/** Extrai o bloco ```vion-flashcards``` de uma mensagem; remove-o do texto exibido. */
+function extractVionFlashcards(content: string): { cards: FlashcardDraft[] | null; cleaned: string } {
+  const closed = /```vion-flashcards\s*([\s\S]*?)```/i
+  const m = content.match(closed)
+  if (m) {
+    let cards: FlashcardDraft[] | null = null
+    try {
+      const parsed = JSON.parse(m[1].trim())
+      if (Array.isArray(parsed)) {
+        cards = parsed
+          .filter((c) => c && typeof c.front === "string" && typeof c.back === "string")
+          .map((c) => ({ front: String(c.front), back: String(c.back) }))
+        if (cards.length === 0) cards = null
+      }
+    } catch {
+      cards = null
+    }
+    return { cards, cleaned: content.replace(closed, "").trim() }
+  }
+  const open = content.search(/```vion-flashcards/i)
+  if (open >= 0) return { cards: null, cleaned: content.slice(0, open).trim() }
+  return { cards: null, cleaned: content }
+}
+
+function SaveFlashcardsCard({ cards }: { cards: FlashcardDraft[] }) {
+  const [state, setState] = useState<"idle" | "loading" | "done">("idle")
+
+  async function save() {
+    setState("loading")
+    const res = await saveMentorFlashcards(cards)
+    if (res.success) {
+      setState("done")
+      toast.success(`${res.count} flashcards salvos no seu baralho!`)
+    } else {
+      setState("idle")
+      toast.error(res.error ?? "Não foi possível salvar")
+    }
+  }
+
+  return (
+    <div className="mt-2 rounded-2xl border bg-background p-4">
+      <div className="mb-2 flex items-center gap-2">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+          <Layers className="h-4 w-4 text-primary" />
+        </div>
+        <p className="text-sm font-semibold">{cards.length} flashcards prontos</p>
+      </div>
+      {state === "done" ? (
+        <Button asChild className="w-full gap-1.5">
+          <Link href="/flashcards">
+            Ver no baralho
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </Button>
+      ) : (
+        <Button onClick={save} disabled={state === "loading"} className="w-full gap-1.5">
+          {state === "loading" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Layers className="h-4 w-4" />}
+          Salvar no meu baralho
+        </Button>
+      )}
+    </div>
+  )
 }
 
 function ApplyPlanCard({ plan }: { plan: VionPlan }) {
@@ -330,7 +400,8 @@ export function MentorChat() {
             >
               {msg.role === "assistant" ? (
                 (() => {
-                  const { plan, cleaned } = extractVionPlan(msg.content)
+                  const { plan, cleaned: afterPlan } = extractVionPlan(msg.content)
+                  const { cards, cleaned } = extractVionFlashcards(afterPlan)
                   return (
                     <>
                       {cleaned ? (
@@ -341,6 +412,7 @@ export function MentorChat() {
                         <TypingDots />
                       )}
                       {plan && !isLoading && <ApplyPlanCard plan={plan} />}
+                      {cards && !isLoading && <SaveFlashcardsCard cards={cards} />}
                       {cleaned && !isLoading && (
                         <div className="flex justify-end mt-1">
                           <CopyButton text={cleaned} />

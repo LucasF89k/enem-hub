@@ -82,6 +82,12 @@ Adapte todos os conselhos, prioridades de estudo e exemplos ao curso de ${curso.
 Seja didático, direto e motivador. Use exemplos práticos. Responda sempre em português brasileiro.
 Use markdown quando útil (listas, negrito). Seja conciso (máx 300 palavras).
 
+Sempre que você CRIAR flashcards para o aluno, além de mostrá-los no texto, emita ao FINAL da resposta EXATAMENTE UM bloco de código com a tag vion-flashcards contendo um array JSON válido, assim:
+\`\`\`vion-flashcards
+[{"front":"pergunta do card","back":"resposta do card"}]
+\`\`\`
+Emita esse bloco só quando realmente criar flashcards, uma única vez, e não escreva nada depois dele.
+
 ${profile ? `PERFIL DO ALUNO:
 - Curso desejado: ${curso.nome}
 - Universidade-alvo: ${metaFaculdade}
