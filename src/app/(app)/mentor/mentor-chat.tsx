@@ -24,15 +24,8 @@ const QUICK_ACTIONS = [
 
 function MentorAvatar({ className }: { className?: string }) {
   return (
-    <div
-      className={cn(
-        "flex items-center justify-center overflow-hidden rounded-full bg-primary/15",
-        className,
-      )}
-    >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/logo-app.png" alt="Vion" className="h-full w-full object-contain p-1" />
-    </div>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src="/logo-app.png" alt="Vion" className={cn("object-contain", className)} />
   )
 }
 
