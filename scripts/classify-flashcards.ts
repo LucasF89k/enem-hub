@@ -20,7 +20,7 @@ async function main() {
   const args = Object.fromEntries(
     process.argv.slice(2).map((a) => a.replace(/^--/, "").split("=") as [string, string]),
   )
-  const batchSize = args.batch ? parseInt(args.batch) : 25
+  const batchSize = args.batch ? parseInt(args.batch) : 15
   const limit = args.limit ? parseInt(args.limit) : Infinity
 
   // Referência: todos os tópicos numerados (Matéria > Conteúdo)
@@ -44,6 +44,8 @@ async function main() {
 
   let processed = 0
   let classified = 0
+  let lastKey = ""
+  let batchFails = 0
 
   while (processed < limit) {
     const cards = await db.flashcard.findMany({
@@ -52,6 +54,13 @@ async function main() {
       take: batchSize,
     })
     if (cards.length === 0) break
+
+    // Detecta lote "preso" (mesmo primeiro card falhando repetido) e o pula.
+    const key = cards[0].id
+    if (key !== lastKey) {
+      lastKey = key
+      batchFails = 0
+    }
 
     const cardsBlock = cards
       .map(
@@ -78,8 +87,23 @@ Responda SOMENTE um array JSON, um item por flashcard, no formato:
       result = await generateJSON<{ card: number; topico: number }[]>(prompt)
       if (!Array.isArray(result)) throw new Error("resposta não é array")
     } catch (e) {
-      console.log(`⚠️  erro/cota na IA (${(e as Error).message}). Aguardando 60s…`)
-      await new Promise((r) => setTimeout(r, 60_000))
+      const msg = (e as Error).message
+      const isQuota = /429|quota|rate|exhaust|resource/i.test(msg)
+      batchFails++
+      // Lote persistente com falha de parse → marca sem-categoria e segue.
+      if (!isQuota && batchFails >= 3) {
+        await Promise.all(
+          cards.map((c) =>
+            db.flashcard.update({ where: { id: c.id }, data: { tags: { set: ["sem-categoria"] } } }),
+          ),
+        )
+        console.log(`⏭️   lote pulado após ${batchFails} falhas de parse`)
+        processed += cards.length
+        continue
+      }
+      const wait = isQuota ? 60 : 6
+      console.log(`⚠️  ${isQuota ? "cota/limite" : "parse"} (${msg.slice(0, 60)}). Aguardando ${wait}s…`)
+      await new Promise((r) => setTimeout(r, wait * 1000))
       continue
     }
 
