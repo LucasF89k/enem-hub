@@ -4,6 +4,7 @@ import { useMemo, useState } from "react"
 import { Check, ChevronsUpDown, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import {
@@ -130,14 +131,25 @@ function Combobox({
 export function CursoUniSelectors({
   defaultCourse,
   defaultInstitution,
+  defaultScore = 850,
 }: {
   defaultCourse?: string | null
   defaultInstitution?: string | null
+  defaultScore?: number
 }) {
   const [cursoSlug, setCursoSlug] = useState(findCurso(defaultCourse)?.slug ?? "medicina")
   const [uniId, setUniId] = useState(findUniversidade(defaultInstitution)?.id ?? "")
+  const [score, setScore] = useState(defaultScore)
 
   const curso = findCurso(cursoSlug) ?? findCurso("medicina")!
+  const selectedUni = findUniversidade(uniId)
+
+  // Ao escolher a faculdade, sugere a nota de corte como nota alvo
+  function handleUni(id: string) {
+    setUniId(id)
+    const u = findUniversidade(id)
+    if (u) setScore(estimateCutoff(curso, u))
+  }
 
   const cursoOptions: Option[] = useMemo(
     () =>
@@ -198,13 +210,33 @@ export function CursoUniSelectors({
           options={uniOptions}
           placeholder="Selecione a universidade…"
           searchPlaceholder="Buscar universidade…"
-          onSelect={setUniId}
+          onSelect={handleUni}
           onClear={() => setUniId("")}
         />
         <p className="text-xs text-muted-foreground">
           Notas de corte estimadas para <b className="text-foreground">{curso.nome}</b>. Também dá
           pra escolher direto no início.
         </p>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label htmlFor="targetScore">Nota alvo (400–1000)</Label>
+        <Input
+          id="targetScore"
+          name="targetScore"
+          type="number"
+          value={score}
+          onChange={(e) => setScore(Number(e.target.value))}
+          min={400}
+          max={1000}
+          step={10}
+        />
+        {selectedUni && (
+          <p className="text-xs text-muted-foreground">
+            Sugerimos <b className="text-primary">{estimateCutoff(curso, selectedUni)}</b> — nota de
+            corte estimada de {curso.nome} na {selectedUni.sigla}.
+          </p>
+        )}
       </div>
     </div>
   )

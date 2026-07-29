@@ -110,22 +110,11 @@ export default function SettingsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="targetScore">Nota alvo (400–1000)</Label>
-              <Input
-                id="targetScore"
-                name="targetScore"
-                type="number"
-                defaultValue={data?.targetScore ?? 950}
-                min={400}
-                max={1000}
-                step={10}
-              />
-            </div>
             <CursoUniSelectors
-              key={`${data?.targetCourse ?? ""}|${data?.targetInstitution ?? ""}`}
+              key={`${data?.targetCourse ?? ""}|${data?.targetInstitution ?? ""}|${data?.targetScore ?? ""}`}
               defaultCourse={data?.targetCourse}
               defaultInstitution={data?.targetInstitution}
+              defaultScore={data?.targetScore ?? 850}
             />
             <div className="space-y-1.5">
               <Label htmlFor="examDate">Data do ENEM</Label>
