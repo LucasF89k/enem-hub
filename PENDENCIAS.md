@@ -21,7 +21,8 @@ Atualizado em: 2026-07-29
 - [ ] **Anos incompletos:** PPL **2018, 2024, 2025** (import parcial).
 - [ ] **Gabaritos faltando:** PPL **2020, 2023**.
 - [ ] **PDFs cifrados** (texto embaralhado, não extraiu): PPL **2014, 2015, 2016, 2017, 2021**.
-- [ ] ~~503 arquivos de simulado privados~~ — **eram para o MiMo**. Como não usamos MiMo, ficam **fora** (ou precisam de outra abordagem sem IA paga).
+- [ ] **503 arquivos de simulado privados** — extrair questões + gabaritos embutidos.
+  - Fazer **com o tempo, via subagentes do Claude** (grátis) — **NÃO** com MiMo. Usar o fluxo do `scripts/claude-extract.ts` (subagente lê o PDF, estrutura as questões e o gabarito, grava no banco).
 
 ## 🔑 Ações suas (infra — não é código)
 
