@@ -10,6 +10,7 @@ interface CompleteOnboardingInput {
   name: string
   targetScore: number
   targetCourse: string
+  targetInstitution: string | null
   examDate: Date | null
   dailyStudyGoal: number // minutos
 }
@@ -22,6 +23,7 @@ export async function completeOnboarding(data: CompleteOnboardingInput) {
     name: data.name,
     targetScore: data.targetScore,
     targetCourse: data.targetCourse,
+    targetInstitution: data.targetInstitution ?? undefined,
     examDate: data.examDate ?? undefined,
     dailyStudyGoal: data.dailyStudyGoal,
   })
@@ -39,7 +41,8 @@ export async function completeOnboarding(data: CompleteOnboardingInput) {
     where: { userId: session.user.id },
     data: {
       targetScore: parsed.data.targetScore,
-      targetCourse: parsed.data.targetCourse ?? "Medicina",
+      targetCourse: parsed.data.targetCourse || "medicina",
+      targetInstitution: parsed.data.targetInstitution || null,
       examDate: parsed.data.examDate ?? null,
       dailyStudyGoal: parsed.data.dailyStudyGoal,
     },

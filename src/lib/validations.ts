@@ -23,8 +23,9 @@ export const registerSchema = z
 
 export const onboardingSchema = z.object({
   name: z.string().min(2).max(80),
-  targetScore: z.number().min(700).max(1000),
+  targetScore: z.number().min(400).max(1000),
   targetCourse: z.string().optional(),
+  targetInstitution: z.string().optional().nullable(),
   examDate: z.date().optional(),
   dailyStudyGoal: z.number().min(30).max(720), // minutos
 })

@@ -9,7 +9,9 @@ import { AvatarUpload } from "@/components/profile/AvatarUpload"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Settings, Flame, Zap, Trophy, Target, Calendar, Clock, BookOpen } from "lucide-react"
+import { Settings, Flame, Zap, Trophy, Target, Calendar, Clock, BookOpen, GraduationCap } from "lucide-react"
+import { findCurso } from "@/constants/cursos"
+import { findUniversidade } from "@/constants/universidades"
 
 export const metadata = { title: "Perfil" }
 
@@ -28,6 +30,7 @@ export default async function ProfilePage() {
       select: {
         targetScore: true,
         targetCourse: true,
+        targetInstitution: true,
         examDate: true,
         dailyStudyGoal: true,
         currentLevel: true,
@@ -159,8 +162,21 @@ export default async function ProfilePage() {
                 <Trophy className="h-4 w-4 text-muted-foreground" />
                 <span>Curso</span>
               </div>
-              <span className="font-semibold">{profile.targetCourse}</span>
+              <span className="font-semibold">
+                {findCurso(profile.targetCourse)?.nome ?? profile.targetCourse}
+              </span>
             </div>
+            {findUniversidade(profile.targetInstitution) && (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm">
+                  <GraduationCap className="h-4 w-4 text-muted-foreground" />
+                  <span>Universidade</span>
+                </div>
+                <span className="font-semibold">
+                  {findUniversidade(profile.targetInstitution)!.sigla}
+                </span>
+              </div>
+            )}
             {daysLeft !== null && (
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-sm">

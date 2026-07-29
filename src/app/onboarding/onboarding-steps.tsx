@@ -33,7 +33,13 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
-import { MED_SCHOOLS } from "@/constants/med-schools"
+import {
+  CURSOS_ORDENADOS,
+  findCurso,
+  estimateCutoff,
+  AREA_LABEL,
+} from "@/constants/cursos"
+import { universidadesDoCurso, findUniversidade, TIPO_LABEL } from "@/constants/universidades"
 import { completeOnboarding } from "@/app/actions/onboarding.actions"
 
 interface OnboardingStepsProps {
@@ -43,7 +49,8 @@ interface OnboardingStepsProps {
 interface OnboardingForm {
   name: string
   targetScore: number
-  targetCourse: string
+  targetCourse: string // slug do curso
+  targetInstitution: string // id da universidade
   examDate: Date | undefined
   dailyStudyHours: number
   weekdays: number[]
@@ -83,15 +90,45 @@ export function OnboardingSteps({ defaultName }: OnboardingStepsProps) {
   const [[step, direction], setStep] = useState<[number, number]>([0, 0])
   const [form, setForm] = useState<OnboardingForm>({
     name: defaultName,
-    targetScore: 950,
-    targetCourse: "",
+    targetScore: 850,
+    targetCourse: "medicina",
+    targetInstitution: "",
     examDate: undefined,
     dailyStudyHours: 3,
     weekdays: [0, 1, 2, 3, 4, 5, 6],
   })
   const [calendarOpen, setCalendarOpen] = useState(false)
+  const [courseOpen, setCourseOpen] = useState(false)
   const [schoolOpen, setSchoolOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
+
+  const curso = findCurso(form.targetCourse) ?? findCurso("medicina")!
+  const uniOptions = universidadesDoCurso(curso.slug, curso.area)
+    .map((u) => ({ u, corte: estimateCutoff(curso, u) }))
+    .sort((a, b) => b.corte - a.corte)
+  const selectedUni = findUniversidade(form.targetInstitution)
+
+  // Ao escolher a faculdade, sugere a nota de corte como nota alvo
+  function selectUniversity(uniId: string) {
+    const u = findUniversidade(uniId)
+    setForm((f) => ({
+      ...f,
+      targetInstitution: uniId,
+      targetScore: u ? estimateCutoff(curso, u) : f.targetScore,
+    }))
+    setSchoolOpen(false)
+  }
+
+  function selectCourse(slug: string) {
+    const c = findCurso(slug)
+    // limpa universidade se ela não oferecer o novo curso
+    const keepUni =
+      c && form.targetInstitution
+        ? universidadesDoCurso(c.slug, c.area).some((u) => u.id === form.targetInstitution)
+        : false
+    setForm((f) => ({ ...f, targetCourse: slug, targetInstitution: keepUni ? f.targetInstitution : "" }))
+    setCourseOpen(false)
+  }
 
   const navigate = (to: number) => setStep([to, to > step ? 1 : -1])
   const goNext = () => navigate(step + 1)
@@ -108,7 +145,8 @@ export function OnboardingSteps({ defaultName }: OnboardingStepsProps) {
       await completeOnboarding({
         name: form.name,
         targetScore: form.targetScore,
-        targetCourse: form.targetCourse || "Medicina",
+        targetCourse: form.targetCourse || "medicina",
+        targetInstitution: form.targetInstitution || null,
         examDate: form.examDate ?? null,
         dailyStudyGoal: Math.round(form.dailyStudyHours * 60),
       })
@@ -178,81 +216,41 @@ export function OnboardingSteps({ defaultName }: OnboardingStepsProps) {
         </p>
       </div>
 
-      {/* Score slider */}
-      <div className="flex flex-col gap-4">
-        <div className="flex items-end justify-between">
-          <span className="text-5xl font-black text-foreground tabular-nums">
-            {form.targetScore}
-          </span>
-          <span className={cn("text-sm font-semibold pb-1", scoreLabel.color)}>
-            {scoreLabel.text}
-          </span>
-        </div>
-        <Slider
-          min={700}
-          max={1000}
-          step={10}
-          value={[form.targetScore]}
-          onValueChange={([v]) => setForm((f) => ({ ...f, targetScore: v }))}
-          className="w-full"
-          aria-label="Nota alvo"
-        />
-        <div className="flex justify-between text-xs text-muted-foreground">
-          <span>700</span>
-          <span>850</span>
-          <span>1000</span>
-        </div>
-      </div>
-
-      {/* University combobox */}
+      {/* Curso combobox */}
       <div className="flex flex-col gap-2">
-        <Label className="text-sm font-medium">
-          Universidade alvo{" "}
-          <span className="text-muted-foreground font-normal">(opcional)</span>
-        </Label>
-        <Popover open={schoolOpen} onOpenChange={setSchoolOpen}>
+        <Label className="text-sm font-medium">Curso desejado</Label>
+        <Popover open={courseOpen} onOpenChange={setCourseOpen}>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
               role="combobox"
-              aria-expanded={schoolOpen}
               className="h-12 w-full justify-between text-left font-normal"
             >
-              <span className={cn("truncate", !form.targetCourse && "text-muted-foreground")}>
-                {form.targetCourse || "Selecionar universidade..."}
-              </span>
+              <span className="truncate">{curso.nome}</span>
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-full p-0" align="start">
+          <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
             <Command>
-              <CommandInput placeholder="Buscar faculdade de Medicina..." />
+              <CommandInput placeholder="Buscar curso..." />
               <CommandList>
-                <CommandEmpty>Nenhuma faculdade encontrada.</CommandEmpty>
+                <CommandEmpty>Nenhum curso encontrado.</CommandEmpty>
                 <CommandGroup>
-                  {MED_SCHOOLS.map((school) => (
+                  {CURSOS_ORDENADOS.map((c) => (
                     <CommandItem
-                      key={school.name}
-                      value={school.name}
-                      onSelect={() => {
-                        setForm((f) => ({
-                          ...f,
-                          targetCourse: school.name,
-                        }))
-                        setSchoolOpen(false)
-                      }}
+                      key={c.slug}
+                      value={`${c.nome} ${AREA_LABEL[c.area]}`}
+                      onSelect={() => selectCourse(c.slug)}
                     >
                       <Check
                         className={cn(
                           "mr-2 h-4 w-4 shrink-0",
-                          form.targetCourse === school.name ? "opacity-100" : "opacity-0"
+                          form.targetCourse === c.slug ? "opacity-100" : "opacity-0",
                         )}
                       />
-                      <div className="flex flex-col min-w-0">
-                        <span className="text-sm">{school.name}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {school.city} · Corte ~{school.cutoff}
-                        </span>
+                      <div className="flex min-w-0 flex-col">
+                        <span className="text-sm">{c.nome}</span>
+                        <span className="text-xs text-muted-foreground">{AREA_LABEL[c.area]}</span>
                       </div>
                     </CommandItem>
                   ))}
@@ -261,6 +259,99 @@ export function OnboardingSteps({ defaultName }: OnboardingStepsProps) {
             </Command>
           </PopoverContent>
         </Popover>
+      </div>
+
+      {/* Universidade combobox (sugere a nota de corte ao escolher) */}
+      <div className="flex flex-col gap-2">
+        <Label className="text-sm font-medium">
+          Universidade-alvo{" "}
+          <span className="font-normal text-muted-foreground">(opcional)</span>
+        </Label>
+        <Popover open={schoolOpen} onOpenChange={setSchoolOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              role="combobox"
+              className="h-12 w-full justify-between text-left font-normal"
+            >
+              <span className={cn("truncate", !selectedUni && "text-muted-foreground")}>
+                {selectedUni
+                  ? `${selectedUni.sigla} · ${selectedUni.cidade}/${selectedUni.uf}`
+                  : "Selecionar universidade..."}
+              </span>
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+            <Command>
+              <CommandInput placeholder="Buscar universidade..." />
+              <CommandList>
+                <CommandEmpty>Nenhuma universidade encontrada.</CommandEmpty>
+                <CommandGroup>
+                  {uniOptions.map(({ u, corte }) => (
+                    <CommandItem
+                      key={u.id}
+                      value={`${u.sigla} ${u.nome} ${u.cidade} ${u.uf}`}
+                      onSelect={() => selectUniversity(u.id)}
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4 shrink-0",
+                          form.targetInstitution === u.id ? "opacity-100" : "opacity-0",
+                        )}
+                      />
+                      <div className="flex min-w-0 flex-1 flex-col">
+                        <span className="text-sm">{u.sigla}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {TIPO_LABEL[u.tipo]} · {u.cidade}/{u.uf}
+                        </span>
+                      </div>
+                      <span className="ml-2 shrink-0 text-xs font-medium tabular-nums text-muted-foreground">
+                        {corte}
+                      </span>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+        {selectedUni && (
+          <p className="text-xs text-muted-foreground">
+            Nota de corte estimada para {curso.nome}:{" "}
+            <b className="text-primary">{estimateCutoff(curso, selectedUni)}</b> — usamos como sua
+            nota alvo.
+          </p>
+        )}
+      </div>
+
+      {/* Score slider */}
+      <div className="flex flex-col gap-4">
+        <div className="flex items-end justify-between">
+          <div>
+            <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
+              Nota alvo
+            </span>
+            <p className="text-4xl font-black tabular-nums text-foreground">{form.targetScore}</p>
+          </div>
+          <span className={cn("pb-1 text-sm font-semibold", scoreLabel.color)}>
+            {scoreLabel.text}
+          </span>
+        </div>
+        <Slider
+          min={400}
+          max={1000}
+          step={10}
+          value={[form.targetScore]}
+          onValueChange={([v]) => setForm((f) => ({ ...f, targetScore: v }))}
+          className="w-full"
+          aria-label="Nota alvo"
+        />
+        <div className="flex justify-between text-xs text-muted-foreground">
+          <span>400</span>
+          <span>700</span>
+          <span>1000</span>
+        </div>
       </div>
     </div>
   )
@@ -398,11 +489,16 @@ export function OnboardingSteps({ defaultName }: OnboardingStepsProps) {
             </span>
           }
         />
-        {form.targetCourse && (
+        <SummaryRow
+          icon={<BookOpen className="w-4 h-4 text-primary" />}
+          label="Curso"
+          value={curso.nome}
+        />
+        {selectedUni && (
           <SummaryRow
             icon={<Stethoscope className="w-4 h-4 text-primary" />}
             label="Universidade"
-            value={form.targetCourse.split(" — ")[1] ?? form.targetCourse}
+            value={`${selectedUni.sigla} — ${selectedUni.cidade}/${selectedUni.uf}`}
           />
         )}
         <SummaryRow
