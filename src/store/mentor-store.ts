@@ -4,6 +4,7 @@ export interface ChatMessage {
   id: string
   role: "user" | "assistant"
   content: string
+  image?: string // data URL (mensagem do usuário com imagem anexada)
 }
 
 interface MentorStore {

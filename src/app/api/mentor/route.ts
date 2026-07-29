@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
       return new Response('Unauthorized', { status: 401 })
     }
 
-    const { messages, topicId, planner } = await req.json()
+    const { messages, topicId, planner, image } = await req.json()
 
     const [profile, wrongQuestions, todayPlan, currentTopic] = await Promise.all([
       db.userProfile.findUnique({
@@ -132,10 +132,22 @@ Regras do JSON:
     const finalSystem = planner ? systemPrompt + plannerInstructions : systemPrompt
 
     // Gemini exige roles 'user'/'model' e histórico alternado começando por 'user'.
+    type Part = { text: string } | { inlineData: { mimeType: string; data: string } }
     const contents = (messages as { role: string; content: string }[]).map((m) => ({
       role: m.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: m.content }],
+      parts: [{ text: m.content }] as Part[],
     }))
+
+    // Anexa a imagem (se houver) à última mensagem do usuário — multimodal.
+    if (typeof image === 'string' && image.startsWith('data:image/')) {
+      const comma = image.indexOf(',')
+      const mimeType = image.slice(5, image.indexOf(';')) || 'image/jpeg'
+      const data = image.slice(comma + 1)
+      const last = contents[contents.length - 1]
+      if (last && last.role === 'user' && data) {
+        last.parts.push({ inlineData: { mimeType, data } })
+      }
+    }
 
     const isQuotaErr = (e: unknown) =>
       /429|quota|rate.?limit|RESOURCE_EXHAUSTED|Too Many Requests/i.test(

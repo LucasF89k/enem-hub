@@ -7,7 +7,7 @@ import { useMentorStore } from "@/store/mentor-store"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
-import { Send, Loader2, Trash2, Copy, Check, User, CalendarCheck, ArrowRight, Layers } from "lucide-react"
+import { Send, Loader2, Trash2, Copy, Check, User, CalendarCheck, ArrowRight, Layers, ImagePlus, X } from "lucide-react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { toast } from "sonner"
@@ -237,10 +237,46 @@ export function MentorChat() {
     useMentorStore()
 
   const [input, setInput] = useState("")
+  const [imageData, setImageData] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const abortRef = useRef<AbortController | null>(null)
   const startedRef = useRef(false)
+  const imageInputRef = useRef<HTMLInputElement>(null)
+
+  // Lê e redimensiona a imagem escolhida para um data URL JPEG (máx 1024px).
+  async function handleImagePick(file: File | undefined | null) {
+    if (!file || !file.type.startsWith("image/")) return
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(reader.result as string)
+      reader.onerror = reject
+      reader.readAsDataURL(file)
+    })
+    const img = new window.Image()
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve()
+      img.onerror = reject
+      img.src = dataUrl
+    })
+    const max = 1024
+    let { width, height } = img
+    if (width > max || height > max) {
+      const scale = Math.min(max / width, max / height)
+      width = Math.round(width * scale)
+      height = Math.round(height * scale)
+    }
+    const canvas = document.createElement("canvas")
+    canvas.width = width
+    canvas.height = height
+    const ctx = canvas.getContext("2d")
+    if (!ctx) {
+      setImageData(dataUrl)
+      return
+    }
+    ctx.drawImage(img, 0, 0, width, height)
+    setImageData(canvas.toDataURL("image/jpeg", 0.82))
+  }
 
   // Show welcome message on first render (fora do modo planner)
   useEffect(() => {
@@ -260,17 +296,22 @@ export function MentorChat() {
   }, [messages])
 
   const sendMessage = useCallback(
-    async (text: string, opts?: { fresh?: boolean }) => {
+    async (text: string, opts?: { fresh?: boolean; image?: string | null }) => {
       const trimmed = text.trim()
-      if (!trimmed || isLoading) return
+      const img = opts?.image ?? null
+      if ((!trimmed && !img) || isLoading) return
 
       setInput("")
+      setImageData(null)
 
       // Início limpo (ex.: entrevista do planner) — descarta histórico anterior
       if (opts?.fresh) clear()
 
+      // Texto enviado ao modelo (Gemini exige um texto mesmo quando só há imagem)
+      const promptText = trimmed || "Analise esta imagem e me ajude (resolva/explique a questão)."
+
       // Add user message
-      addMessage({ role: "user", content: trimmed })
+      addMessage({ role: "user", content: trimmed, image: img ?? undefined })
 
       // Add empty assistant message for streaming
       const assistantId = addMessage({ role: "assistant", content: "" })
@@ -283,18 +324,20 @@ export function MentorChat() {
       try {
         // Build conversation history for API (skip the initial welcome message)
         const apiMessages = opts?.fresh
-          ? [{ role: "user" as const, content: trimmed }]
+          ? [{ role: "user" as const, content: promptText }]
           : [
-              ...messages.filter(
-                (m) => !(m.role === "assistant" && m.content.includes("Sou o **Mentor ENEM**")),
-              ),
-              { role: "user" as const, content: trimmed },
+              ...messages
+                .filter(
+                  (m) => !(m.role === "assistant" && m.content.includes("Sou o **Mentor ENEM**")),
+                )
+                .map((m) => ({ role: m.role, content: m.content })),
+              { role: "user" as const, content: promptText },
             ]
 
         const response = await fetch("/api/mentor", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ messages: apiMessages, topicId, planner }),
+          body: JSON.stringify({ messages: apiMessages, topicId, planner, image: img }),
           signal: controller.signal,
         })
 
@@ -341,7 +384,7 @@ export function MentorChat() {
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault()
-      sendMessage(input)
+      sendMessage(input, { image: imageData })
     }
   }
 
@@ -422,7 +465,22 @@ export function MentorChat() {
                   )
                 })()
               ) : (
-                <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                <>
+                  {msg.image && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={msg.image}
+                      alt="Imagem enviada"
+                      className={cn(
+                        "rounded-lg max-w-full max-h-64 object-contain",
+                        msg.content && "mb-2",
+                      )}
+                    />
+                  )}
+                  {msg.content && (
+                    <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                  )}
+                </>
               )}
             </div>
 
@@ -464,7 +522,46 @@ export function MentorChat() {
 
       {/* Input */}
       <div className="px-4 pb-2 pt-2 shrink-0 border-t">
+        {/* Preview da imagem anexada */}
+        {imageData && (
+          <div className="mb-2 relative inline-block">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={imageData}
+              alt="Anexo"
+              className="h-20 w-20 object-cover rounded-lg border"
+            />
+            <button
+              type="button"
+              onClick={() => setImageData(null)}
+              className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-foreground text-background flex items-center justify-center shadow"
+              aria-label="Remover imagem"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
+        )}
         <div className="flex gap-2 items-end">
+          <input
+            ref={imageInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              handleImagePick(e.target.files?.[0])
+              e.target.value = ""
+            }}
+          />
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => imageInputRef.current?.click()}
+            disabled={isLoading}
+            className="shrink-0 h-11 w-11"
+            aria-label="Anexar imagem"
+          >
+            <ImagePlus className="h-4 w-4" />
+          </Button>
           <Textarea
             ref={textareaRef}
             value={input}
@@ -487,8 +584,8 @@ export function MentorChat() {
           ) : (
             <Button
               size="icon"
-              onClick={() => sendMessage(input)}
-              disabled={!input.trim()}
+              onClick={() => sendMessage(input, { image: imageData })}
+              disabled={!input.trim() && !imageData}
               className="shrink-0 h-11 w-11"
             >
               <Send className="h-4 w-4" />
