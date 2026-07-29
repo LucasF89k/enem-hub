@@ -12,6 +12,16 @@ Atualizado em: 2026-07-29
 
 ---
 
+## 🧭 Estrutura / organização de tópicos (reportado 29/07 — fazer DEPOIS de terminar a geração de conteúdo)
+
+> Ajustar a TAXONOMIA antes de (re)gerar o conteúdo dessas disciplinas, senão gera resumo pra tópico errado.
+
+- [ ] **Filosofia** — tópicos atuais não cobrem a linha histórica esperada. Deve ter: Pré-socráticos (Tales de Mileto; Heráclito e Parmênides), Sócrates, Sofistas (dialética), Santo Agostinho, São Tomás de Aquino, René Descartes, David Hume, Kant, Utilitarismo e Panóptico, Foucault. **Usuário vai enviar PDF.**
+- [ ] **Biologia** — revisar tópicos/relevância. **Usuário vai enviar PDF.**
+- [ ] **Linguagens e Códigos** — reorganizar **por HABILIDADE e COMPETÊNCIA da matriz do ENEM**, não por conteúdo. Explicar como cada habilidade é cobrada dentro de cada competência (destrinchar a matriz), em vez de só listar conteúdo. Ex.: há competência ligada a Literatura → precisa existir, mas organizada por competência. Afeta: Língua Portuguesa, Literatura, Inglês, Artes/Ed. Física.
+- [ ] **Química — "Equilíbrio Químico" (qui-equilibrio)**: revisar; apareceu conteúdo de **ondulatória (Física)** aí. Estrutura está OK (Ondulatória está em Física); o problema é o BODY gerado — regerar/limpar.
+- [ ] **Relevância (importance/frequency)** dos conteúdos em geral está "zoada" — revisar os valores por tópico.
+
 ## 📚 Conteúdo (incremental, com o tempo — subagentes Claude)
 
 - [ ] **Resumos aprofundados (Teoria)** — gerar o `body` de cada tópico como resumo de **10-15 min** (1800-2500 palavras), em markdown, **com links internos estilo Wikipedia** usando a sintaxe `[[slug-do-topico|texto]]` para assuntos correlatos.
