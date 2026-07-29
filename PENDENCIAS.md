@@ -18,8 +18,9 @@ Atualizado em: 2026-07-29
 
 ## 📝 ENEM regular incompleto (api.enem.dev — GRÁTIS, sem IA)
 
-- [ ] **ENEM 2009–2023** só tem ~74–89 de 180 questões cada (import parou incompleto). A API tem ~183–185/ano.
-  - Corrigir: rodar `npx tsx scripts/import-questions.ts --all` (idempotente, só adiciona as que faltam, já com gabarito) → depois `npx tsx scripts/build-simulados.ts` pra reconstruir os simulados até ~180.
+- [ ] **ENEM 2009–2023** só tem ~74–89 de 180 questões cada. A API `api.enem.dev` lista ~183–185/ano, MAS as ~100 que faltam são **baseadas em imagem** (sem texto/alternativas estruturados) → o import pula.
+  - O re-import só recupera as poucas com texto. Rodar `npx tsx scripts/import-questions.ts --all` (idempotente) recupera essas + gabarito; depois `build-simulados.ts`.
+  - **As questões de imagem ficam para a SESSÃO/FASE F**, usando **Ghostscript** (renderizar/extrair as imagens dos PDFs oficiais do INEP) + **Cloudinary** (hospedar as imagens). É assim que se chega aos 180 reais por prova.
 
 ## 🎓 ENCCEJA (via subagentes Claude — sem MiMo)
 
