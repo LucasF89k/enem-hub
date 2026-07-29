@@ -18,43 +18,63 @@ export function AvatarUpload({ currentImage, initials }: AvatarUploadProps) {
   const [preview, setPreview] = useState<string | null>(currentImage)
   const [isPending, startTransition] = useTransition()
 
+  // Redimensiona/recorta a imagem para um quadrado pequeno (JPEG leve) no cliente.
+  function resizeImage(file: File, size = 256): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file)
+      const img = new Image()
+      img.onload = () => {
+        URL.revokeObjectURL(url)
+        const canvas = document.createElement("canvas")
+        canvas.width = size
+        canvas.height = size
+        const ctx = canvas.getContext("2d")
+        if (!ctx) return reject(new Error("canvas"))
+        const min = Math.min(img.width, img.height)
+        const sx = (img.width - min) / 2
+        const sy = (img.height - min) / 2
+        ctx.drawImage(img, sx, sy, min, min, 0, 0, size, size)
+        resolve(canvas.toDataURL("image/jpeg", 0.85))
+      }
+      img.onerror = () => {
+        URL.revokeObjectURL(url)
+        reject(new Error("load"))
+      }
+      img.src = url
+    })
+  }
+
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
+    e.target.value = "" // permite reselecionar o mesmo arquivo
     if (!file) return
-
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error("Imagem muito grande. Máximo 2MB.")
-      return
-    }
 
     if (!file.type.startsWith("image/")) {
       toast.error("Selecione uma imagem válida.")
       return
     }
+    if (file.size > 8 * 1024 * 1024) {
+      toast.error("Imagem muito grande. Máximo 8MB.")
+      return
+    }
 
-    const reader = new FileReader()
-    reader.onload = (ev) => {
-      const base64 = ev.target?.result as string
-      setPreview(base64)
-      startTransition(async () => {
-        try {
-          const result = await updateProfileImage(base64)
-          if (result.success) {
-            toast.success("Foto atualizada!")
-            router.refresh()
-          } else {
-            toast.error(result.error ?? "Erro ao salvar foto")
-            setPreview(currentImage)
-          }
-        } catch {
-          toast.error("Erro ao salvar foto")
+    startTransition(async () => {
+      try {
+        const dataUrl = await resizeImage(file)
+        setPreview(dataUrl)
+        const result = await updateProfileImage(dataUrl)
+        if (result.success) {
+          toast.success("Foto atualizada!")
+          router.refresh()
+        } else {
+          toast.error(result.error ?? "Erro ao salvar foto")
           setPreview(currentImage)
         }
-      })
-    }
-    reader.readAsDataURL(file)
-    // Reset input so same file can be re-selected
-    e.target.value = ""
+      } catch {
+        toast.error("Erro ao processar a foto")
+        setPreview(currentImage)
+      }
+    })
   }
 
   return (

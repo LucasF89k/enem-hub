@@ -166,17 +166,21 @@ export default async function ProfilePage() {
                 {findCurso(profile.targetCourse)?.nome ?? profile.targetCourse}
               </span>
             </div>
-            {findUniversidade(profile.targetInstitution) && (
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm">
-                  <GraduationCap className="h-4 w-4 text-muted-foreground" />
-                  <span>Universidade</span>
+            {(() => {
+              const uni = findUniversidade(profile.targetInstitution)
+              if (!uni) return null
+              return (
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm">
+                    <GraduationCap className="h-4 w-4 text-muted-foreground" />
+                    <span>Universidade</span>
+                  </div>
+                  <span className="font-semibold">
+                    {uni.sigla} · {uni.cidade}/{uni.uf}
+                  </span>
                 </div>
-                <span className="font-semibold">
-                  {findUniversidade(profile.targetInstitution)!.sigla}
-                </span>
-              </div>
-            )}
+              )
+            })()}
             {daysLeft !== null && (
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-sm">
