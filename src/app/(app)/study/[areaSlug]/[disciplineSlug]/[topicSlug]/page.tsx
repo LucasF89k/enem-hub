@@ -8,6 +8,7 @@ import { FavoriteButton } from "@/components/study/FavoriteButton"
 import { TopicTabs } from "./topic-tabs"
 import { FavoriteType } from "@prisma/client"
 import { getTopicVideos } from "@/app/actions/video.actions"
+import { resolveWikiLinks } from "@/lib/wiki-links"
 
 export async function generateMetadata({
   params,
@@ -75,6 +76,9 @@ export default async function TopicPage({
   }
 
   const content = topic.contents[0] ?? null
+
+  // Resolve links internos ([[slug|texto]]) do corpo teórico → âncoras azuis
+  const resolvedBody = content ? await resolveWikiLinks(content.body) : ""
 
   // Videos for this topic
   const videos = await getTopicVideos(topic.id)
@@ -182,7 +186,7 @@ export default async function TopicPage({
         content={content ? {
           id: content.id,
           summary: content.summary,
-          body: content.body,
+          body: resolvedBody,
           keyConcepts: content.keyConcepts,
           tips: content.tips,
           formulas: content.formulas,

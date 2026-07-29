@@ -51,20 +51,34 @@ interface GeneratedContent {
   tricks: string[]
 }
 
-function buildPrompt(topicName: string, disciplineName: string, areaName: string): string {
-  return `Você é professor especialista em ENEM preparando material para candidatos a Medicina. Crie conteúdo completo para:
+function buildPrompt(
+  topicName: string,
+  disciplineName: string,
+  areaName: string,
+  related: { slug: string; name: string }[],
+): string {
+  const relatedList =
+    related.length > 0
+      ? related.map((r) => `- ${r.slug} — ${r.name}`).join("\n")
+      : "(nenhum)"
+
+  return `Você é professor especialista em ENEM preparando material para candidatos a Medicina. Crie um RESUMO APROFUNDADO (10 a 15 minutos de leitura) para:
 Tópico: ${topicName}
 Disciplina: ${disciplineName}
 Área: ${areaName}
 
+LINKS INTERNOS (estilo Wikipedia): ao mencionar um assunto correlato que esteja na lista abaixo, transforme a palavra num link usando a sintaxe [[slug|texto exibido]] (ex.: [[funcao-afim|função afim]]). Use APENAS slugs desta lista, e só quando fizer sentido pedagógico (2 a 6 links no total). NUNCA invente slugs.
+Tópicos relacionados disponíveis para linkar:
+${relatedList}
+
 Retorne SOMENTE JSON (sem markdown, sem explicação):
 {
   "summary": string (80 palavras: o que é e por que é importante no ENEM),
-  "body": string (HTML com h3/p/ul/strong, 600 palavras, teoria completa),
-  "keyConcepts": string[] (6 conceitos-chave, frases de até 8 palavras),
-  "tips": string[] (4 dicas de como este tema aparece no ENEM),
+  "body": string (markdown com ## e ### para seções, parágrafos, listas e **negrito**; 1800 a 2500 palavras; teoria completa, aprofundada e didática, com exemplos e aplicação no ENEM; inclua os links internos [[slug|texto]] no meio do texto),
+  "keyConcepts": string[] (6 a 8 conceitos-chave, frases de até 8 palavras),
+  "tips": string[] (4 a 6 dicas de como este tema aparece no ENEM),
   "formulas": string[] (fórmulas em texto simples, vazio se não houver),
-  "tricks": string[] (3 macetes e pegadinhas comuns na prova)
+  "tricks": string[] (3 a 5 macetes e pegadinhas comuns na prova)
 }`
 }
 
@@ -87,14 +101,27 @@ async function generateForTopic(topic: {
   name: string
   importance: number
   frequency: number
+  disciplineId: string
   discipline: { name: string; area: { name: string } }
 }): Promise<"saved" | "error"> {
   try {
-    const prompt = buildPrompt(topic.name, topic.discipline.name, topic.discipline.area.name)
+    // Tópicos irmãos (mesma disciplina) — candidatos a link interno estilo wiki
+    const related = await db.topic.findMany({
+      where: { disciplineId: topic.disciplineId, id: { not: topic.id } },
+      select: { slug: true, name: true },
+      orderBy: { order: "asc" },
+      take: 40,
+    })
+    const prompt = buildPrompt(
+      topic.name,
+      topic.discipline.name,
+      topic.discipline.area.name,
+      related,
+    )
     const completion = await mimo.chat.completions.create({
       model: MIMO_MODEL_PRO,
       messages: [{ role: "user", content: prompt }],
-      max_tokens: 4096,
+      max_tokens: 8192,
       temperature: 0.5,
     })
     const raw = (completion.choices[0]?.message?.content ?? "").trim()
@@ -168,6 +195,7 @@ async function main() {
       name: true,
       importance: true,
       frequency: true,
+      disciplineId: true,
       discipline: { select: { name: true, area: { select: { name: true } } } },
     },
     orderBy: { order: "asc" },

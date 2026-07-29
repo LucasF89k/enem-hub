@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import ReactMarkdown from "react-markdown"
+import ReactMarkdown, { type Components } from "react-markdown"
 import remarkGfm from "remark-gfm"
 import rehypeRaw from "rehype-raw"
 import rehypeSanitize from "rehype-sanitize"
@@ -24,6 +24,33 @@ import { CreateFlashcardDialog } from "@/components/flashcards/CreateFlashcardDi
 import { TopicQuestionsInline, type InlineQuestion } from "@/components/study/TopicQuestionsInline"
 import { XpBadge } from "@/components/gamification/XpBadge"
 import type { VideoWithWatched } from "@/app/actions/video.actions"
+
+/** Links do conteúdo teórico: internos (para outro tópico) ficam azuis, estilo Wikipedia. */
+const markdownComponents: Components = {
+  a({ href, children }) {
+    const h = typeof href === "string" ? href : "#"
+    if (h.startsWith("/")) {
+      return (
+        <Link
+          href={h}
+          className="font-medium text-blue-600 decoration-blue-400/50 underline-offset-2 hover:underline dark:text-blue-400"
+        >
+          {children}
+        </Link>
+      )
+    }
+    return (
+      <a
+        href={h}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-blue-600 hover:underline dark:text-blue-400"
+      >
+        {children}
+      </a>
+    )
+  },
+}
 
 interface TopicContent {
   id: string
@@ -79,7 +106,7 @@ export function TopicTabs({ topicId, topicName, content, flashcards, questions, 
               <span>~{content.readTime ?? 5} min de leitura</span>
             </div>
             <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:font-semibold prose-p:leading-relaxed">
-              <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw, rehypeSanitize]}>{content.body}</ReactMarkdown>
+              <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw, rehypeSanitize]} components={markdownComponents}>{content.body}</ReactMarkdown>
             </div>
           </article>
         ) : (
@@ -87,7 +114,7 @@ export function TopicTabs({ topicId, topicName, content, flashcards, questions, 
             <BookOpen className="h-10 w-10 text-muted-foreground/40" />
             <p className="text-sm font-medium">Teoria em construção</p>
             <p className="text-xs text-muted-foreground max-w-xs">
-              O conteúdo desta seção será gerado automaticamente na Fase 6 do projeto.
+              O resumo aprofundado deste tópico está sendo adicionado aos poucos. Enquanto isso, use os flashcards, questões e vídeos.
             </p>
           </div>
         )}
@@ -173,7 +200,7 @@ export function TopicTabs({ topicId, topicName, content, flashcards, questions, 
             <Lightbulb className="h-10 w-10 text-muted-foreground/40" />
             <p className="text-sm font-medium">Resumo em construção</p>
             <p className="text-xs text-muted-foreground max-w-xs">
-              O resumo será gerado automaticamente na Fase 6 do projeto.
+              Os conceitos-chave, dicas e macetes deste tópico estão sendo adicionados aos poucos.
             </p>
           </div>
         )}

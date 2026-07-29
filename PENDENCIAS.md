@@ -14,6 +14,10 @@ Atualizado em: 2026-07-29
 
 ## 📚 Conteúdo (incremental, com o tempo — subagentes Claude)
 
+- [ ] **Resumos aprofundados (Teoria)** — gerar o `body` de cada tópico como resumo de **10-15 min** (1800-2500 palavras), em markdown, **com links internos estilo Wikipedia** usando a sintaxe `[[slug-do-topico|texto]]` para assuntos correlatos.
+  - ✅ **Recurso pronto:** os links `[[slug|texto]]` já são resolvidos no servidor ([src/lib/wiki-links.ts](src/lib/wiki-links.ts)) e renderizados em **azul** (clicáveis, navegação in-app) na aba Teoria.
+  - Spec do gerador atualizada em `scripts/generate-content.ts` (usa os tópicos irmãos como candidatos a link). **Rodar a geração em massa via subagentes Claude** (não MiMo).
+
 - [ ] **Flashcards** — **8.768** cards genéricos ("Importados do Anki") ainda sem matéria/tópico.
   - Já classificados: ~9.223. Ferramenta: subagente lê o conteúdo e atribui o tópico (~900/rodada, limitado pelo limite de sessão do Claude).
 - [ ] **Vídeos do YouTube** — **~84 tópicos** com menos de 6 vídeos.
