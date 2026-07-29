@@ -1,7 +1,9 @@
 import { NextRequest } from 'next/server'
 import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
+import OpenAI from 'openai'
 import { geminiKeys, geminiChatModelWithKey } from '@/lib/gemini'
+import { mimoKeys, mimoClientWithKey, MIMO_MODEL } from '@/lib/mimo'
 import { findCurso, estimateCutoff, cursoMedia } from '@/constants/cursos'
 import { findUniversidade } from '@/constants/universidades'
 
@@ -131,54 +133,105 @@ Regras do JSON:
 
     const finalSystem = planner ? systemPrompt + plannerInstructions : systemPrompt
 
-    // Gemini exige roles 'user'/'model' e histórico alternado começando por 'user'.
-    type Part = { text: string } | { inlineData: { mimeType: string; data: string } }
-    const contents = (messages as { role: string; content: string }[]).map((m) => ({
-      role: m.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: m.content }] as Part[],
-    }))
+    // Anexo (imagem/PDF) da última mensagem do usuário.
+    const hasAttach = typeof image === 'string' && /^data:(image\/|application\/pdf)/.test(image)
+    const attachIsImage = hasAttach && (image as string).startsWith('data:image/')
 
-    // Anexa a imagem/PDF (se houver) à última mensagem do usuário — multimodal.
-    if (typeof image === 'string' && /^data:(image\/|application\/pdf)/.test(image)) {
-      const comma = image.indexOf(',')
-      const mimeType = image.slice(5, image.indexOf(';')) || 'image/jpeg'
-      const data = image.slice(comma + 1)
-      const last = contents[contents.length - 1]
-      if (last && last.role === 'user' && data) {
-        last.parts.push({ inlineData: { mimeType, data } })
+    // Mensagens no formato OpenAI (MiMo). MiMo lê imagem nativamente; PDF não →
+    // nesse caso vai só o texto e o Gemini (fallback) é quem lê o PDF.
+    const buildOpenAIMessages = (): OpenAI.Chat.ChatCompletionMessageParam[] => {
+      const arr: OpenAI.Chat.ChatCompletionMessageParam[] = [
+        { role: 'system', content: finalSystem },
+      ]
+      const list = messages as { role: string; content: string }[]
+      list.forEach((m, i) => {
+        const role = m.role === 'assistant' ? 'assistant' : 'user'
+        const isLast = i === list.length - 1
+        if (isLast && role === 'user' && attachIsImage) {
+          arr.push({
+            role: 'user',
+            content: [
+              { type: 'text', text: m.content },
+              { type: 'image_url', image_url: { url: image as string } },
+            ],
+          })
+        } else {
+          arr.push({ role, content: m.content } as OpenAI.Chat.ChatCompletionMessageParam)
+        }
+      })
+      return arr
+    }
+
+    // Conteúdo no formato Gemini (fallback) — aceita imagem e PDF.
+    type Part = { text: string } | { inlineData: { mimeType: string; data: string } }
+    const buildGeminiContents = () => {
+      const contents = (messages as { role: string; content: string }[]).map((m) => ({
+        role: m.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: m.content }] as Part[],
+      }))
+      if (hasAttach) {
+        const img = image as string
+        const mimeType = img.slice(5, img.indexOf(';')) || 'image/jpeg'
+        const data = img.slice(img.indexOf(',') + 1)
+        const last = contents[contents.length - 1]
+        if (last && last.role === 'user' && data) {
+          last.parts.push({ inlineData: { mimeType, data } })
+        }
+      }
+      return contents
+    }
+
+    // Geradores de stream (yield de deltas de texto).
+    async function* mimoGen(apiKey: string): AsyncGenerator<string> {
+      const client = mimoClientWithKey(apiKey)
+      const stream = await client.chat.completions.create({
+        model: MIMO_MODEL,
+        stream: true,
+        temperature: 0.7,
+        max_tokens: 2048,
+        messages: buildOpenAIMessages(),
+      })
+      for await (const chunk of stream) {
+        const delta = chunk.choices[0]?.delta?.content
+        if (delta) yield delta
+      }
+    }
+    async function* geminiGen(apiKey: string): AsyncGenerator<string> {
+      const model = geminiChatModelWithKey(apiKey, finalSystem)
+      const result = await model.generateContentStream({ contents: buildGeminiContents() })
+      for await (const chunk of result.stream) {
+        const t = chunk.text?.() ?? ''
+        if (t) yield t
       }
     }
 
-    const isQuotaErr = (e: unknown) =>
-      /429|quota|rate.?limit|RESOURCE_EXHAUSTED|Too Many Requests/i.test(
-        e instanceof Error ? e.message : String(e),
-      )
+    // Ordem dos provedores: MiMo (rotação de chaves) → Gemini (fallback).
+    // Cada provedor só é "confirmado" quando o primeiro chunk chega; se estourar
+    // cota/erro antes disso, rotaciona pro próximo sem o usuário perceber.
+    const starters: Array<() => AsyncGenerator<string>> = [
+      ...mimoKeys().map((k) => () => mimoGen(k)),
+      ...geminiKeys().map((k) => () => geminiGen(k)),
+    ]
+    if (starters.length === 0) {
+      throw new Error('Nenhuma chave de IA configurada (MIMO_API_KEYS ou GEMINI_API_KEYS)')
+    }
 
-    // Rotação de chaves: usa uma até estourar a cota, então passa pra próxima.
-    const keys = geminiKeys()
-    if (keys.length === 0) throw new Error('Nenhuma chave do Gemini configurada')
-
-    type ChunkIter = AsyncIterator<{ text: () => string }>
-    let iterator: ChunkIter | null = null
-    let firstChunk: IteratorResult<{ text: () => string }> | null = null
+    let gen: AsyncGenerator<string> | null = null
+    let firstChunk: IteratorResult<string> | null = null
     let lastErr: unknown = null
-
-    for (const key of keys) {
+    for (const start of starters) {
       try {
-        const model = geminiChatModelWithKey(key, finalSystem)
-        const result = await model.generateContentStream({ contents })
-        const it = result.stream[Symbol.asyncIterator]() as ChunkIter
-        const first = await it.next() // 429 por cota estoura aqui → tenta próxima chave
-        iterator = it
+        const g = start()
+        const first = await g.next() // 429/erro estoura aqui → tenta o próximo provedor
+        gen = g
         firstChunk = first
         break
       } catch (e) {
         lastErr = e
-        if (isQuotaErr(e)) continue
-        throw e
+        continue
       }
     }
-    if (!iterator || !firstChunk) throw lastErr ?? new Error('Falha ao iniciar o Mentor')
+    if (!gen || !firstChunk) throw lastErr ?? new Error('Falha ao iniciar o Mentor')
 
     const readable = new ReadableStream({
       async start(controller) {
@@ -186,9 +239,8 @@ Regras do JSON:
         try {
           let res = firstChunk!
           while (!res.done) {
-            const text = res.value?.text?.() ?? ''
-            if (text) controller.enqueue(enc.encode(text))
-            res = await iterator!.next()
+            if (res.value) controller.enqueue(enc.encode(res.value))
+            res = await gen!.next()
           }
         } catch {
           /* erro no meio do stream — encerra o que já veio */
@@ -202,9 +254,12 @@ Regras do JSON:
       headers: { 'Content-Type': 'text/plain; charset=utf-8' },
     })
   } catch (error) {
-    console.error('[Mentor Gemini Error]:', error)
+    console.error('[Mentor Error]:', error)
+    const status = (error as { status?: number })?.status
     const message = error instanceof Error ? error.message : 'Erro desconhecido'
-    const isQuota = /429|quota|rate.?limit|RESOURCE_EXHAUSTED|Too Many Requests/i.test(message)
+    const isQuota =
+      status === 429 ||
+      /429|quota|rate.?limit|RESOURCE_EXHAUSTED|Too Many Requests|insufficient/i.test(message)
     return new Response(
       isQuota
         ? '⚠️ O Mentor atingiu o limite de uso gratuito por enquanto. Tente novamente em alguns minutos.'

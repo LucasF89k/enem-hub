@@ -36,6 +36,36 @@ export const mimo = new OpenAI(
 export const MIMO_MODEL = useOpenRouter ? 'xiaomi/mimo-v2.5' : 'mimo-v2.5'
 export const MIMO_MODEL_PRO = useOpenRouter ? 'xiaomi/mimo-v2.5-pro' : 'mimo-v2.5-pro'
 
+/**
+ * Chaves do MiMo para ROTAÇÃO (usa uma até estourar a cota, passa pra próxima).
+ * Defina MIMO_API_KEYS separadas por vírgula; cai para a chave única do provedor.
+ */
+export function mimoKeys(): string[] {
+  const multi = (process.env.MIMO_API_KEYS || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+  if (multi.length) return multi
+  const single = useOpenRouter ? process.env.OPENROUTER_API_KEY : process.env.MIMO_API_KEY
+  return single ? [single] : []
+}
+
+/** Cliente MiMo com uma chave específica (para rotação de chaves no Mentor). */
+export function mimoClientWithKey(apiKey: string): OpenAI {
+  return new OpenAI(
+    useOpenRouter
+      ? {
+          apiKey,
+          baseURL: 'https://openrouter.ai/api/v1',
+          defaultHeaders: {
+            'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL ?? 'https://enem-hub.vercel.app',
+            'X-Title': 'Vion',
+          },
+        }
+      : { apiKey, baseURL: 'https://api.xiaomimimo.com/v1' },
+  )
+}
+
 export async function generateMimoJSON<T>(prompt: string, maxTokens = 4096): Promise<T> {
   const completion = await mimo.chat.completions.create({
     model: MIMO_MODEL_PRO,

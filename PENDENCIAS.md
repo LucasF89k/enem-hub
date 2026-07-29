@@ -2,7 +2,7 @@
 
 > Regra fixa: **NÃO usar MiMo nem Gemini** para tarefas em massa (classificação/conteúdo).
 > Isso é feito por **subagentes do Claude** (grátis), **aos poucos, enquanto os usuários usam o app**.
-> Gemini fica reservado **só para o chat do Mentor**.
+> O chat do Mentor usa **MiMo `mimo-v2.5`** (multimodal) com **Gemini de fallback**; nenhum dos dois em massa.
 
 Atualizado em: 2026-07-29
 
@@ -47,7 +47,7 @@ Atualizado em: 2026-07-29
 ## 💡 Opcionais / ideias
 
 - Ranking estilo Duolingo com **ligas** (hoje é ranking global + grupos entre amigos).
-- Migrar o Mentor para o MiMo **se um dia** houver créditos (hoje: Gemini 2.0-flash).
+- ✅ **Mentor migrado para o MiMo** (`mimo-v2.5`, multimodal — lê imagem) com rotação de chaves e **Gemini como fallback** (o Gemini ainda é quem lê PDF).
 - **Gerar imagens** no Mentor (hoje ele só **lê**; gerar exigiria outro modelo/pago) — deixado para depois.
 
 ---
