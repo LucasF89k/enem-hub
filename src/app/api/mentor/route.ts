@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
-import { geminiChatModel } from '@/lib/gemini'
+import { geminiKeys, geminiChatModelWithKey } from '@/lib/gemini'
 import { findCurso, estimateCutoff, cursoMedia } from '@/constants/cursos'
 import { findUniversidade } from '@/constants/universidades'
 
@@ -137,16 +137,49 @@ Regras do JSON:
       parts: [{ text: m.content }],
     }))
 
-    const model = geminiChatModel(finalSystem)
-    const result = await model.generateContentStream({ contents })
+    const isQuotaErr = (e: unknown) =>
+      /429|quota|rate.?limit|RESOURCE_EXHAUSTED|Too Many Requests/i.test(
+        e instanceof Error ? e.message : String(e),
+      )
+
+    // Rotação de chaves: usa uma até estourar a cota, então passa pra próxima.
+    const keys = geminiKeys()
+    if (keys.length === 0) throw new Error('Nenhuma chave do Gemini configurada')
+
+    type ChunkIter = AsyncIterator<{ text: () => string }>
+    let iterator: ChunkIter | null = null
+    let firstChunk: IteratorResult<{ text: () => string }> | null = null
+    let lastErr: unknown = null
+
+    for (const key of keys) {
+      try {
+        const model = geminiChatModelWithKey(key, finalSystem)
+        const result = await model.generateContentStream({ contents })
+        const it = result.stream[Symbol.asyncIterator]() as ChunkIter
+        const first = await it.next() // 429 por cota estoura aqui → tenta próxima chave
+        iterator = it
+        firstChunk = first
+        break
+      } catch (e) {
+        lastErr = e
+        if (isQuotaErr(e)) continue
+        throw e
+      }
+    }
+    if (!iterator || !firstChunk) throw lastErr ?? new Error('Falha ao iniciar o Mentor')
 
     const readable = new ReadableStream({
       async start(controller) {
+        const enc = new TextEncoder()
         try {
-          for await (const chunk of result.stream) {
-            const text = chunk.text()
-            if (text) controller.enqueue(new TextEncoder().encode(text))
+          let res = firstChunk!
+          while (!res.done) {
+            const text = res.value?.text?.() ?? ''
+            if (text) controller.enqueue(enc.encode(text))
+            res = await iterator!.next()
           }
+        } catch {
+          /* erro no meio do stream — encerra o que já veio */
         } finally {
           controller.close()
         }

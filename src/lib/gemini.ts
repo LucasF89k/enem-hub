@@ -30,6 +30,30 @@ export function geminiChatModel(systemInstruction: string) {
   })
 }
 
+/**
+ * Lista de chaves da API do Gemini para ROTAÇÃO (usa uma até estourar a cota,
+ * depois passa pra próxima). Defina GEMINI_API_KEYS separadas por vírgula no
+ * ambiente para ganhar mais cota gratuita; cai para GEMINI_API_KEY se não houver.
+ */
+export function geminiKeys(): string[] {
+  const multi = (process.env.GEMINI_API_KEYS || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean)
+  if (multi.length) return multi
+  return process.env.GEMINI_API_KEY ? [process.env.GEMINI_API_KEY] : []
+}
+
+/** Modelo de chat criado com uma chave específica (para rotação de chaves). */
+export function geminiChatModelWithKey(apiKey: string, systemInstruction: string) {
+  const client = new GoogleGenerativeAI(apiKey)
+  return client.getGenerativeModel({
+    model: "gemini-2.0-flash",
+    systemInstruction,
+    generationConfig: { temperature: 0.7, maxOutputTokens: 2048 },
+  })
+}
+
 export async function generateText(prompt: string): Promise<string> {
   const result = await gemini.generateContent(prompt)
   return result.response.text()
