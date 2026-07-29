@@ -16,6 +16,15 @@ Atualizado em: 2026-07-29
   - Rodar: `npx tsx scripts/search-videos.ts --fill` (bate na cota diária do YouTube → aos poucos, retomável).
   - Estado atual: 1.076 vídeos, 123 tópicos completos.
 
+## 📝 ENEM regular incompleto (api.enem.dev — GRÁTIS, sem IA)
+
+- [ ] **ENEM 2009–2023** só tem ~74–89 de 180 questões cada (import parou incompleto). A API tem ~183–185/ano.
+  - Corrigir: rodar `npx tsx scripts/import-questions.ts --all` (idempotente, só adiciona as que faltam, já com gabarito) → depois `npx tsx scripts/build-simulados.ts` pra reconstruir os simulados até ~180.
+
+## 🎓 ENCCEJA (via subagentes Claude — sem MiMo)
+
+- [ ] Importar as provas do **ENCCEJA** (não está no api.enem.dev → extração de PDF via subagente, aos poucos).
+
 ## 📝 Provas ENEM PPL (extração de PDF — "faça depois" antigo)
 
 - [ ] **Anos incompletos:** PPL **2018, 2024, 2025** (import parcial).
