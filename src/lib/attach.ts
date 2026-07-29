@@ -69,3 +69,6 @@ export const REDACAO_CORRECTION_PROMPT = `Corrija esta redação do ENEM (está 
 5. Termine com 2-3 dicas objetivas para subir a nota.
 
 Seja rigoroso e use os critérios reais do ENEM.`
+
+/** Prompt para o Mentor transcrever uma foto de um plano de estudos em papel. */
+export const PLANO_FOLHA_PROMPT = `Tenho um plano/cronograma de estudos pronto nesta foto. Transcreva ele fielmente, dia a dia, mantendo as mesmas matérias e atividades, e depois gere o plano estruturado (bloco vion-plano-folha) para eu aplicar no meu Planner. Não precisa me fazer perguntas — é só copiar o que está na folha.`

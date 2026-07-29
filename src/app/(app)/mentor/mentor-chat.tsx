@@ -12,7 +12,11 @@ import { Send, Loader2, Trash2, Copy, Check, User, CalendarCheck, ArrowRight, La
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { toast } from "sonner"
-import { applyMentorPlan } from "@/app/actions/planner.actions"
+import {
+  applyMentorPlan,
+  applyImportedPlan,
+  type ImportedPlanInput,
+} from "@/app/actions/planner.actions"
 import { saveMentorFlashcards } from "@/app/actions/flashcard.actions"
 
 const QUICK_ACTIONS = [
@@ -107,6 +111,73 @@ function extractVionFlashcards(content: string): { cards: FlashcardDraft[] | nul
   const open = content.search(/```vion-flashcards/i)
   if (open >= 0) return { cards: null, cleaned: content.slice(0, open).trim() }
   return { cards: null, cleaned: content }
+}
+
+interface ImportedPlan {
+  title?: string
+  days: { date: string; items: { title: string; type: string; duration?: number }[] }[]
+}
+
+/** Extrai o bloco ```vion-plano-folha``` (plano transcrito de uma foto). */
+function extractVionPlanoFolha(content: string): { plan: ImportedPlan | null; cleaned: string } {
+  const closed = /```vion-plano-folha\s*([\s\S]*?)```/i
+  const m = content.match(closed)
+  if (m) {
+    let plan: ImportedPlan | null = null
+    try {
+      const parsed = JSON.parse(m[1].trim())
+      if (parsed && Array.isArray(parsed.days) && parsed.days.length > 0) plan = parsed
+    } catch {
+      plan = null
+    }
+    return { plan, cleaned: content.replace(closed, "").trim() }
+  }
+  const open = content.search(/```vion-plano-folha/i)
+  if (open >= 0) return { plan: null, cleaned: content.slice(0, open).trim() }
+  return { plan: null, cleaned: content }
+}
+
+function ApplyImportedPlanCard({ plan }: { plan: ImportedPlan }) {
+  const [state, setState] = useState<"idle" | "loading" | "done">("idle")
+  const totalItems = plan.days.reduce((n, d) => n + (d.items?.length ?? 0), 0)
+
+  async function apply() {
+    setState("loading")
+    const res = await applyImportedPlan(plan as ImportedPlanInput)
+    if (res.success) {
+      setState("done")
+      toast.success("Plano da folha aplicado no seu Planner!")
+    } else {
+      setState("idle")
+      toast.error(res.error ?? "Não foi possível aplicar o plano")
+    }
+  }
+
+  return (
+    <div className="mt-2 rounded-2xl border bg-background p-4">
+      <div className="mb-2 flex items-center gap-2">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+          <CalendarCheck className="h-4 w-4 text-primary" />
+        </div>
+        <p className="text-sm font-semibold">
+          {plan.title?.trim() || "Plano da folha"} · {plan.days.length} dias, {totalItems} atividades
+        </p>
+      </div>
+      {state === "done" ? (
+        <Button asChild className="w-full gap-1.5">
+          <Link href="/planner">
+            Ver no Planner
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </Button>
+      ) : (
+        <Button onClick={apply} disabled={state === "loading"} className="w-full gap-1.5">
+          {state === "loading" ? <Loader2 className="h-4 w-4 animate-spin" /> : <CalendarCheck className="h-4 w-4" />}
+          Aplicar plano da folha
+        </Button>
+      )}
+    </div>
+  )
 }
 
 function SaveFlashcardsCard({ cards }: { cards: FlashcardDraft[] }) {
@@ -429,7 +500,8 @@ export function MentorChat() {
               {msg.role === "assistant" ? (
                 (() => {
                   const { plan, cleaned: afterPlan } = extractVionPlan(msg.content)
-                  const { cards, cleaned } = extractVionFlashcards(afterPlan)
+                  const { plan: folha, cleaned: afterFolha } = extractVionPlanoFolha(afterPlan)
+                  const { cards, cleaned } = extractVionFlashcards(afterFolha)
                   return (
                     <>
                       {cleaned ? (
@@ -440,6 +512,7 @@ export function MentorChat() {
                         <TypingDots />
                       )}
                       {plan && !isLoading && <ApplyPlanCard plan={plan} />}
+                      {folha && !isLoading && <ApplyImportedPlanCard plan={folha} />}
                       {cards && !isLoading && <SaveFlashcardsCard cards={cards} />}
                       {cleaned && !isLoading && (
                         <div className="flex justify-end mt-1">

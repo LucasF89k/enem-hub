@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo, useTransition } from "react"
+import { useState, useEffect, useMemo, useRef, useTransition } from "react"
 import { format, addDays, parseISO } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { toast } from "sonner"
@@ -17,11 +17,32 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { cn } from "@/lib/utils"
-import { completePlanItem, generatePlan, recalibratePlan } from "@/app/actions/planner.actions"
-import { Wand2, Loader2, RefreshCw, Sparkles, ArrowRight } from "lucide-react"
+import {
+  completePlanItem,
+  generatePlan,
+  recalibratePlan,
+  deletePlan,
+  addPlanItem,
+  updatePlanItem,
+  removePlanItem,
+  type AddPlanItemInput,
+} from "@/app/actions/planner.actions"
+import { Wand2, Loader2, RefreshCw, Sparkles, ArrowRight, Trash2, Plus, Camera } from "lucide-react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useMentorStore } from "@/store/mentor-store"
+import { fileToAttachment, ATTACH_ACCEPT, PLANO_FOLHA_PROMPT } from "@/lib/attach"
 import { WeekDayStrip, type DaySummary } from "@/components/planner/WeekDayStrip"
 import { TopicPlanCard, type PlanItemWithType } from "@/components/planner/TopicPlanCard"
+
+const TYPE_OPTIONS: { value: string; label: string }[] = [
+  { value: "CONTENT", label: "Teoria" },
+  { value: "QUESTIONS", label: "Questões" },
+  { value: "FLASHCARDS", label: "Flashcards" },
+  { value: "SIMULADO", label: "Simulado" },
+  { value: "REDACAO", label: "Redação" },
+  { value: "REVISION", label: "Revisão" },
+]
 
 const DAY_LABELS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"]
 const ALL_WEEK_DAYS = [0, 1, 2, 3, 4, 5, 6]
@@ -81,6 +102,19 @@ export function PlannerClient({ weekStart, items, hasPlan, dailyGoal }: PlannerC
   const [isGenerating, startGenerate] = useTransition()
   const [, startComplete] = useTransition()
   const [isRecalibrating, startRecalibrate] = useTransition()
+  const [isDeleting, startDelete] = useTransition()
+  const [isSaving, startSave] = useTransition()
+
+  const router = useRouter()
+  const setPending = useMentorStore((s) => s.setPending)
+  const folhaInputRef = useRef<HTMLInputElement>(null)
+
+  // Dialog de adicionar/editar atividade (construir o plano manualmente)
+  const [itemDialog, setItemDialog] = useState<
+    | { mode: "add"; date: string }
+    | { mode: "edit"; id: string; title: string; type: string; duration: number }
+    | null
+  >(null)
 
   const todayStr = new Date().toISOString().slice(0, 10)
 
@@ -127,6 +161,7 @@ export function PlannerClient({ weekStart, items, hasPlan, dailyGoal }: PlannerC
       }
       map.get(key)!.items.push({
         id: item.id,
+        title: item.title,
         type: item.type,
         duration: item.duration,
         completed: item.completed,
@@ -206,6 +241,74 @@ export function PlannerClient({ weekStart, items, hasPlan, dailyGoal }: PlannerC
         }
       } catch {
         toast.error("Erro ao recalibrar plano.")
+      }
+    })
+  }
+
+  function handleDeletePlan() {
+    if (
+      !confirm(
+        "Excluir o plano de estudos atual? Isso remove todas as atividades e não pode ser desfeito.",
+      )
+    )
+      return
+    startDelete(async () => {
+      const res = await deletePlan()
+      if (res.success) {
+        toast.success("Plano excluído.")
+        window.location.reload()
+      } else {
+        toast.error("Erro ao excluir o plano.")
+      }
+    })
+  }
+
+  async function handleFolhaPhoto(file?: File | null) {
+    if (!file) return
+    const data = await fileToAttachment(file)
+    if (!data) {
+      toast.error("Envie uma foto (JPG/PNG) ou PDF do plano.")
+      return
+    }
+    setPending({ text: PLANO_FOLHA_PROMPT, image: data })
+    toast.success("Enviando pro Mentor transcrever…")
+    router.push("/mentor")
+  }
+
+  function handleSaveItem(form: FormData) {
+    const dialog = itemDialog
+    if (!dialog) return
+    const title = String(form.get("title") ?? "").trim()
+    const type = String(form.get("type") ?? "CONTENT") as AddPlanItemInput["type"]
+    const duration = Number(form.get("duration") ?? 30)
+    if (!title) {
+      toast.error("Dê um nome à atividade.")
+      return
+    }
+    startSave(async () => {
+      const res =
+        dialog.mode === "add"
+          ? await addPlanItem({ scheduledAt: dialog.date, title, type, duration })
+          : await updatePlanItem({ id: dialog.id, title, type, duration })
+      if (res.success) {
+        toast.success(dialog.mode === "add" ? "Atividade adicionada!" : "Atividade atualizada!")
+        setItemDialog(null)
+        window.location.reload()
+      } else {
+        toast.error(res.error ?? "Erro ao salvar")
+      }
+    })
+  }
+
+  function handleDeleteItem(id: string) {
+    setLocalItems((prev) => prev.filter((p) => p.id !== id))
+    startSave(async () => {
+      try {
+        await removePlanItem(id)
+        toast.success("Atividade removida")
+      } catch {
+        toast.error("Erro ao remover")
+        window.location.reload()
       }
     })
   }
@@ -327,6 +430,42 @@ export function PlannerClient({ weekStart, items, hasPlan, dailyGoal }: PlannerC
           )}
           <GenerateDialog />
         </div>
+
+        {/* Ações secundárias: plano em folha (foto) e excluir */}
+        <div className="mt-2 flex flex-wrap gap-2">
+          <input
+            ref={folhaInputRef}
+            type="file"
+            accept={ATTACH_ACCEPT}
+            className="hidden"
+            onChange={(e) => {
+              handleFolhaPhoto(e.target.files?.[0])
+              e.target.value = ""
+            }}
+          />
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5 text-muted-foreground"
+            onClick={() => folhaInputRef.current?.click()}
+            title="Já tem um plano no papel? Mande a foto e o Mentor monta igual."
+          >
+            <Camera className="h-4 w-4" />
+            Tenho na folha
+          </Button>
+          {hasPlan && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 text-muted-foreground hover:text-destructive"
+              onClick={handleDeletePlan}
+              disabled={isDeleting}
+            >
+              {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+              Excluir plano
+            </Button>
+          )}
+        </div>
       </div>
 
       {recalibrateRecommended && hasPlan && verdict?.reason && (
@@ -345,10 +484,20 @@ export function PlannerClient({ weekStart, items, hasPlan, dailyGoal }: PlannerC
           <p className="max-w-xs text-sm text-muted-foreground">
             Gere um plano personalizado para começar a estudar com estratégia
           </p>
-          <Button onClick={() => setShowGenDialog(true)} className="mt-2 gap-1.5">
-            <Wand2 className="h-4 w-4" />
-            Gerar meu primeiro plano
-          </Button>
+          <div className="mt-2 flex flex-col items-center gap-2 sm:flex-row">
+            <Button onClick={() => setShowGenDialog(true)} className="gap-1.5">
+              <Wand2 className="h-4 w-4" />
+              Gerar meu primeiro plano
+            </Button>
+            <Button
+              variant="outline"
+              className="gap-1.5"
+              onClick={() => setItemDialog({ mode: "add", date: todayStr })}
+            >
+              <Plus className="h-4 w-4" />
+              Montar do zero
+            </Button>
+          </div>
         </div>
       ) : (
         <>
@@ -384,8 +533,8 @@ export function PlannerClient({ weekStart, items, hasPlan, dailyGoal }: PlannerC
 
           {/* Cards do dia */}
           {groups.length === 0 ? (
-            <p className="py-14 text-center text-sm text-muted-foreground">
-              Dia livre — aproveite para descansar ou revisar o que quiser. 🌿
+            <p className="py-10 text-center text-sm text-muted-foreground">
+              Dia livre — descanse, revise, ou adicione uma atividade abaixo. 🌿
             </p>
           ) : (
             <div className="space-y-3">
@@ -396,12 +545,96 @@ export function PlannerClient({ weekStart, items, hasPlan, dailyGoal }: PlannerC
                   subjectName={g.subjectName}
                   items={g.items}
                   onToggle={toggleComplete}
+                  onEdit={(it) =>
+                    setItemDialog({
+                      mode: "edit",
+                      id: it.id,
+                      title: it.title,
+                      type: it.type,
+                      duration: it.duration,
+                    })
+                  }
+                  onDelete={handleDeleteItem}
                 />
               ))}
             </div>
           )}
+
+          {/* Construir manualmente: adicionar atividade neste dia */}
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full gap-1.5 border-dashed"
+            onClick={() => setItemDialog({ mode: "add", date: selectedStr })}
+          >
+            <Plus className="h-4 w-4" />
+            Adicionar atividade em {weekdayCap.toLowerCase()}
+          </Button>
         </>
       )}
+
+      {/* Dialog: adicionar / editar atividade */}
+      <Dialog open={!!itemDialog} onOpenChange={(o) => !o && setItemDialog(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {itemDialog?.mode === "edit" ? "Editar atividade" : "Nova atividade"}
+            </DialogTitle>
+          </DialogHeader>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault()
+              handleSaveItem(new FormData(e.currentTarget))
+            }}
+            className="space-y-4"
+          >
+            <div className="space-y-1.5">
+              <Label htmlFor="item-title">Atividade</Label>
+              <Input
+                id="item-title"
+                name="title"
+                placeholder="Ex.: Matemática — funções"
+                defaultValue={itemDialog?.mode === "edit" ? itemDialog.title : ""}
+                autoFocus
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="item-type">Tipo</Label>
+                <select
+                  id="item-type"
+                  name="type"
+                  defaultValue={itemDialog?.mode === "edit" ? itemDialog.type : "CONTENT"}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                >
+                  {TYPE_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="item-duration">Minutos</Label>
+                <Input
+                  id="item-duration"
+                  name="duration"
+                  type="number"
+                  min={5}
+                  max={600}
+                  defaultValue={itemDialog?.mode === "edit" ? itemDialog.duration : 30}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="submit" disabled={isSaving} className="gap-1.5">
+                {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                {itemDialog?.mode === "edit" ? "Salvar" : "Adicionar"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

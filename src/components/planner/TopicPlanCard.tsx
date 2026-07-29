@@ -1,11 +1,12 @@
 "use client"
 
 import Link from "next/link"
-import { BookOpen, HelpCircle, Brain, ClipboardList, PenLine, Check, ChevronRight } from "lucide-react"
+import { BookOpen, HelpCircle, Brain, ClipboardList, PenLine, Check, ChevronRight, Pencil, Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 export interface PlanItemWithType {
   id: string
+  title: string
   type: string
   duration: number
   completed: boolean
@@ -26,12 +27,17 @@ export function TopicPlanCard({
   subjectName,
   items,
   onToggle,
+  onEdit,
+  onDelete,
 }: {
   topicName: string
   subjectName: string
   items: PlanItemWithType[]
   onToggle: (id: string) => void
+  onEdit?: (item: PlanItemWithType) => void
+  onDelete?: (id: string) => void
 }) {
+  const editable = !!onEdit || !!onDelete
   return (
     <div className="overflow-hidden rounded-2xl border bg-card">
       <div className="px-4 pb-2.5 pt-3.5">
@@ -61,20 +67,46 @@ export function TopicPlanCard({
               {item.completed && <Check className="h-3 w-3" strokeWidth={3} />}
             </button>
 
-            <Link href={item.href} className="flex flex-1 items-center gap-3">
+            <Link href={item.href} className="flex flex-1 items-center gap-3 min-w-0">
               <span className={cn("flex h-7 w-7 shrink-0 items-center justify-center rounded-md", meta.tint)}>
                 {meta.icon}
               </span>
               <span
                 className={cn(
-                  "flex-1 text-[13px]",
+                  "flex-1 truncate text-[13px]",
                   item.completed ? "text-muted-foreground line-through" : "text-foreground",
                 )}
               >
-                {meta.label}
+                {item.title || meta.label}
+                <span className="ml-1.5 text-[11px] text-muted-foreground">{item.duration}min</span>
               </span>
-              <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+              {!editable && <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />}
             </Link>
+
+            {editable && (
+              <div className="flex shrink-0 items-center gap-0.5">
+                {onEdit && (
+                  <button
+                    type="button"
+                    onClick={() => onEdit(item)}
+                    aria-label="Editar atividade"
+                    className="rounded p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </button>
+                )}
+                {onDelete && (
+                  <button
+                    type="button"
+                    onClick={() => onDelete(item.id)}
+                    aria-label="Remover atividade"
+                    className="rounded p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         )
       })}

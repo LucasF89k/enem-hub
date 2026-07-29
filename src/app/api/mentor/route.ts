@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
       return new Response('Unauthorized', { status: 401 })
     }
 
-    const { messages, topicId, planner, image } = await req.json()
+    const { messages, topicId, image } = await req.json()
 
     const [profile, wrongQuestions, todayPlan, currentTopic] = await Promise.all([
       db.userProfile.findUnique({
@@ -79,10 +79,19 @@ export async function POST(req: NextRequest) {
       ? `${uni.sigla} (${uni.cidade}/${uni.uf}) — nota de corte estimada ~${estimateCutoff(curso, uni)}`
       : `ainda não definida (corte típico de ${curso.nome} ~${cursoMedia(curso)})`
 
+    const hoje = new Date().toLocaleDateString('pt-BR', {
+      timeZone: 'America/Sao_Paulo',
+      weekday: 'long',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    })
+
     const systemPrompt = `Você é o Mentor ENEM, tutor especializado em preparação para o ENEM com foco no curso de ${curso.nome}.
 Adapte todos os conselhos, prioridades de estudo e exemplos ao curso de ${curso.nome} e às competências mais cobradas para essa carreira.
 Seja didático, direto e motivador. Use exemplos práticos. Responda sempre em português brasileiro.
 Use markdown quando útil (listas, negrito). Seja conciso (máx 300 palavras).
+Hoje é ${hoje} (fuso de Brasília).
 
 Sempre que você CRIAR flashcards para o aluno, além de mostrá-los no texto, emita ao FINAL da resposta EXATAMENTE UM bloco de código com a tag vion-flashcards contendo um array JSON válido, assim:
 \`\`\`vion-flashcards
@@ -106,10 +115,11 @@ ${wrongQuestions.map(q => `- ${q.question?.topic?.discipline?.name ?? '?'} / ${q
 ${todayPlan.length > 0 ? `PLANO DE HOJE:
 ${todayPlan.map(p => `- ${p.title} (${p.duration}min)`).join('\n')}` : ''}`
 
-    const plannerInstructions = `
+    // Regra SEMPRE ativa: montar/criar/refazer plano começa por um questionário.
+    const planBuildingInstructions = `
 
-MODO PLANEJADOR — MONTAR ROTINA DE ESTUDOS
-Seu objetivo agora é ENTREVISTAR o aluno e, ao final, montar uma rotina de estudos personalizada.
+MONTAR PLANO DE ESTUDOS — SEMPRE FAÇA UM QUESTIONÁRIO ANTES
+Sempre que o aluno pedir para MONTAR, CRIAR, REFAZER ou AJUSTAR um plano/rotina/cronograma de estudos, você DEVE primeiro ENTREVISTAR o aluno. NUNCA proponha ou emita um plano sem antes fazer essas perguntas — a única exceção é quando o aluno envia uma FOTO de um plano pronto (ver regra abaixo).
 
 Regras da entrevista:
 - Faça UMA pergunta por vez, curta e objetiva. NUNCA despeje várias perguntas juntas. Espere a resposta antes da próxima.
@@ -131,7 +141,24 @@ Regras do JSON:
 - balance: "teoria", "equilibrado" ou "questoes".
 - Emita o bloco vion-plan UMA ÚNICA VEZ, só quando tiver as respostas, e não escreva nada depois dele.`
 
-    const finalSystem = planner ? systemPrompt + plannerInstructions : systemPrompt
+    // Foto de um plano já pronto: transcrever fielmente (sem questionário).
+    const folhaInstructions = `
+
+PLANO EM FOLHA (FOTO) — TRANSCREVER, SEM QUESTIONÁRIO
+Se o aluno enviar uma FOTO/imagem de um plano/cronograma/planner de estudos já pronto, NÃO faça o questionário: apenas transcreva fielmente o que está na folha, dia a dia, mantendo as mesmas matérias e atividades.
+Considerando que hoje é ${hoje}, agende cada dia na semana correspondente (segunda a domingo) a partir da semana atual — a menos que a folha traga datas específicas.
+Depois de mostrar o plano em texto, emita ao FINAL EXATAMENTE UM bloco de código com a tag vion-plano-folha e um JSON válido:
+\`\`\`vion-plano-folha
+{"title":"Plano da folha","days":[{"date":"YYYY-MM-DD","items":[{"title":"Funções — teoria","type":"CONTENT","duration":60}]}]}
+\`\`\`
+Regras do JSON:
+- date: data ISO (YYYY-MM-DD) de cada dia do plano.
+- type de cada item ∈ CONTENT (teoria), QUESTIONS (questões), FLASHCARDS, SIMULADO, REDACAO, REVISION (revisão). Escolha o mais adequado ao que está escrito.
+- title: o texto do item como está na folha (ex.: "Redação — treino", "Matemática — funções").
+- duration: minutos estimados (use 45 se não houver indicação).
+- Emita o bloco vion-plano-folha UMA ÚNICA VEZ, só quando transcrever a folha, e não escreva nada depois dele.`
+
+    const finalSystem = systemPrompt + planBuildingInstructions + folhaInstructions
 
     // Anexo (imagem/PDF) da última mensagem do usuário.
     const hasAttach = typeof image === 'string' && /^data:(image\/|application\/pdf)/.test(image)
