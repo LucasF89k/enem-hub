@@ -463,7 +463,7 @@ export function MentorChat() {
       </div>
 
       {/* Input */}
-      <div className="px-4 pb-4 pt-2 shrink-0 border-t">
+      <div className="px-4 pb-2 pt-2 shrink-0 border-t">
         <div className="flex gap-2 items-end">
           <Textarea
             ref={textareaRef}
@@ -495,9 +495,6 @@ export function MentorChat() {
             </Button>
           )}
         </div>
-        <p className="text-[10px] text-muted-foreground mt-1 text-center">
-          Enter para enviar · Shift+Enter para nova linha
-        </p>
       </div>
     </div>
   )
