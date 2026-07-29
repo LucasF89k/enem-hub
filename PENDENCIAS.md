@@ -6,6 +6,10 @@
 
 Atualizado em: 2026-07-29
 
+> ✅ **Novo:** o Mentor agora **lê imagens e PDFs** (anexo no chat). E a aba **Redação** tem
+> "Corrigir do papel" — manda a foto direto pro Mentor, que corrige pelas 5 competências do ENEM.
+> Falta ainda **gerar** imagens (deixado para depois).
+
 ---
 
 ## 📚 Conteúdo (incremental, com o tempo — subagentes Claude)
@@ -44,6 +48,7 @@ Atualizado em: 2026-07-29
 
 - Ranking estilo Duolingo com **ligas** (hoje é ranking global + grupos entre amigos).
 - Migrar o Mentor para o MiMo **se um dia** houver créditos (hoje: Gemini 2.0-flash).
+- **Gerar imagens** no Mentor (hoje ele só **lê**; gerar exigiria outro modelo/pago) — deixado para depois.
 
 ---
 
@@ -52,4 +57,5 @@ Atualizado em: 2026-07-29
 Bug Mentor (Gemini 2.0-flash), Bug Simulado (todas as questões com área; ENEM 2 dias, vestibular único),
 Esqueci-a-senha (Resend), Grupos de ranking, reset de contas + logout de sessões órfãs,
 upload de foto sem Cloudinary, onboarding com curso+universidade+sugestão de corte,
-mesma sugestão nas Configurações, barra de navegação compacta, XP visível, redação (correção + cronômetro + temas 1998-2024), etc.
+mesma sugestão nas Configurações, barra de navegação compacta, XP visível, redação (correção + cronômetro + temas 1998-2024),
+Mentor multimodal (lê imagens/PDFs), "Corrigir do papel" (foto da redação → Mentor corrige pelas 5 competências), etc.

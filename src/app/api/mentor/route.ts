@@ -138,8 +138,8 @@ Regras do JSON:
       parts: [{ text: m.content }] as Part[],
     }))
 
-    // Anexa a imagem (se houver) à última mensagem do usuário — multimodal.
-    if (typeof image === 'string' && image.startsWith('data:image/')) {
+    // Anexa a imagem/PDF (se houver) à última mensagem do usuário — multimodal.
+    if (typeof image === 'string' && /^data:(image\/|application\/pdf)/.test(image)) {
       const comma = image.indexOf(',')
       const mimeType = image.slice(5, image.indexOf(';')) || 'image/jpeg'
       const data = image.slice(comma + 1)

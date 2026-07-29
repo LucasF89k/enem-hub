@@ -4,10 +4,11 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import { useMentorStore } from "@/store/mentor-store"
+import { fileToAttachment, isImageDataUrl, ATTACH_ACCEPT } from "@/lib/attach"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
-import { Send, Loader2, Trash2, Copy, Check, User, CalendarCheck, ArrowRight, Layers, ImagePlus, X } from "lucide-react"
+import { Send, Loader2, Trash2, Copy, Check, User, CalendarCheck, ArrowRight, Layers, ImagePlus, X, FileText } from "lucide-react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { toast } from "sonner"
@@ -235,6 +236,8 @@ export function MentorChat() {
 
   const { messages, isLoading, addMessage, appendToMessage, setLoading, clear } =
     useMentorStore()
+  const pending = useMentorStore((s) => s.pending)
+  const setPending = useMentorStore((s) => s.setPending)
 
   const [input, setInput] = useState("")
   const [imageData, setImageData] = useState<string | null>(null)
@@ -244,38 +247,10 @@ export function MentorChat() {
   const startedRef = useRef(false)
   const imageInputRef = useRef<HTMLInputElement>(null)
 
-  // Lê e redimensiona a imagem escolhida para um data URL JPEG (máx 1024px).
+  // Lê a foto/arquivo escolhido para um data URL (imagem redimensionada ou PDF).
   async function handleImagePick(file: File | undefined | null) {
-    if (!file || !file.type.startsWith("image/")) return
-    const dataUrl = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onload = () => resolve(reader.result as string)
-      reader.onerror = reject
-      reader.readAsDataURL(file)
-    })
-    const img = new window.Image()
-    await new Promise<void>((resolve, reject) => {
-      img.onload = () => resolve()
-      img.onerror = reject
-      img.src = dataUrl
-    })
-    const max = 1024
-    let { width, height } = img
-    if (width > max || height > max) {
-      const scale = Math.min(max / width, max / height)
-      width = Math.round(width * scale)
-      height = Math.round(height * scale)
-    }
-    const canvas = document.createElement("canvas")
-    canvas.width = width
-    canvas.height = height
-    const ctx = canvas.getContext("2d")
-    if (!ctx) {
-      setImageData(dataUrl)
-      return
-    }
-    ctx.drawImage(img, 0, 0, width, height)
-    setImageData(canvas.toDataURL("image/jpeg", 0.82))
+    const data = await fileToAttachment(file)
+    if (data) setImageData(data)
   }
 
   // Show welcome message on first render (fora do modo planner)
@@ -381,6 +356,16 @@ export function MentorChat() {
     }
   }, [planner, sendMessage])
 
+  // Envio pendente vindo de outra tela (ex.: foto da redação → corrigir)
+  useEffect(() => {
+    if (pending && !startedRef.current) {
+      startedRef.current = true
+      const p = pending
+      setPending(null)
+      sendMessage(p.text, { image: p.image })
+    }
+  }, [pending, sendMessage, setPending])
+
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault()
@@ -466,17 +451,28 @@ export function MentorChat() {
                 })()
               ) : (
                 <>
-                  {msg.image && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={msg.image}
-                      alt="Imagem enviada"
-                      className={cn(
-                        "rounded-lg max-w-full max-h-64 object-contain",
-                        msg.content && "mb-2",
-                      )}
-                    />
-                  )}
+                  {msg.image &&
+                    (isImageDataUrl(msg.image) ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={msg.image}
+                        alt="Imagem enviada"
+                        className={cn(
+                          "rounded-lg max-w-full max-h-64 object-contain",
+                          msg.content && "mb-2",
+                        )}
+                      />
+                    ) : (
+                      <div
+                        className={cn(
+                          "flex items-center gap-2 rounded-lg bg-background/20 px-3 py-2",
+                          msg.content && "mb-2",
+                        )}
+                      >
+                        <FileText className="h-4 w-4 shrink-0" />
+                        <span className="text-xs">Arquivo PDF enviado</span>
+                      </div>
+                    ))}
                   {msg.content && (
                     <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
                   )}
@@ -522,20 +518,27 @@ export function MentorChat() {
 
       {/* Input */}
       <div className="px-4 pb-2 pt-2 shrink-0 border-t">
-        {/* Preview da imagem anexada */}
+        {/* Preview do anexo (imagem ou PDF) */}
         {imageData && (
           <div className="mb-2 relative inline-block">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={imageData}
-              alt="Anexo"
-              className="h-20 w-20 object-cover rounded-lg border"
-            />
+            {isImageDataUrl(imageData) ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={imageData}
+                alt="Anexo"
+                className="h-20 w-20 object-cover rounded-lg border"
+              />
+            ) : (
+              <div className="h-20 w-28 rounded-lg border flex flex-col items-center justify-center gap-1 bg-muted text-muted-foreground">
+                <FileText className="h-6 w-6" />
+                <span className="text-[10px]">Arquivo PDF</span>
+              </div>
+            )}
             <button
               type="button"
               onClick={() => setImageData(null)}
               className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-foreground text-background flex items-center justify-center shadow"
-              aria-label="Remover imagem"
+              aria-label="Remover anexo"
             >
               <X className="h-3 w-3" />
             </button>
@@ -545,7 +548,7 @@ export function MentorChat() {
           <input
             ref={imageInputRef}
             type="file"
-            accept="image/*"
+            accept={ATTACH_ACCEPT}
             className="hidden"
             onChange={(e) => {
               handleImagePick(e.target.files?.[0])
@@ -558,7 +561,8 @@ export function MentorChat() {
             onClick={() => imageInputRef.current?.click()}
             disabled={isLoading}
             className="shrink-0 h-11 w-11"
-            aria-label="Anexar imagem"
+            aria-label="Anexar foto ou arquivo"
+            title="Anexar foto ou arquivo"
           >
             <ImagePlus className="h-4 w-4" />
           </Button>
