@@ -30,9 +30,7 @@ Atualizado em: 2026-07-29
 
 - [ ] **Flashcards** — **8.768** cards genéricos ("Importados do Anki") ainda sem matéria/tópico.
   - Já classificados: ~9.223. Ferramenta: subagente lê o conteúdo e atribui o tópico (~900/rodada, limitado pelo limite de sessão do Claude).
-- [ ] **Vídeos do YouTube** — **~84 tópicos** com menos de 6 vídeos.
-  - Rodar: `npx tsx scripts/search-videos.ts --fill` (bate na cota diária do YouTube → aos poucos, retomável).
-  - Estado atual: 1.076 vídeos, 123 tópicos completos.
+- [x] ~~**Vídeos do YouTube**~~ — ✅ CONCLUÍDO (30/07): todos os tópicos com 6 vídeos. Última rodada `--fill` salvou 495 vídeos, 83/83 tópicos completados, 0 sem resultado.
 
 ## 📝 ENEM regular incompleto (api.enem.dev — GRÁTIS, sem IA)
 
