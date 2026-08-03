@@ -44,7 +44,7 @@ export async function updateUserSettings(formData: FormData) {
     targetInstitution: formData.get("targetInstitution") || null,
     examDate: formData.get("examDate") || null,
     dailyStudyGoal: formData.get("dailyStudyGoal"),
-    theme: formData.get("theme"),
+    theme: formData.get("theme") ?? undefined, // tema agora é aplicado no cliente (ThemeSelect)
   }
 
   const parsed = settingsSchema.safeParse(raw)

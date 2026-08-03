@@ -9,8 +9,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
+import { ThemeSelect } from "@/components/settings/ThemeSelect"
 import { ArrowLeft, Loader2, LogOut, Save } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
@@ -149,16 +149,9 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-1.5">
-              <Label htmlFor="theme">Tema</Label>
-              <Select name="theme" defaultValue={data?.theme ?? "dark"}>
-                <SelectTrigger id="theme">
-                  <SelectValue placeholder="Selecione o tema" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="dark">Escuro</SelectItem>
-                  <SelectItem value="light">Claro</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label>Tema</Label>
+              <ThemeSelect />
+              <p className="text-xs text-muted-foreground">Aplica na hora, não precisa salvar.</p>
             </div>
           </CardContent>
         </Card>
