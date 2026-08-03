@@ -16,8 +16,9 @@ Atualizado em: 2026-07-30
 
 > Ajustar a TAXONOMIA antes de (re)gerar o conteúdo dessas disciplinas, senão gera resumo pra tópico errado.
 
-- [ ] **Filosofia** — tópicos atuais não cobrem a linha histórica esperada. Deve ter: Pré-socráticos (Tales de Mileto; Heráclito e Parmênides), Sócrates, Sofistas (dialética), Santo Agostinho, São Tomás de Aquino, René Descartes, David Hume, Kant, Utilitarismo e Panóptico, Foucault. **Usuário vai enviar PDF.**
-- [ ] **Biologia** — revisar tópicos/relevância. **Usuário vai enviar PDF.**
+- [x] ~~**Filosofia**~~ — REESTRUTURADO (03/08, guia recebido): +9 tópicos (Pré-socráticos, Sócrates/Sofistas, Medieval, Moderna, Contratualistas, Kant, Foucault, Utilitarismo, Estética) + relevância pela ordem do guia. Falta gerar o conteúdo (próximo run — já liberado no gerador).
+- [x] ~~**Biologia**~~ — OK: a estrutura atual já cobre o guia (10 áreas), Ciclos Biogeoquímicos adicionado. Liberado no gerador. Falta gerar o conteúdo.
+- [ ] **Relevância global (Enem's Anatomy 2026.pdf, 70MB)** — usar essa análise pra ajustar importance/frequency de TODOS os tópicos (não só chute). Pendente — PDF grande, ler em partes.
 - [ ] **Linguagens e Códigos** — reorganizar **por HABILIDADE e COMPETÊNCIA da matriz do ENEM**, não por conteúdo. Explicar como cada habilidade é cobrada dentro de cada competência (destrinchar a matriz), em vez de só listar conteúdo. Ex.: há competência ligada a Literatura → precisa existir, mas organizada por competência. Afeta: Língua Portuguesa, Literatura, Inglês, Artes/Ed. Física.
 - [ ] **Química — "Equilíbrio Químico" (qui-equilibrio)**: revisar; apareceu conteúdo de **ondulatória (Física)** aí. Estrutura está OK (Ondulatória está em Física); o problema é o BODY gerado — regerar/limpar.
 - [ ] **Relevância (importance/frequency)** dos conteúdos em geral está "zoada" — revisar os valores por tópico.

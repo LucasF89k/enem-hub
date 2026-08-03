@@ -26,7 +26,7 @@ const db = new PrismaClient()
 const CONCURRENCY = 4
 const MAX_RETRIES = 3
 const MIN_ENRICHED_WORDS = 1700
-const SKIP_DISCIPLINES = new Set(["filosofia", "biologia"]) // aguardam PDF/reorg
+const SKIP_DISCIPLINES = new Set<string>() // Filosofia/Biologia liberados (PDFs recebidos 03/08)
 
 // ── CLI flags ─────────────────────────────────────────────────────────────
 const argv = process.argv.slice(2)
