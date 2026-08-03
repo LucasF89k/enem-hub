@@ -58,9 +58,9 @@ Atualizado em: 2026-07-30
 
 ## 🔑 Ações suas (infra — não é código)
 
-- [ ] **Resend — rotacionar a chave** (a atual apareceu no chat).
-- [ ] **Resend — verificar um domínio** (sem isso, e-mails de "esqueci a senha" só chegam ao e-mail da conta Resend).
-- [ ] **AUTH_SECRET no Vercel** (opcional, reforço) — colocar o novo segredo nas env vars e redeploy. Já atualizei o `.env` local.
+- [x] ~~Resend — rotacionar a chave~~ ✅ feito pelo usuário (30/07).
+- [x] ~~Resend — verificar um domínio~~ ✅ feito pelo usuário (30/07).
+- [x] ~~AUTH_SECRET no Vercel~~ ✅ feito pelo usuário (30/07).
 
 ## 💡 Opcionais / ideias
 
