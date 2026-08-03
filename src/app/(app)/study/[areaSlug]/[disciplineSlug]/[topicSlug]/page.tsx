@@ -62,7 +62,7 @@ export default async function TopicPage({
           options: { orderBy: { order: "asc" }, select: { id: true, letter: true, text: true } },
         },
         orderBy: [{ difficulty: "asc" }, { createdAt: "asc" }],
-        take: 20,
+        take: 60,
       },
     },
   })
@@ -120,6 +120,16 @@ export default async function TopicPage({
     correctId: q.correctId,
     options: q.options.map((o) => ({ id: o.id, letter: o.letter, text: o.text })),
   }))
+
+  // Questões que o usuário já errou (última resposta incorreta) → filtro "Revisar erradas"
+  const answers = await db.userQuestion.findMany({
+    where: { userId, questionId: { in: questions.map((q) => q.id) } },
+    orderBy: { answeredAt: "desc" },
+    select: { questionId: true, isCorrect: true },
+  })
+  const latestByQ = new Map<string, boolean>()
+  for (const a of answers) if (!latestByQ.has(a.questionId)) latestByQ.set(a.questionId, a.isCorrect)
+  const wrongIds = [...latestByQ.entries()].filter(([, ok]) => !ok).map(([id]) => id)
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6 space-y-5">
@@ -195,6 +205,7 @@ export default async function TopicPage({
         } : null}
         flashcards={flashcards}
         questions={questions}
+        wrongIds={wrongIds}
         pendingReviews={pendingReviews}
         videos={videos}
       />

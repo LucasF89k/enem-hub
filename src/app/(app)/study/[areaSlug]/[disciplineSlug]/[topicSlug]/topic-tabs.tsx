@@ -75,12 +75,13 @@ interface Props {
   content: TopicContent | null
   flashcards: TopicFlashcard[]
   questions: InlineQuestion[]
+  wrongIds?: string[]
   pendingReviews: number
   videos: VideoWithWatched[]
   defaultTab?: string
 }
 
-export function TopicTabs({ topicId, topicName, content, flashcards, questions, pendingReviews, videos, defaultTab }: Props) {
+export function TopicTabs({ topicId, topicName, content, flashcards, questions, wrongIds, pendingReviews, videos, defaultTab }: Props) {
   return (
     <Tabs defaultValue={defaultTab ?? "teoria"}>
       <StudyTimer />
@@ -268,7 +269,7 @@ export function TopicTabs({ topicId, topicName, content, flashcards, questions, 
           <XpBadge xp={10} />
           <span className="text-[11px] text-muted-foreground">por acerto · +2 XP por tentativa</span>
         </div>
-        <TopicQuestionsInline questions={questions} />
+        <TopicQuestionsInline questions={questions} wrongIds={wrongIds} />
       </TabsContent>
 
       {/* ── Vídeos ── */}

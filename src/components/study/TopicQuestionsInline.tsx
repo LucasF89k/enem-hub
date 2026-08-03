@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useMemo, useState, useTransition } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { CheckCircle2, XCircle, ChevronDown, Zap, RotateCcw, HelpCircle } from "lucide-react"
+import { CheckCircle2, XCircle, ChevronDown, Zap, RotateCcw, HelpCircle, Shuffle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -36,7 +36,26 @@ const DIFFICULTY_CLASS: Record<string, string> = {
   VERY_HARD: "border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-400",
 }
 
-export function TopicQuestionsInline({ questions }: { questions: InlineQuestion[] }) {
+type Filter = "all" | "EASY" | "MEDIUM" | "HARD" | "shuffle" | "wrong"
+
+function shuffleArr<T>(arr: T[]): T[] {
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
+
+export function TopicQuestionsInline({
+  questions,
+  wrongIds = [],
+}: {
+  questions: InlineQuestion[]
+  wrongIds?: string[]
+}) {
+  const [filter, setFilter] = useState<Filter>("all")
+  const [shuffleSeed, setShuffleSeed] = useState(0)
   const [index, setIndex] = useState(0)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [confirmed, setConfirmed] = useState(false)
@@ -48,6 +67,72 @@ export function TopicQuestionsInline({ questions }: { questions: InlineQuestion[
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
 
+  const wrongSet = useMemo(() => new Set(wrongIds), [wrongIds])
+  const counts = useMemo(() => {
+    let easy = 0, medium = 0, hard = 0
+    for (const q of questions) {
+      if (q.difficulty === "EASY") easy++
+      else if (q.difficulty === "MEDIUM") medium++
+      else hard++ // HARD e VERY_HARD
+    }
+    return { easy, medium, hard, wrong: questions.filter((q) => wrongSet.has(q.id)).length }
+  }, [questions, wrongSet])
+
+  // Lista ativa conforme o filtro escolhido
+  const active = useMemo(() => {
+    switch (filter) {
+      case "EASY": return questions.filter((q) => q.difficulty === "EASY")
+      case "MEDIUM": return questions.filter((q) => q.difficulty === "MEDIUM")
+      case "HARD": return questions.filter((q) => q.difficulty === "HARD" || q.difficulty === "VERY_HARD")
+      case "wrong": return questions.filter((q) => wrongSet.has(q.id))
+      case "shuffle": return shuffleArr(questions)
+      default: return questions
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }
+  }, [questions, filter, shuffleSeed, wrongSet])
+
+  function resetProgress() {
+    setIndex(0)
+    setSelectedId(null)
+    setConfirmed(false)
+    setResult(null)
+    setExplanationOpen(false)
+    setCorrectCount(0)
+    setAnsweredCount(0)
+    setStartTime(Date.now())
+  }
+
+  function changeFilter(f: Filter) {
+    if (f === "shuffle") setShuffleSeed((s) => s + 1)
+    setFilter(f)
+    resetProgress()
+  }
+
+  const FilterBar = () => {
+    const chip = (f: Filter, label: string, extra?: string) => (
+      <button
+        key={f}
+        onClick={() => changeFilter(f)}
+        className={cn(
+          "shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs transition-colors",
+          filter === f ? "border-primary bg-primary/10 font-semibold text-primary" : "bg-background hover:bg-muted",
+        )}
+      >
+        {label}{extra}
+      </button>
+    )
+    return (
+      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+        {chip("all", "Todas")}
+        {chip("shuffle", "Misturar")}
+        {counts.easy > 0 && chip("EASY", "Fáceis", ` ${counts.easy}`)}
+        {counts.medium > 0 && chip("MEDIUM", "Médias", ` ${counts.medium}`)}
+        {counts.hard > 0 && chip("HARD", "Difíceis", ` ${counts.hard}`)}
+        {counts.wrong > 0 && chip("wrong", "Revisar erradas", ` ${counts.wrong}`)}
+      </div>
+    )
+  }
+
   if (questions.length === 0) {
     return (
       <div className="flex flex-col items-center gap-3 py-8 text-center">
@@ -57,8 +142,8 @@ export function TopicQuestionsInline({ questions }: { questions: InlineQuestion[
     )
   }
 
-  const finished = index >= questions.length
-  const q = finished ? null : questions[index]
+  const finished = index >= active.length
+  const q = finished ? null : active[index]
 
   function handleConfirm() {
     if (!q || !selectedId || confirmed || isPending) return
@@ -87,34 +172,49 @@ export function TopicQuestionsInline({ questions }: { questions: InlineQuestion[
     setStartTime(Date.now())
   }
 
-  function restart() {
-    setIndex(0)
-    setSelectedId(null)
-    setConfirmed(false)
-    setResult(null)
-    setExplanationOpen(false)
-    setCorrectCount(0)
-    setAnsweredCount(0)
-    setStartTime(Date.now())
+  // Filtro sem questões (ex.: nenhuma difícil, ou nenhuma errada ainda)
+  if (active.length === 0) {
+    return (
+      <div className="space-y-4">
+        <FilterBar />
+        <div className="flex flex-col items-center gap-2 py-10 text-center">
+          <HelpCircle className="h-9 w-9 text-muted-foreground/40" />
+          <p className="text-sm text-muted-foreground">
+            {filter === "wrong"
+              ? "Você ainda não errou nenhuma questão deste tópico. 🎉"
+              : "Nenhuma questão neste filtro."}
+          </p>
+        </div>
+      </div>
+    )
   }
 
   if (finished) {
     const pct = answeredCount ? Math.round((correctCount / answeredCount) * 100) : 0
     return (
-      <div className="flex flex-col items-center gap-4 py-10 text-center">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-          <CheckCircle2 className="h-8 w-8 text-primary" />
+      <div className="space-y-4">
+        <FilterBar />
+        <div className="flex flex-col items-center gap-4 py-10 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+            <CheckCircle2 className="h-8 w-8 text-primary" />
+          </div>
+          <div>
+            <p className="text-lg font-semibold">Prática concluída!</p>
+            <p className="text-sm text-muted-foreground">
+              Você acertou <b className="text-foreground">{correctCount}</b> de {answeredCount} ({pct}%)
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={resetProgress} variant="outline" className="gap-2">
+              <RotateCcw className="h-4 w-4" />
+              Refazer
+            </Button>
+            <Button onClick={() => changeFilter("shuffle")} variant="outline" className="gap-2">
+              <Shuffle className="h-4 w-4" />
+              Misturar
+            </Button>
+          </div>
         </div>
-        <div>
-          <p className="text-lg font-semibold">Prática concluída!</p>
-          <p className="text-sm text-muted-foreground">
-            Você acertou <b className="text-foreground">{correctCount}</b> de {answeredCount} ({pct}%)
-          </p>
-        </div>
-        <Button onClick={restart} variant="outline" className="gap-2">
-          <RotateCcw className="h-4 w-4" />
-          Refazer
-        </Button>
       </div>
     )
   }
@@ -140,10 +240,12 @@ export function TopicQuestionsInline({ questions }: { questions: InlineQuestion[
 
   return (
     <div className="space-y-4">
+      <FilterBar />
+
       {/* Progresso */}
       <div className="flex items-center justify-between">
         <span className="text-xs font-medium text-muted-foreground">
-          Questão {index + 1} de {questions.length}
+          Questão {index + 1} de {active.length}
         </span>
         <div className="flex items-center gap-2">
           {answeredCount > 0 && (
@@ -161,7 +263,7 @@ export function TopicQuestionsInline({ questions }: { questions: InlineQuestion[
       <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
         <div
           className="h-full rounded-full bg-primary transition-all"
-          style={{ width: `${(index / questions.length) * 100}%` }}
+          style={{ width: `${(index / active.length) * 100}%` }}
         />
       </div>
 
@@ -262,7 +364,7 @@ export function TopicQuestionsInline({ questions }: { questions: InlineQuestion[
             )}
 
             <Button className="w-full" onClick={next}>
-              {index + 1 < questions.length ? "Próxima questão" : "Ver resultado"}
+              {index + 1 < active.length ? "Próxima questão" : "Ver resultado"}
             </Button>
           </motion.div>
         )}
