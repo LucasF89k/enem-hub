@@ -13,10 +13,37 @@ import { submitFlashcardReview, recordFlashcardSessionTime } from "@/app/actions
 import { Progress } from "@/components/ui/progress"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Check, X, Star, Zap, RotateCcw, Home } from "lucide-react"
+import { Check, X, Star, Zap, RotateCcw, Home, Info, Filter } from "lucide-react"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 import confetti from "canvas-confetti"
+
+/** Legenda dos 4 botões — explica principalmente a diferença entre Bom e Fácil. */
+function RatingLegend() {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
+        >
+          <Info className="h-3.5 w-3.5" />
+          O que é cada opção?
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="center" className="w-72 text-xs">
+        <p className="mb-2 font-semibold">Como avaliar</p>
+        <ul className="space-y-1.5 text-muted-foreground">
+          <li><span className="font-semibold text-red-500">Errei</span> — não lembrei (volta logo).</li>
+          <li><span className="font-semibold text-orange-500">Difícil</span> — acertei com muito esforço.</li>
+          <li><span className="font-semibold text-blue-500">Bom</span> — acertei, mas <b className="text-foreground">ainda vale revisar de novo</b> em breve.</li>
+          <li><span className="font-semibold text-green-500">Fácil</span> — acertei tranquilo, já domino (espaça bastante).</li>
+        </ul>
+      </PopoverContent>
+    </Popover>
+  )
+}
 
 export interface ReviewCard {
   id: string
@@ -34,7 +61,13 @@ interface Stats {
 
 const SWIPE_THRESHOLD = 80
 
-export function FlashcardReviewScreen({ cards }: { cards: ReviewCard[] }) {
+export function FlashcardReviewScreen({
+  cards,
+  chooserHref,
+}: {
+  cards: ReviewCard[]
+  chooserHref?: string
+}) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isFlipped, setIsFlipped] = useState(false)
   const [stats, setStats] = useState<Stats>({ again: 0, hard: 0, good: 0, easy: 0 })
@@ -152,7 +185,15 @@ export function FlashcardReviewScreen({ cards }: { cards: ReviewCard[] }) {
         </div>
 
         <div className="flex flex-col gap-2 w-full">
-          <Button asChild className="w-full">
+          {chooserHref && (
+            <Button asChild className="w-full">
+              <Link href={chooserHref}>
+                <Filter className="mr-2 h-4 w-4" />
+                Revisar outro filtro
+              </Link>
+            </Button>
+          )}
+          <Button asChild variant={chooserHref ? "outline" : "default"} className="w-full">
             <Link href="/flashcards">
               <Home className="mr-2 h-4 w-4" />
               Voltar ao início
@@ -291,6 +332,16 @@ export function FlashcardReviewScreen({ cards }: { cards: ReviewCard[] }) {
             ← Errei &nbsp;·&nbsp; Deslize para avaliar &nbsp;·&nbsp; Fácil →
           </p>
         )}
+      </div>
+
+      {/* Legenda (visível após virar) */}
+      <div
+        className={cn(
+          "flex justify-center shrink-0 transition-opacity",
+          isFlipped ? "opacity-100" : "opacity-0 pointer-events-none",
+        )}
+      >
+        <RatingLegend />
       </div>
 
       {/* Rating buttons — visible only after flip */}
