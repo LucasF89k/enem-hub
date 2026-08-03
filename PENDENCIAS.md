@@ -21,10 +21,10 @@ Atualizado em: 2026-07-29
 - [ ] **Linguagens e Códigos** — reorganizar **por HABILIDADE e COMPETÊNCIA da matriz do ENEM**, não por conteúdo. Explicar como cada habilidade é cobrada dentro de cada competência (destrinchar a matriz), em vez de só listar conteúdo. Ex.: há competência ligada a Literatura → precisa existir, mas organizada por competência. Afeta: Língua Portuguesa, Literatura, Inglês, Artes/Ed. Física.
 - [ ] **Química — "Equilíbrio Químico" (qui-equilibrio)**: revisar; apareceu conteúdo de **ondulatória (Física)** aí. Estrutura está OK (Ondulatória está em Física); o problema é o BODY gerado — regerar/limpar.
 - [ ] **Relevância (importance/frequency)** dos conteúdos em geral está "zoada" — revisar os valores por tópico.
-- [ ] **Biologia — falta tópico "Ciclos Biogeoquímicos"** (extremamente relevante). Adicionar junto com a reestruturação de Biologia (PDF).
-- [ ] **Química — falta tópico "Separação de Misturas"** (essencial pro ENEM). Adicionar Topic + gerar conteúdo.
-- [ ] **Flashcards por tópico** — criação/organização deve ser por tópico, não tudo misturado. Hoje: criação já aceita tópico, mas os cards do Mentor caem num deck único "Flashcards do Mentor" sem tópico. Fazer o Mentor vincular ao tópico atual.
-- [ ] **Spec 7 (esclarecer)** — "questão de linguagens em biologia" (tópico Ecologia/Relações Ecológicas): parece haver conteúdo/questão de Linguagens dentro de Biologia. Pedir print/detalhe pro usuário.
+- [x] ~~**Biologia — tópico "Ciclos Biogeoquímicos"**~~ — tópico CRIADO (bio-ciclos-biogeoquimicos). Falta só gerar o conteúdo (próximo run MiMo).
+- [x] ~~**Química — tópico "Separação de Misturas"**~~ — tópico CRIADO (qui-separacao-misturas). Falta só gerar o conteúdo (próximo run MiMo).
+- [x] ~~**Flashcards do Mentor por tópico**~~ — FEITO: os cards do Mentor agora são vinculados ao tópico atual e ficam no deck "Flashcards do Mentor" (separado do "Meus flashcards").
+- [ ] **Questões mal classificadas (Linguagens em Biologia)** — ex.: questão de "variedade linguística" (fonte revistaecologico) está no tópico **Ecologia e Relações Ecológicas** (Biologia). É questão de **Linguagens/Língua Portuguesa**. Reclassificar as questões de Linguagens que caíram em áreas erradas (mesma família do backfill de área/tópico das questões — fazer via subagentes quando o limite semanal permitir).
 - [ ] **QA anti-alucinação** — após o run atual do MiMo, varrer o conteúdo em busca de nomes/citações/sites inventados (ex.: "Pereira Junior" apareceu em Trovadorismo/Literatura) e regerar os afetados com o prompt novo (regras anti-invenção já adicionadas).
 
 ## 📚 Conteúdo (incremental, com o tempo — subagentes Claude)

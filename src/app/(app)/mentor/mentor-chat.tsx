@@ -180,12 +180,12 @@ function ApplyImportedPlanCard({ plan }: { plan: ImportedPlan }) {
   )
 }
 
-function SaveFlashcardsCard({ cards }: { cards: FlashcardDraft[] }) {
+function SaveFlashcardsCard({ cards, topicId }: { cards: FlashcardDraft[]; topicId?: string }) {
   const [state, setState] = useState<"idle" | "loading" | "done">("idle")
 
   async function save() {
     setState("loading")
-    const res = await saveMentorFlashcards(cards)
+    const res = await saveMentorFlashcards(cards, topicId ?? null)
     if (res.success) {
       setState("done")
       toast.success(`${res.count} flashcards salvos no seu baralho!`)
@@ -513,7 +513,7 @@ export function MentorChat() {
                       )}
                       {plan && !isLoading && <ApplyPlanCard plan={plan} />}
                       {folha && !isLoading && <ApplyImportedPlanCard plan={folha} />}
-                      {cards && !isLoading && <SaveFlashcardsCard cards={cards} />}
+                      {cards && !isLoading && <SaveFlashcardsCard cards={cards} topicId={topicId} />}
                       {cleaned && !isLoading && (
                         <div className="flex justify-end mt-1">
                           <CopyButton text={cleaned} />
