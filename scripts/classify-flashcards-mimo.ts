@@ -77,7 +77,7 @@ Responda SOMENTE um array JSON: [{"card":1,"topico":<número>}, ...]`
       const completion = await mimo.chat.completions.create({
         model: MIMO_MODEL,
         messages: [{ role: "user", content: prompt }],
-        max_tokens: 3000,
+        max_tokens: 12000, // alto: o modelo raciocina antes; senão o JSON sai vazio
         temperature: 0,
       })
       const raw = (completion.choices[0]?.message?.content ?? "").trim()

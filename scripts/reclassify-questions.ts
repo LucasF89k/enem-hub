@@ -20,7 +20,7 @@ import { mimo, MIMO_MODEL } from "../src/lib/mimo"
 
 const db = new PrismaClient()
 
-const BATCH = 8
+const BATCH = 6
 const CONCURRENCY = 4
 
 const argv = process.argv.slice(2)
@@ -94,6 +94,8 @@ async function main() {
   for (let i = 0; i < questions.length; i += BATCH) batches.push(questions.slice(i, i + BATCH))
 
   let changed = 0, kept = 0, invalid = 0, idx = 0
+  let okBatches = 0, failBatches = 0
+  let aborted = false
   const samples: string[] = []
 
   async function classifyBatch(batch: typeof questions) {
@@ -120,7 +122,7 @@ Responda SOMENTE um array JSON, um item por questão, na ordem: [{"id":"<id>","t
       const completion = await mimo.chat.completions.create({
         model: MIMO_MODEL,
         messages: [{ role: "user", content: prompt }],
-        max_tokens: 4000,
+        max_tokens: 16000, // alto: o modelo raciocina antes; senão o JSON sai vazio/cortado
         temperature: 0,
       })
       const raw = (completion.choices[0]?.message?.content ?? "").trim()
@@ -144,19 +146,28 @@ Responda SOMENTE um array JSON, um item por questão, na ordem: [{"id":"<id>","t
           })
         }
       }
+      okBatches++
     } catch (err) {
+      failBatches++
       console.error("  ❌ lote falhou:", err instanceof Error ? err.message.slice(0, 120) : err)
     }
   }
 
   async function worker() {
-    while (idx < batches.length) {
+    while (idx < batches.length && !aborted) {
+      // Disjuntor: se falhar muito no começo (sem nenhum sucesso), aborta pra não gastar tokens à toa.
+      if (!aborted && failBatches >= 12 && okBatches === 0) {
+        aborted = true
+        console.error("\n🛑  ABORTADO: muitos lotes falhando sem sucesso — não vou gastar mais tokens. Verifique o script/saldo.")
+        break
+      }
       const b = batches[idx++]
       await classifyBatch(b)
       await sleep(300)
     }
   }
   await Promise.all(Array.from({ length: CONCURRENCY }, () => worker()))
+  if (aborted) { await db.$disconnect(); process.exit(1) }
 
   console.log("\n── Amostra de mudanças (de → para) ──")
   console.log(samples.join("\n") || "  (nenhuma mudança proposta)")
