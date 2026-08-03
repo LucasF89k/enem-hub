@@ -1,10 +1,10 @@
 # Pendências — Vion
 
-> Regra fixa: **NÃO usar MiMo nem Gemini** para tarefas em massa (classificação/conteúdo).
-> Isso é feito por **subagentes do Claude** (grátis), **aos poucos, enquanto os usuários usam o app**.
-> O chat do Mentor usa **MiMo `mimo-v2.5`** (multimodal) com **Gemini de fallback**; nenhum dos dois em massa.
+> **Atualização 30/07:** o usuário liberou **MiMo pago** ($2 de crédito) para geração de conteúdo
+> e classificação em massa (é barato: ~US$ 0,20-1,00 o lote todo). Antes era só subagente Claude.
+> O chat do Mentor também usa **MiMo `mimo-v2.5`** (multimodal) com **Gemini de fallback**.
 
-Atualizado em: 2026-07-29
+Atualizado em: 2026-07-30
 
 > ✅ **Novo:** o Mentor agora **lê imagens e PDFs** (anexo no chat). E a aba **Redação** tem
 > "Corrigir do papel" — manda a foto direto pro Mentor, que corrige pelas 5 competências do ENEM.
@@ -29,9 +29,10 @@ Atualizado em: 2026-07-29
 
 ## 📚 Conteúdo (incremental, com o tempo — subagentes Claude)
 
-- [ ] **Resumos aprofundados (Teoria)** — gerar o `body` de cada tópico como resumo de **10-15 min** (1800-2500 palavras), em markdown, **com links internos estilo Wikipedia** usando a sintaxe `[[slug-do-topico|texto]]` para assuntos correlatos.
-  - ✅ **Recurso pronto:** os links `[[slug|texto]]` já são resolvidos no servidor ([src/lib/wiki-links.ts](src/lib/wiki-links.ts)) e renderizados em **azul** (clicáveis, navegação in-app) na aba Teoria.
-  - Spec do gerador atualizada em `scripts/generate-content.ts` (usa os tópicos irmãos como candidatos a link). **Rodar a geração em massa via subagentes Claude** (não MiMo).
+- [ ] **Resumos aprofundados (Teoria)** — 10-15 min, markdown, com links `[[slug|texto]]` (azuis).
+  - ✅ Recurso pronto ([src/lib/wiki-links.ts](src/lib/wiki-links.ts)); geração via **MiMo** (`scripts/generate-content.ts`).
+  - **Progresso (30/07): 135/209 tópicos prontos.** Faltam **74**: ~29 falharam por fórmula com `\` (prompt já corrigido → re-rodar `--all`), + Filosofia (12) e Biologia (em espera de PDF), + os 2 novos tópicos.
+- [ ] **Reclassificação de questões (via MiMo)** — EM ANDAMENTO (`scripts/reclassify-questions.ts`), rodando nas 6.433 questões pra corrigir área/tópico (dry-run validou ~37% de correções reais).
 
 - [ ] **Flashcards** — **8.768** cards genéricos ("Importados do Anki") ainda sem matéria/tópico.
   - Já classificados: ~9.223. Ferramenta: subagente lê o conteúdo e atribui o tópico (~900/rodada, limitado pelo limite de sessão do Claude).
