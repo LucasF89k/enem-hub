@@ -10,7 +10,17 @@ import {
 
 export const metadata = { title: "Revisão" }
 
-const SESSION_CAP = 150
+const SESSION_CAP = 20
+
+/** Embaralha (Fisher-Yates) sem mutar o original. */
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
 const VALID: FilterKey[] = ["revisar", "novos", "errei", "dificil", "bom", "facil", "todos"]
 
 export default async function ReviewPage({
@@ -95,22 +105,29 @@ export default async function ReviewPage({
     return <FlashcardFilterScreen scopeQuery={scopeQuery} counts={counts} />
   }
 
-  // Monta a lista conforme o filtro
-  const match = (id: string): boolean => {
-    const lr = latest.get(id)
-    switch (filterKey) {
-      case "revisar": return !lr || lr.due
-      case "novos": return !lr
-      case "errei": return lr?.rating === 1
-      case "dificil": return lr?.rating === 2
-      case "bom": return lr?.rating === 3
-      case "facil": return lr?.rating === 4
-      case "todos": return true
+  // Seleciona 20 cards ALEATÓRIOS do filtro, sem repetir os já respondidos.
+  // "revisar": prioriza os não respondidos (embaralhados); só completa com
+  // vencidos se faltarem novos — assim você nunca cai nos mesmos de novo.
+  const unanswered = cards.filter((c) => !latest.get(c.id))
+  const pickByRating = (rating: number) => cards.filter((c) => latest.get(c.id)?.rating === rating)
+
+  let pool: typeof cards
+  switch (filterKey) {
+    case "revisar": {
+      const due = cards.filter((c) => latest.get(c.id)?.due)
+      pool = [...shuffle(unanswered), ...shuffle(due)]
+      break
     }
+    case "novos": pool = shuffle(unanswered); break
+    case "errei": pool = shuffle(pickByRating(1)); break
+    case "dificil": pool = shuffle(pickByRating(2)); break
+    case "bom": pool = shuffle(pickByRating(3)); break
+    case "facil": pool = shuffle(pickByRating(4)); break
+    case "todos": pool = shuffle(cards); break
+    default: pool = shuffle(unanswered)
   }
 
-  const reviewCards: ReviewCard[] = cards
-    .filter((c) => match(c.id))
+  const reviewCards: ReviewCard[] = pool
     .slice(0, SESSION_CAP)
     .map((c) => ({ id: c.id, front: c.front, back: c.back, type: c.type as string }))
 
