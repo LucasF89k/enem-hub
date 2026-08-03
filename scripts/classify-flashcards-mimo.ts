@@ -55,6 +55,7 @@ async function main() {
   for (let i = 0; i < cards.length; i += BATCH) batches.push(cards.slice(i, i + BATCH))
 
   let classified = 0, uncategorized = 0, idx = 0
+  let okBatches = 0, failBatches = 0, aborted = false
   const samples: string[] = []
 
   async function doBatch(batch: typeof cards) {
@@ -98,18 +99,26 @@ Responda SOMENTE um array JSON: [{"card":1,"topico":<número>}, ...]`
           if (!dryRun) await db.flashcard.update({ where: { id: c.id }, data: { tags: { set: ["sem-categoria"] } } })
         }
       }
+      okBatches++
     } catch (err) {
+      failBatches++
       console.error("  ❌ lote falhou:", err instanceof Error ? err.message.slice(0, 100) : err)
     }
   }
 
   async function worker() {
-    while (idx < batches.length) {
+    while (idx < batches.length && !aborted) {
+      if (!aborted && failBatches >= 12 && okBatches === 0) {
+        aborted = true
+        console.error("\n🛑  ABORTADO: muitos lotes falhando sem sucesso — parando pra não gastar tokens.")
+        break
+      }
       await doBatch(batches[idx++])
       await sleep(300)
     }
   }
   await Promise.all(Array.from({ length: CONCURRENCY }, () => worker()))
+  if (aborted) { await db.$disconnect(); process.exit(1) }
 
   console.log("\n── Amostra ──\n" + (samples.join("\n") || "  (nenhuma)"))
   console.log("\n" + "─".repeat(50))
