@@ -39,6 +39,12 @@ Atualizado em: 2026-07-30
   - Já classificados: ~9.223. Ferramenta: subagente lê o conteúdo e atribui o tópico (~900/rodada, limitado pelo limite de sessão do Claude).
 - [x] ~~**Vídeos do YouTube**~~ — ✅ CONCLUÍDO (30/07): todos os tópicos com 6 vídeos. Última rodada `--fill` salvou 495 vídeos, 83/83 tópicos completados, 0 sem resultado.
 
+## 🎯 Gabaritos faltando (1.662 questões sem `correctId` — 26%)
+
+- [ ] Backfill de gabarito: **1.662 questões sem resposta certa** (não dá pra corrigir). Principais: ENEM PPL 2020 (181), UERJ 2024 (155), UFT (~500), UNESP 2022 (74), Exato 25/26 (~200), ENEM PPL 2023 (44), UniCEUB Med 2021 (40).
+  - Maioria tem PDF de gabarito na pasta → **pdftotext + casar nº da questão → letra → `correctId`** (grátis, sem IA). Os bagunçados: MiMo (barato).
+  - Prioridade: ENEM PPL 2020 (prova inteira).
+
 ## 📝 ENEM regular incompleto (api.enem.dev — GRÁTIS, sem IA)
 
 - [ ] **ENEM 2009–2023** só tem ~74–89 de 180 questões cada. A API `api.enem.dev` lista ~183–185/ano, MAS as ~100 que faltam são **baseadas em imagem** (sem texto/alternativas estruturados) → o import pula.
