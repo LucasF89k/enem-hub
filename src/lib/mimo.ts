@@ -66,14 +66,48 @@ export function mimoClientWithKey(apiKey: string): OpenAI {
   )
 }
 
-export async function generateMimoJSON<T>(prompt: string, maxTokens = 4096): Promise<T> {
-  const completion = await mimo.chat.completions.create({
-    model: MIMO_MODEL_PRO,
-    messages: [{ role: 'user', content: prompt }],
-    max_tokens: maxTokens,
-    temperature: 0.5,
-  })
-  const raw = (completion.choices[0]?.message?.content ?? '').trim()
-  const clean = raw.replace(/^```json\n?/m, '').replace(/^```\n?/m, '').replace(/\n?```$/m, '').trim()
-  return JSON.parse(clean) as T
+/** Extrai o JSON (objeto OU array) de uma resposta, ignorando cercas/reasoning/prosa. */
+function extractJson(raw: string): string {
+  const firstObj = raw.indexOf('{')
+  const firstArr = raw.indexOf('[')
+  let s = -1
+  let e = -1
+  if (firstArr >= 0 && (firstObj < 0 || firstArr < firstObj)) {
+    s = firstArr
+    e = raw.lastIndexOf(']')
+  } else {
+    s = firstObj
+    e = raw.lastIndexOf('}')
+  }
+  return s >= 0 && e > s ? raw.slice(s, e + 1) : raw
+}
+
+export async function generateMimoJSON<T>(prompt: string, maxTokens = 8000): Promise<T> {
+  // mimo-v2.5(-pro) é modelo de "reasoning": o raciocínio consome tokens, então o
+  // orçamento precisa ser folgado pro JSON (content) sair completo. Tenta o pro e,
+  // se falhar (parse/erro), cai pro modelo padrão.
+  let lastErr: unknown = null
+  for (const model of [MIMO_MODEL_PRO, MIMO_MODEL]) {
+    try {
+      const completion = await mimo.chat.completions.create({
+        model,
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: maxTokens,
+        temperature: 0.5,
+      })
+      const raw = (completion.choices[0]?.message?.content ?? '').trim()
+      const clean = extractJson(raw)
+      // Sanitiza barras invertidas inválidas (LaTeX etc.) que quebram o JSON.
+      const sanitized = clean.replace(/\\(?!["\\/bfnrtu])/g, '\\\\')
+      try {
+        return JSON.parse(sanitized) as T
+      } catch {
+        return JSON.parse(clean) as T
+      }
+    } catch (err) {
+      lastErr = err
+      continue
+    }
+  }
+  throw lastErr ?? new Error('generateMimoJSON: não foi possível obter JSON válido')
 }

@@ -2,7 +2,7 @@
 
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
-import { generateJSON } from "@/lib/gemini"
+import { generateMimoJSON } from "@/lib/mimo"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { z } from "zod"
@@ -84,7 +84,7 @@ Regras:
 Responda SOMENTE JSON: {"theme": "<o tema, uma frase>"}.`
 
   try {
-    const result = await generateJSON<{ theme: string }>(prompt)
+    const result = await generateMimoJSON<{ theme: string }>(prompt)
     const theme = String(result.theme ?? "").trim().slice(0, 300)
     if (theme.length < 8) return { error: "Não foi possível gerar um tema. Tente de novo." }
     return { theme }
@@ -148,7 +148,7 @@ Competências:
 5. Elaboração de proposta de intervenção para o problema abordado`
 
   try {
-    const result = await generateJSON<EssayEvaluation>(prompt)
+    const result = await generateMimoJSON<EssayEvaluation>(prompt)
 
     const clamp = (v: number) => {
       const clamped = Math.max(0, Math.min(200, v))
