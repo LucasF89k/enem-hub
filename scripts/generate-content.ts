@@ -163,12 +163,18 @@ async function generateForTopic(topic: {
     const end = raw.lastIndexOf("}")
     const clean = start >= 0 && end > start ? raw.slice(start, end + 1) : raw
 
+    // Sanitiza barras invertidas inválidas (ex.: LaTeX \cdot, \frac) que quebram o JSON.
+    const sanitized = clean.replace(/\\(?!["\\/bfnrtu])/g, "\\\\")
     let parsed: unknown
     try {
-      parsed = JSON.parse(clean)
+      parsed = JSON.parse(sanitized)
     } catch {
-      console.error(`  ❌  ${topic.name} — JSON inválido (${raw.length} chars)`)
-      return "error"
+      try {
+        parsed = JSON.parse(clean)
+      } catch {
+        console.error(`  ❌  ${topic.name} — JSON inválido (${raw.length} chars)`)
+        return "error"
+      }
     }
     if (!isValid(parsed)) {
       console.error(`  ❌  ${topic.name} — formato/idioma/tamanho inesperado`)
