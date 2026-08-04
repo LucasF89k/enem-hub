@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
 
     const { messages, topicId, image } = await req.json()
 
-    const [profile, wrongQuestions, todayPlan, currentTopic] = await Promise.all([
+    const [profile, wrongQuestions, todayPlan, currentTopic, existingCards] = await Promise.all([
       db.userProfile.findUnique({
         where: { userId: session.user.id },
         select: {
@@ -64,6 +64,15 @@ export async function POST(req: NextRequest) {
             },
           }).catch(() => null)
         : null,
+
+      // Flashcards que já existem neste tópico — para o Mentor NÃO repetir.
+      topicId
+        ? db.flashcard.findMany({
+            where: { topicId },
+            select: { front: true },
+            take: 60,
+          }).catch(() => [])
+        : Promise.resolve([]),
     ])
 
     const trailMessages: Record<string, string> = {
@@ -100,6 +109,14 @@ Sempre que você CRIAR flashcards para o aluno, além de mostrá-los no texto, e
 [{"front":"pergunta do card","back":"resposta do card"}]
 \`\`\`
 Emita esse bloco só quando realmente criar flashcards, uma única vez, e não escreva nada depois dele.
+REGRAS DOS FLASHCARDS: INVENTE cards NOVOS e ORIGINAIS a partir do seu conhecimento — variados (definição, aplicação, exemplo, pegadinha, comparação), não só decoreba óbvia. NUNCA repita nem parafraseie os flashcards que já existem (listados abaixo, se houver). Cada card deve trazer algo diferente do que o aluno já tem.${
+      Array.isArray(existingCards) && existingCards.length > 0
+        ? `\n\nFLASHCARDS QUE JÁ EXISTEM NESTE TÓPICO (NÃO os repita — crie diferentes):\n${existingCards
+            .slice(0, 40)
+            .map((c: { front: string }) => `- ${c.front}`)
+            .join('\n')}`
+        : ''
+    }
 
 ${profile ? `PERFIL DO ALUNO:
 - Curso desejado: ${curso.nome}

@@ -17,6 +17,7 @@ import {
   Code2,
   Brain,
   Play,
+  Sparkles,
 } from "lucide-react"
 import Link from "next/link"
 import { VideoList } from "@/components/study/VideoList"
@@ -67,6 +68,7 @@ interface TopicFlashcard {
   id: string
   front: string
   type: string
+  tags: string[]
 }
 
 interface Props {
@@ -241,18 +243,40 @@ export function TopicTabs({ topicId, topicName, content, flashcards, questions, 
         </div>
 
         {flashcards.length > 0 ? (
-          <div className="space-y-2">
-            {flashcards.map((card) => (
-              <Card key={card.id} className="overflow-hidden">
-                <CardContent className="py-3 px-4">
-                  <p className="text-sm line-clamp-2">{card.front}</p>
-                  <Badge variant="secondary" className="text-[10px] mt-1.5">
-                    {card.type}
-                  </Badge>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          (() => {
+            const isIa = (c: TopicFlashcard) =>
+              c.tags?.some((t) => t === "mentor" || t === "ia")
+            const groups = [
+              { key: "ia", label: "Criados pela IA (Mentor)", cards: flashcards.filter(isIa) },
+              { key: "base", label: "Do banco", cards: flashcards.filter((c) => !isIa(c)) },
+            ].filter((g) => g.cards.length > 0)
+            return (
+              <div className="space-y-5">
+                {groups.map((group) => (
+                  <div key={group.key} className="space-y-2">
+                    <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      {group.key === "ia" ? (
+                        <Sparkles className="h-3.5 w-3.5 text-primary" />
+                      ) : (
+                        <Brain className="h-3.5 w-3.5" />
+                      )}
+                      {group.label} · {group.cards.length}
+                    </h3>
+                    {group.cards.map((card) => (
+                      <Card key={card.id} className="overflow-hidden">
+                        <CardContent className="py-3 px-4">
+                          <p className="text-sm line-clamp-2">{card.front}</p>
+                          <Badge variant="secondary" className="text-[10px] mt-1.5">
+                            {card.type}
+                          </Badge>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            )
+          })()
         ) : (
           <div className="flex flex-col items-center gap-3 py-8 text-center">
             <Brain className="h-10 w-10 text-muted-foreground/40" />

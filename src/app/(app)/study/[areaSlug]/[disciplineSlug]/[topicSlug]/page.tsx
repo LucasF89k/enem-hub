@@ -48,7 +48,7 @@ export default async function TopicPage({
       },
       contents: { take: 1, orderBy: { importance: "desc" } },
       flashcards: {
-        select: { id: true, front: true, type: true },
+        select: { id: true, front: true, type: true, tags: true },
         orderBy: { createdAt: "asc" },
       },
       questions: {
@@ -109,6 +109,7 @@ export default async function TopicPage({
     id: f.id,
     front: f.front,
     type: f.type as string,
+    tags: f.tags,
   }))
 
   const questions = topic.questions.map((q) => ({
