@@ -35,8 +35,7 @@ Atualizado em: 2026-07-30
   - **Progresso (30/07): 135/209 tópicos prontos.** Faltam **74**: ~29 falharam por fórmula com `\` (prompt já corrigido → re-rodar `--all`), + Filosofia (12) e Biologia (em espera de PDF), + os 2 novos tópicos.
 - [ ] **Reclassificação de questões (via MiMo)** — EM ANDAMENTO (`scripts/reclassify-questions.ts`), rodando nas 6.433 questões pra corrigir área/tópico (dry-run validou ~37% de correções reais).
 
-- [ ] **Flashcards** — **8.768** cards genéricos ("Importados do Anki") ainda sem matéria/tópico.
-  - Já classificados: ~9.223. Ferramenta: subagente lê o conteúdo e atribui o tópico (~900/rodada, limitado pelo limite de sessão do Claude).
+- [ ] **Flashcards** — praticamente concluído: **17.728 de 18.047 classificados (98%)**. Faltam só **319** sem matéria/tópico. (Atualizado 30/07 — o número antigo de "8.768" está obsoleto.)
 - [x] ~~**Vídeos do YouTube**~~ — ✅ CONCLUÍDO (30/07): todos os tópicos com 6 vídeos. Última rodada `--fill` salvou 495 vídeos, 83/83 tópicos completados, 0 sem resultado.
 
 ## 🎯 Gabaritos faltando (1.662 questões sem `correctId` — 26%)
