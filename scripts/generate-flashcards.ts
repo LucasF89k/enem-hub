@@ -36,6 +36,7 @@ const disciplineSlug = typeof flags["discipline"] === "string" ? flags["discipli
 const topicId = typeof flags["topic-id"] === "string" ? flags["topic-id"] : null
 const limit = typeof flags["limit"] === "string" ? parseInt(flags["limit"]) : null
 const all = flags["all"] === true
+const force = flags["force"] === true // gera mesmo se o tópico já tiver 8+ cards (complementar)
 
 if (!all && !areaSlug && !disciplineSlug && !topicId) {
   console.error("❌  Passe --all, --area=SLUG, --discipline=SLUG ou --topic-id=ID")
@@ -180,7 +181,7 @@ async function main() {
   })
 
   const pending: TopicCandidate[] = candidates
-    .filter((t) => t.flashcards.length < MIN_FLASHCARDS)
+    .filter((t) => force || t.flashcards.length < MIN_FLASHCARDS)
     .map((t) => ({
       id: t.id,
       name: t.name,
