@@ -33,6 +33,7 @@ for (const a of argv) {
 const dryRun = flags["dry-run"] === true
 const limit = typeof flags["limit"] === "string" ? parseInt(flags["limit"]) : null
 const areaFilter = typeof flags["area"] === "string" ? flags["area"] : null
+const onlyMissing = flags["missing"] === true // só questões sem tópico (classificação inicial)
 
 function sleep(ms: number) {
   return new Promise<void>((r) => setTimeout(r, ms))
@@ -76,7 +77,10 @@ async function main() {
     }
   }
 
-  const where = areaFilter ? { areaSlug: areaFilter } : {}
+  const where = {
+    ...(areaFilter ? { areaSlug: areaFilter } : {}),
+    ...(onlyMissing ? { topicId: null } : {}),
+  }
   const questions = await db.question.findMany({
     where,
     select: {
