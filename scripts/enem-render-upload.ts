@@ -46,17 +46,39 @@ function render(pdf: string, prefix: string): string[] {
   }).map((f) => `${SP}/${f}`)
 }
 
+/** Gabarito oficial do api.enem.dev: { número da questão: letra }. Grátis. */
+async function fetchGabarito(year: number): Promise<Record<number, string>> {
+  const map: Record<number, string> = {}
+  for (let offset = 0; offset < 200; offset += 50) {
+    try {
+      const r = await fetch(`https://api.enem.dev/v1/exams/${year}/questions?limit=50&offset=${offset}`)
+      if (!r.ok) break
+      const j = (await r.json()) as { questions?: { index: number; correctAlternative?: string }[] }
+      const items = j.questions ?? []
+      if (items.length === 0) break
+      for (const q of items) if (q.index && q.correctAlternative) map[q.index] = q.correctAlternative
+    } catch {
+      break
+    }
+  }
+  return map
+}
+
 async function main() {
   if (!existsSync(SP)) mkdirSync(SP, { recursive: true })
 
   const existing = await db.question.findMany({ where: { year: YEAR, source: `ENEM ${YEAR}` }, select: { number: true } })
   const existingNumbers = existing.map((q) => q.number).filter((n): n is number => n != null)
 
+  const gabarito = await fetchGabarito(YEAR)
+  console.log(`  gabarito api.enem.dev: ${Object.keys(gabarito).length} respostas`)
+
   const manifest: {
     year: number
     existingNumbers: number[]
+    gabarito: Record<number, string>
     days: { day: number; gabaritoImages: string[]; pages: { page: number; localPath: string; url: string }[] }[]
-  } = { year: YEAR, existingNumbers, days: [] }
+  } = { year: YEAR, existingNumbers, gabarito, days: [] }
 
   for (const d of DAYS) {
     console.log(`\n== Dia ${d.day} ==`)
