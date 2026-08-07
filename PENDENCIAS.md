@@ -35,27 +35,35 @@ Atualizado em: 2026-07-30
   - **Progresso (30/07): 135/209 tópicos prontos.** Faltam **74**: ~29 falharam por fórmula com `\` (prompt já corrigido → re-rodar `--all`), + Filosofia (12) e Biologia (em espera de PDF), + os 2 novos tópicos.
 - [ ] **Reclassificação de questões (via MiMo)** — EM ANDAMENTO (`scripts/reclassify-questions.ts`), rodando nas 6.433 questões pra corrigir área/tópico (dry-run validou ~37% de correções reais).
 
-- [ ] **Flashcards** — praticamente concluído: **17.728 de 18.047 classificados (98%)**. Faltam só **319** sem matéria/tópico. (Atualizado 30/07 — o número antigo de "8.768" está obsoleto.)
+- [ ] **Flashcards — imagens perdidas na importação (07/08):** **4.082 cards** tinham imagem e a importação trocou por o texto `[imagem]` (perdeu o nome do arquivo). As imagens **existem** nos `.apkg` de `fonte de conteudo/ANKI - FLASHCARDS/` (zip com SQLite + mídia). **Conserto GRÁTIS (sem IA):** re-parsear os `.apkg`, casar cards por texto, subir as imagens no Cloudinary e trocar o `[imagem]` pela URL. (Adaptar `import-anki-decks.ts`.)
+- [ ] **Classificar ~1.616 questões sem tópico** — a maioria são as novas questões de imagem do ENEM (têm área, falta o tópico específico). Rodar `scripts/reclassify-questions.ts --missing` (MiMo, barato).
+- [x] ~~**Flashcards classificação**~~ — 98% (faltam ~319 sem tópico + os 4.082 acima que são de imagem).
+- [x] ~~**Vídeos do YouTube**~~ — ✅ CONCLUÍDO (30/07): todos os tópicos com 6 vídeos. Última rodada `--fill` salvou 495 vídeos, 83/83 tópicos completados, 0 sem resultado.
 - [x] ~~**Vídeos do YouTube**~~ — ✅ CONCLUÍDO (30/07): todos os tópicos com 6 vídeos. Última rodada `--fill` salvou 495 vídeos, 83/83 tópicos completados, 0 sem resultado.
 
-## 🎯 Gabaritos faltando (1.662 questões sem `correctId` — 26%)
+## 🎯 Gabaritos faltando (~1.671 questões sem `correctId`)
 
-- [ ] Backfill de gabarito: **1.662 questões sem resposta certa** (não dá pra corrigir). Principais: ENEM PPL 2020 (181), UERJ 2024 (155), UFT (~500), UNESP 2022 (74), Exato 25/26 (~200), ENEM PPL 2023 (44), UniCEUB Med 2021 (40).
+> Os do **ENEM regular** já foram preenchidos. Os que restam são de **vestibulares / PPL / simulados** (não-ENEM).
+- [ ] Backfill de gabarito. Principais: ENEM PPL 2020 (181), UERJ 2024 (155), UFT (~500), UNESP 2022 (74), Exato 25/26 (~200), ENEM PPL 2023 (44), UniCEUB Med 2021 (40).
   - Maioria tem PDF de gabarito na pasta → **pdftotext + casar nº da questão → letra → `correctId`** (grátis, sem IA). Os bagunçados: MiMo (barato).
-  - Prioridade: ENEM PPL 2020 (prova inteira).
 
-## 📝 ENEM regular incompleto (api.enem.dev — GRÁTIS, sem IA)
+## ✅ ENEM regular 2009–2023 — COMPLETO (07/08)
 
-- [ ] **ENEM 2009–2023** só tem ~74–89 de 180 questões cada. A API `api.enem.dev` lista ~183–185/ano, MAS as ~100 que faltam são **baseadas em imagem** (sem texto/alternativas estruturados) → o import pula.
-  - O re-import só recupera as poucas com texto. Rodar `npx tsx scripts/import-questions.ts --all` (idempotente) recupera essas + gabarito; depois `build-simulados.ts`.
-  - **As questões de imagem ficam para a SESSÃO/FASE F**, usando **Ghostscript** (renderizar/extrair as imagens dos PDFs oficiais do INEP) + **Cloudinary** (hospedar as imagens). É assim que se chega aos 180 reais por prova.
+- [x] ~~**Questões de imagem do ENEM**~~ — **FEITO.** As **15 provas (2009–2023)** agora têm ~180 questões cada (antes ~74–89). Pipeline: `enem-render-upload.ts` (Ghostscript → Cloudinary + gabarito do api.enem.dev no manifesto) → subagente Sonnet extrai (ou MiMo p/ 2009) → `enem-images-import.ts`. Simulados reconstruídos (`build-simulados.ts`).
+- [ ] **Gabaritos faltando em algumas questões de imagem** (usuário vai pegar os oficiais do INEP depois):
+  - **ENEM 2009:** 5 questões sem gabarito — **101, 140, 157, 166, 180** (o MiMo não leu essas letras na folha amarela). → 175/180 no simulado.
+  - **ENEM 2015:** questão **145** e **ENEM 2020:** **144, 168, 179** — provavelmente **ANULADAS** (não aparecem no gabarito oficial). Confirmar; se anuladas, `correctId` null está correto. → 179/180 e 177/180.
+  - Fonte: baixar o **gabarito oficial do INEP** (Caderno Amarelo) desses anos e casar número → letra.
+- [ ] **ENEM 2013 (86–90):** recuperadas do caderno amarelo (baixado em `Novas fontes/`), gabarito lido da própria prova. OK (180/180).
 
 ## 🎓 ENCCEJA (via subagentes Claude — sem MiMo)
 
 - [ ] Importar as provas do **ENCCEJA** (não está no api.enem.dev → extração de PDF via subagente, aos poucos).
 
-## 📝 Provas ENEM PPL (extração de PDF — "faça depois" antigo)
+## 📝 Provas ENEM PPL — INCOMPLETAS (só questões de texto)
 
+> Os PPL aparecem com poucas questões (ex.: PPL 2025 = 45, PPL 2024 = 85) porque **só as de texto foram importadas**; as de **imagem NÃO foram feitas**. O pipeline de imagem (Ghostscript+Cloudinary+extração) foi rodado só no **ENEM regular 2009–2023**, ainda **não** no PPL.
+- [ ] **Completar o PPL com o mesmo pipeline** — rodar `enem-render-upload.ts` + extração nos PDFs de `fonte de conteudo/.../02 - ENEM PPLs (2009-2025)` (gabarito: ler do PDF ou api). Cada ano ~180.
 - [ ] **Anos incompletos:** PPL **2018, 2024, 2025** (import parcial).
 - [ ] **Gabaritos faltando:** PPL **2020, 2023**.
 - [ ] **PDFs cifrados** (texto embaralhado, não extraiu): PPL **2014, 2015, 2016, 2017, 2021**.
