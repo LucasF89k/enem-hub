@@ -13,9 +13,24 @@ const db = new PrismaClient()
 interface Item {
   number: number
   statement: string
-  options: { letter: string; text: string }[]
+  options: { letter: string; text: string }[] | Record<string, string>
   correct: string
   imageUrl: string
+}
+
+/** Aceita options como array [{letter,text}] OU objeto {A:"...",B:"..."}. */
+function normOptions(opts: Item["options"]): { letter: string; text: string }[] {
+  if (Array.isArray(opts)) {
+    return opts
+      .filter((o) => o && o.letter && o.text)
+      .map((o) => ({ letter: String(o.letter).toUpperCase().trim(), text: String(o.text) }))
+  }
+  if (opts && typeof opts === "object") {
+    return Object.entries(opts)
+      .filter(([k, v]) => k && v)
+      .map(([k, v]) => ({ letter: String(k).toUpperCase().trim(), text: String(v) }))
+  }
+  return []
 }
 
 function areaFromNumber(n: number): string {
@@ -37,14 +52,12 @@ async function main() {
 
   let ok = 0, skip = 0
   for (const it of items) {
-    if (!it.number || !it.statement || !Array.isArray(it.options) || it.options.length < 4) { skip++; continue }
+    const normalized = normOptions(it.options)
+    if (!it.number || !it.statement || normalized.length < 4) { skip++; continue }
     const exists = await db.question.findFirst({ where: { year, source, number: it.number }, select: { id: true } })
     if (exists) { skip++; continue }
 
-    const opts = it.options
-      .filter((o) => o.letter && o.text)
-      .map((o, i) => ({ letter: o.letter.toUpperCase(), text: o.text, order: i }))
-    if (opts.length < 4) { skip++; continue }
+    const opts = normalized.map((o, i) => ({ letter: o.letter, text: o.text, order: i }))
 
     const q = await db.question.create({
       data: {
