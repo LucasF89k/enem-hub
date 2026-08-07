@@ -22,14 +22,21 @@ const db = new PrismaClient()
 
 const GS = "C:/Program Files/gs/gs10.07.1/bin/gswin64c.exe"
 const SP = "C:/Users/dilbe/AppData/Local/Temp/claude/d--enem-hub/97109b74-d515-4738-aee2-7a20fe647063/scratchpad/enem-img"
-const BASE =
-  "fonte de conteudo/Provas ENEM normal e ENEM PPL/Provas ENEM normal e ENEM PPL/ENEM - 2022 (NORMAL)"
 
-const YEAR = 2022
-const DAYS = [
-  { day: 1, prova: `${BASE}/1º dia de prova/1 dia_prova_amarelo.pdf`, gab: `${BASE}/1º dia de prova/1 dia gabarito.pdf` },
-  { day: 2, prova: `${BASE}/2º dia de prova/2 dia_prova_amarelo.pdf`, gab: `${BASE}/2º dia de prova/2 dia gabarito.pdf` },
-]
+// Args: --year=YYYY --provas="p1.pdf,p2.pdf" --gabs="g1.pdf,g2.pdf"
+const flags: Record<string, string> = {}
+for (const a of process.argv.slice(2)) {
+  const m = a.match(/^--([^=]+)=(.*)$/)
+  if (m) flags[m[1]] = m[2]
+}
+const YEAR = parseInt(flags["year"] ?? "0")
+const provas = (flags["provas"] ?? "").split(",").map((s) => s.trim()).filter(Boolean)
+const gabs = (flags["gabs"] ?? "").split(",").map((s) => s.trim()).filter(Boolean)
+if (!YEAR || provas.length === 0 || provas.length !== gabs.length) {
+  console.error('Uso: --year=YYYY --provas="p1,p2" --gabs="g1,g2" (provas e gabs alinhados por dia)')
+  process.exit(1)
+}
+const DAYS = provas.map((prova, i) => ({ day: i + 1, prova, gab: gabs[i] }))
 
 function render(pdf: string, prefix: string): string[] {
   execFileSync(GS, ["-dNOPAUSE", "-dBATCH", "-q", "-sDEVICE=png16m", "-r150", `-sOutputFile=${SP}/${prefix}-%d.png`, pdf])
@@ -53,8 +60,8 @@ async function main() {
 
   for (const d of DAYS) {
     console.log(`\n== Dia ${d.day} ==`)
-    const provaPages = render(d.prova, `d${d.day}p`)
-    const gabPages = render(d.gab, `d${d.day}g`)
+    const provaPages = render(d.prova, `y${YEAR}-d${d.day}p`)
+    const gabPages = render(d.gab, `y${YEAR}-d${d.day}g`)
     console.log(`  prova: ${provaPages.length} páginas | gabarito: ${gabPages.length}`)
 
     const pages: { page: number; localPath: string; url: string }[] = []
