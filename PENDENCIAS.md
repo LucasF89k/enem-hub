@@ -12,6 +12,17 @@ Atualizado em: 2026-07-30
 
 ---
 
+## 🔴 GRANDE PENDÊNCIA — Questões de IMAGEM dos PDFs (vestibulares/PPL/simulados) — reportado 07/08
+
+> **O usuário enfatizou: "não esqueça disso".** É o maior bloco pendente.
+
+- [ ] **~9 mil questões de imagem** dos PDFs que o usuário mandou (vestibulares, ENEM PPL, e os **simulados também têm imagens**) foram **PULADAS** na extração (`extract-pdf-exams.ts` só pegou as de texto). O usuário quer **TUDO completo** — inclusive as "questões normais" (não-simulado) que dependem de figura.
+  - **2 tipos:** (1) **179 já no banco** que citam imagem no enunciado mas estão SEM imagem (UERJ, ENEM PPL, UNESP…); (2) **puladas totalmente** (nem entraram) — a maior parte dos ~9 mil.
+  - **Como fazer:** mesmo pipeline do ENEM (render Ghostscript → achar figura → Cloudinary → anexar), mas a leitura/extração precisa de **VISÃO paga (MiMo)** — os vestibulares NÃO têm api.enem.dev.
+  - **Custo honesto:** ~9 mil questões ≈ **US$ 80-150 no MiMo** (é o maior gasto). **Medir primeiro** com `extract-pdf-exams.ts --dry-run` (grátis) pra ter o número exato antes.
+  - **Lembrar:** incluir os **simulados** (têm imagem também) quando rodar o bloco.
+- [ ] **ENEM 2009-2023 — melhorar imagens (GRÁTIS):** 1.447 questões de imagem ficaram com a **página INTEIRA** (Cloudinary) em vez da figura recortada. O **api.enem.dev tem a figura recortada** no `context` (markdown `![](enem.dev/.../N.png)`). Trocar a página inteira pela recortada — **de graça** (cuidado com match de numeração por caderno; casar por conteúdo se preciso). 524 questões já têm a recortada (do import original).
+
 ## 🧭 Estrutura / organização de tópicos (reportado 29/07 — fazer DEPOIS de terminar a geração de conteúdo)
 
 > Ajustar a TAXONOMIA antes de (re)gerar o conteúdo dessas disciplinas, senão gera resumo pra tópico errado.
