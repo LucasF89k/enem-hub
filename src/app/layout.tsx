@@ -4,6 +4,7 @@ import { Toaster } from "sonner"
 import { ServiceWorkerRegistrar } from "@/components/pwa/ServiceWorkerRegistrar"
 import { OfflineBanner } from "@/components/pwa/OfflineBanner"
 import { InstallPrompt } from "@/components/pwa/InstallPrompt"
+import { AppSplash } from "@/components/AppSplash"
 import "./globals.css"
 
 const inter = Inter({
@@ -69,6 +70,7 @@ export default function RootLayout({
       <body className="min-h-screen bg-background text-foreground font-sans antialiased">
         <ServiceWorkerRegistrar />
         <OfflineBanner />
+        <AppSplash />
         {children}
         <InstallPrompt />
         <Toaster position="bottom-right" richColors />

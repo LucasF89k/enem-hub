@@ -61,13 +61,6 @@ export default async function DashboardPage() {
   const selectedUniId = findUniversidade(profile?.targetInstitution)?.id ?? null
   const examDateISO = profile?.examDate ? profile.examDate.toISOString() : null
 
-  // "Study Score" — composto por Foco (meta do dia), Consistência (streak) e Revisão (flashcards em dia)
-  const focoScore = Math.min(100, dailyGoal > 0 ? (minutesToday / dailyGoal) * 100 : 0)
-  const consistenciaScore = Math.min(100, streak * 12)
-  const revisaoScore = dueReviews === 0 ? 100 : Math.max(20, 100 - dueReviews * 4)
-  const studyScore = Math.round((focoScore + consistenciaScore + revisaoScore) / 3)
-  const scoreTrend: "up" | "down" = studyScore >= 60 ? "up" : "down"
-
   return (
     <div className="mx-auto flex w-full max-w-[460px] flex-col px-6 pb-16 pt-3 sm:px-8">
       {/* Hero — inspirado no Opal: fundo com profundidade (vinheta + glow), gauge, pills, streak */}
@@ -86,7 +79,7 @@ export default async function DashboardPage() {
         </div>
 
         <div className="opal-enter my-6" style={{ animationDelay: "70ms" }}>
-          <StudyScoreGauge score={studyScore} label="Score de Estudo" trend={scoreTrend} />
+          <StudyScoreGauge minutes={minutesToday} goalMinutes={dailyGoal} label="Meta de estudo hoje" />
         </div>
 
         <div
@@ -131,8 +124,10 @@ export default async function DashboardPage() {
 
         <div className="my-8 h-px w-full bg-border" />
 
-        {/* Contador regressivo do ENEM — com a trilha embutida */}
-        <div className="opal-enter w-full max-w-[360px]" style={{ animationDelay: "280ms" }}>
+        {/* Contador regressivo do ENEM — com a trilha embutida.
+            Antes tinha max-w-[360px] enquanto os cards vizinhos são w-full —
+            isso fazia as bordas não baterem ao rolar (o "torto" real). */}
+        <div className="opal-enter w-full" style={{ animationDelay: "280ms" }}>
           <ExamCountdown
             examDate={examDateISO}
             trailLabel={trailConfig.label}

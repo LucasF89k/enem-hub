@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { TrendingDown, TrendingUp } from "lucide-react"
 
 const R = 90
 const CIRC = 2 * Math.PI * R
@@ -9,19 +8,20 @@ const ARC_FRACTION = 0.75 // arco de 270° (não círculo completo, como no Opal
 const ARC_LEN = CIRC * ARC_FRACTION
 
 /**
- * Gauge circular estilo Opal: arco de 270° que anima do 0 até o score,
- * com o número central em count-up sincronizado.
+ * Gauge circular estilo Opal: arco de 270° que anima do 0 até a meta de
+ * estudo do dia (minutos estudados / meta diária), com count-up sincronizado.
+ * Não é um "score" abstrato — é literalmente o progresso da meta de hoje.
  */
 export function StudyScoreGauge({
-  score,
-  label = "Score de Estudo",
-  trend,
+  minutes,
+  goalMinutes,
+  label = "Meta de estudo hoje",
 }: {
-  score: number
+  minutes: number
+  goalMinutes: number
   label?: string
-  trend?: "up" | "down"
 }) {
-  const clamped = Math.min(100, Math.max(0, score))
+  const pct = goalMinutes > 0 ? Math.min(100, (minutes / goalMinutes) * 100) : 0
   const [progress, setProgress] = useState(0)
   const [display, setDisplay] = useState(0)
 
@@ -32,21 +32,20 @@ export function StudyScoreGauge({
     const tick = (now: number) => {
       const t = Math.min(1, (now - start) / duration)
       const eased = 1 - Math.pow(1 - t, 3) // ease-out cubic
-      setProgress(eased * (clamped / 100))
-      setDisplay(Math.round(eased * clamped))
+      setProgress(eased * (pct / 100))
+      setDisplay(Math.round(eased * minutes))
       if (t < 1) raf = requestAnimationFrame(tick)
     }
     raf = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf)
-  }, [clamped])
+  }, [pct, minutes])
 
   // Comprimento visível do arco preenchido — NÃO usar strokeDashoffset aqui:
   // como o dash (270°) e o gap (90°) somam exatamente a circunferência, deslocar
   // o offset só GIRA o segmento já cheio ao redor do círculo, não o encolhe (era
-  // o bug: em qualquer score o arco aparecia quase inteiro). O comprimento do
+  // o bug: em qualquer valor o arco aparecia quase inteiro). O comprimento do
   // dash precisa ser proporcional ao progresso, ponto.
   const visibleLen = ARC_LEN * progress
-  const TrendIcon = trend === "down" ? TrendingDown : TrendingUp
 
   return (
     <div className="relative flex h-[210px] w-[210px] items-center justify-center">
@@ -80,7 +79,7 @@ export function StudyScoreGauge({
           strokeDasharray={`${ARC_LEN} ${CIRC - ARC_LEN}`}
           transform="rotate(135 100 100)"
         />
-        {/* progresso — dash = comprimento visível (cresce com o score), gap gigante
+        {/* progresso — dash = comprimento visível (cresce com a meta), gap gigante
             pra nunca repetir o padrão dentro do círculo */}
         <circle
           cx="100"
@@ -96,15 +95,11 @@ export function StudyScoreGauge({
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center pt-4">
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-baseline gap-1">
           <span className="text-[52px] font-semibold leading-none tracking-tight text-foreground">
             {display}
           </span>
-          {clamped > 0 && (
-            <TrendIcon
-              className={trend === "down" ? "h-4 w-4 text-destructive" : "h-4 w-4 text-accent"}
-            />
-          )}
+          <span className="text-base font-medium text-muted-foreground">/{goalMinutes} min</span>
         </div>
         <p className="mt-1.5 text-xs font-medium text-muted-foreground">{label}</p>
       </div>
