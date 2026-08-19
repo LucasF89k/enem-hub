@@ -49,9 +49,20 @@ export function StudyScoreGauge({
 
   return (
     <div className="relative flex h-[210px] w-[210px] items-center justify-center">
+      <div className="opal-breathing-glow" aria-hidden />
       <svg viewBox="0 0 200 200" className="h-full w-full">
         <defs>
-          <linearGradient id="score-gauge-fill" x1="0%" y1="0%" x2="100%" y2="0%">
+          {/* userSpaceOnUse alinhado à diagonal do arco (135°→45°) — acompanha a curva
+              em vez do gradiente "borrado" que um linearGradient objectBoundingBox
+              produz sobre um <circle> rotacionado. */}
+          <linearGradient
+            id="score-gauge-fill"
+            gradientUnits="userSpaceOnUse"
+            x1="36.4"
+            y1="163.6"
+            x2="163.6"
+            y2="36.4"
+          >
             <stop offset="0%" stopColor="var(--gauge-from)" />
             <stop offset="100%" stopColor="var(--gauge-to)" />
           </linearGradient>

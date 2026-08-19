@@ -12,7 +12,7 @@ export function MetricPill({
 }) {
   return (
     <div className="flex flex-col items-center gap-1.5">
-      <div className="flex items-center gap-1.5 rounded-full border border-border bg-secondary/60 px-4 py-2">
+      <div className="opal-glass-card flex items-center gap-1.5 rounded-full px-4 py-2">
         <Icon className="h-3.5 w-3.5 text-muted-foreground" />
         <span className="text-sm font-semibold text-foreground">{value}</span>
       </div>

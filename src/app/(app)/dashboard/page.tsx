@@ -70,29 +70,35 @@ export default async function DashboardPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-[460px] flex-col px-6 pb-16 pt-3 sm:px-8">
-      {/* Hero — inspirado no Opal: gauge de score + pills + streak */}
-      <div className="flex flex-col items-center">
-        <div className="flex w-full items-center justify-between">
+      {/* Hero — inspirado no Opal: fundo com profundidade (vinheta + glow), gauge, pills, streak */}
+      <div className="opal-hero-bg flex flex-col items-center">
+        <div
+          className="opal-enter flex w-full items-center justify-between"
+          style={{ animationDelay: "0ms" }}
+        >
           <h1 className="text-lg font-light text-foreground">
             Olá, <b className="font-medium">{firstName}</b>
           </h1>
-          <div className="flex items-center gap-1 rounded-full border border-border bg-secondary/60 px-3 py-1.5 text-sm font-medium text-warning">
+          <div className="opal-glass-card flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-medium text-warning">
             <Flame className="h-3.5 w-3.5 fill-warning" />
             {streak}
           </div>
         </div>
 
-        <div className="my-6">
+        <div className="opal-enter my-6" style={{ animationDelay: "70ms" }}>
           <StudyScoreGauge score={studyScore} label="Score de Estudo" trend={scoreTrend} />
         </div>
 
-        <div className="flex w-full items-start justify-center gap-4">
+        <div
+          className="opal-enter flex w-full items-start justify-center gap-4"
+          style={{ animationDelay: "140ms" }}
+        >
           <MetricPill icon={Timer} value={`${minutesToday}m`} label="Foco" />
           <MetricPill icon={Repeat} value={streak} label="Consistência" />
           <MetricPill icon={Brain} value={dueReviews} label="Revisão" />
         </div>
 
-        <div className="mt-6 w-full">
+        <div className="opal-enter mt-6 w-full" style={{ animationDelay: "210ms" }}>
           {dueReviews > 0 ? (
             <StudyNudgeCard
               icon={Brain}
@@ -126,7 +132,7 @@ export default async function DashboardPage() {
         <div className="my-8 h-px w-full bg-border" />
 
         {/* Contador regressivo do ENEM — com a trilha embutida */}
-        <div className="w-full max-w-[360px]">
+        <div className="opal-enter w-full max-w-[360px]" style={{ animationDelay: "280ms" }}>
           <ExamCountdown
             examDate={examDateISO}
             trailLabel={trailConfig.label}
@@ -134,7 +140,7 @@ export default async function DashboardPage() {
           />
         </div>
 
-        <div className="mt-8 w-full">
+        <div className="opal-enter mt-8 w-full" style={{ animationDelay: "350ms" }}>
           <QuietStatsRow
             streak={streak}
             estimatedScore={estimatedScore}
@@ -142,15 +148,17 @@ export default async function DashboardPage() {
           />
         </div>
 
-        <TargetInstitutionCard
-          institution={profile?.targetInstitution}
-          cursoSlug={curso.slug}
-          estimatedScore={estimatedScore}
-        />
+        <div className="opal-enter w-full" style={{ animationDelay: "420ms" }}>
+          <TargetInstitutionCard
+            institution={profile?.targetInstitution}
+            cursoSlug={curso.slug}
+            estimatedScore={estimatedScore}
+          />
+        </div>
       </div>
 
       {/* Notas de corte — visível no fluxo principal, adaptado ao curso */}
-      <section className="mt-10">
+      <section className="opal-enter mt-10" style={{ animationDelay: "490ms" }}>
         <NotasCorteBoard
           cursoSlug={curso.slug}
           selectedUniId={selectedUniId}

@@ -18,7 +18,7 @@ export function StudyNudgeCard({
   href: string
 }) {
   return (
-    <div className="w-full rounded-3xl border border-border bg-card p-5">
+    <div className="opal-glass-card w-full rounded-3xl p-5">
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
         <Icon className="h-3.5 w-3.5" />
         {eyebrow}
