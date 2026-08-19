@@ -69,8 +69,8 @@ export function Header({ actions, className, user }: HeaderProps) {
       {/* Right actions */}
       {actions && <div className="flex items-center gap-1">{actions}</div>}
 
-      {/* Conquistas — só na tela de Perfil, ao lado do nível */}
-      {(pathname === "/profile" || pathname.startsWith("/profile/")) && (
+      {/* Conquistas — acesso rápido fixo em qualquer tela, ao lado do nível */}
+      {pathname !== "/conquistas" && !pathname.startsWith("/conquistas/") && (
         <Link
           href="/conquistas"
           aria-label="Ver minhas conquistas"

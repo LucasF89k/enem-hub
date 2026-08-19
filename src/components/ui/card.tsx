@@ -9,7 +9,10 @@ const Card = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "rounded-lg border bg-card text-card-foreground shadow-sm",
+      // opal-glass-card já traz fundo/borda/blur/glow (vira sólido no light mode) —
+      // isso faz TODOS os cards do app (shadcn <Card>) ganharem o visual Opal de uma
+      // vez só, sem precisar tocar em cada tela que usa <Card>.
+      "opal-glass-card rounded-2xl text-card-foreground",
       className
     )}
     {...props}
