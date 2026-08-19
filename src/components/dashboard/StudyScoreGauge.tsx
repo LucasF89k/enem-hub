@@ -26,17 +26,13 @@ export function StudyScoreGauge({
   const [display, setDisplay] = useState(0)
 
   useEffect(() => {
-    const raf = requestAnimationFrame(() => setProgress(clamped / 100))
-    return () => cancelAnimationFrame(raf)
-  }, [clamped])
-
-  useEffect(() => {
     const duration = 1400
     const start = performance.now()
     let raf: number
     const tick = (now: number) => {
       const t = Math.min(1, (now - start) / duration)
       const eased = 1 - Math.pow(1 - t, 3) // ease-out cubic
+      setProgress(eased * (clamped / 100))
       setDisplay(Math.round(eased * clamped))
       if (t < 1) raf = requestAnimationFrame(tick)
     }
@@ -44,7 +40,12 @@ export function StudyScoreGauge({
     return () => cancelAnimationFrame(raf)
   }, [clamped])
 
-  const offset = ARC_LEN * (1 - progress)
+  // Comprimento visível do arco preenchido — NÃO usar strokeDashoffset aqui:
+  // como o dash (270°) e o gap (90°) somam exatamente a circunferência, deslocar
+  // o offset só GIRA o segmento já cheio ao redor do círculo, não o encolhe (era
+  // o bug: em qualquer score o arco aparecia quase inteiro). O comprimento do
+  // dash precisa ser proporcional ao progresso, ponto.
+  const visibleLen = ARC_LEN * progress
   const TrendIcon = trend === "down" ? TrendingDown : TrendingUp
 
   return (
@@ -79,7 +80,8 @@ export function StudyScoreGauge({
           strokeDasharray={`${ARC_LEN} ${CIRC - ARC_LEN}`}
           transform="rotate(135 100 100)"
         />
-        {/* progresso */}
+        {/* progresso — dash = comprimento visível (cresce com o score), gap gigante
+            pra nunca repetir o padrão dentro do círculo */}
         <circle
           cx="100"
           cy="100"
@@ -88,13 +90,9 @@ export function StudyScoreGauge({
           stroke="url(#score-gauge-fill)"
           strokeWidth={12}
           strokeLinecap="round"
-          strokeDasharray={`${ARC_LEN} ${CIRC - ARC_LEN}`}
-          strokeDashoffset={offset}
+          strokeDasharray={`${visibleLen} ${CIRC}`}
           transform="rotate(135 100 100)"
-          style={{
-            transition: "stroke-dashoffset 1400ms cubic-bezier(0.16, 1, 0.3, 1)",
-            filter: "drop-shadow(0 0 6px var(--glow-mint))",
-          }}
+          style={{ filter: "drop-shadow(0 0 4px color-mix(in srgb, var(--glow-mint) 60%, transparent))" }}
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center pt-4">
