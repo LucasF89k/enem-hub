@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation"
 import Link from "next/link"
+import { Trophy } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { LevelBadge } from "@/components/dashboard/LevelBadge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -67,6 +68,17 @@ export function Header({ actions, className, user }: HeaderProps) {
 
       {/* Right actions */}
       {actions && <div className="flex items-center gap-1">{actions}</div>}
+
+      {/* Conquistas — só na tela de Perfil, ao lado do nível */}
+      {(pathname === "/profile" || pathname.startsWith("/profile/")) && (
+        <Link
+          href="/conquistas"
+          aria-label="Ver minhas conquistas"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-secondary hover:text-primary"
+        >
+          <Trophy className="h-4 w-4" />
+        </Link>
+      )}
 
       {/* Nível/XP */}
       {user && <LevelBadge level={user.level ?? 1} totalXP={user.totalXP ?? 0} />}

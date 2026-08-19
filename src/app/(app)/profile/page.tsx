@@ -213,14 +213,8 @@ export default async function ProfilePage() {
         </Card>
       )}
 
-      {/* Quick links */}
+      {/* Quick links — "Ver minhas conquistas" foi pro header, ao lado do nível */}
       <div className="flex flex-col gap-2">
-        <Button asChild variant="outline" className="justify-start gap-2">
-          <Link href="/conquistas">
-            <Trophy className="h-4 w-4" />
-            Ver minhas conquistas
-          </Link>
-        </Button>
         <Button asChild variant="outline" className="justify-start gap-2">
           <Link href="/analytics">
             <Zap className="h-4 w-4" />

@@ -41,6 +41,7 @@ import {
 } from "@/constants/cursos"
 import { universidadesDoCurso, findUniversidade, TIPO_LABEL } from "@/constants/universidades"
 import { completeOnboarding } from "@/app/actions/onboarding.actions"
+import { OnboardingIntro } from "./OnboardingIntro"
 
 interface OnboardingStepsProps {
   defaultName: string
@@ -87,6 +88,7 @@ function formatHours(hours: number): string {
 }
 
 export function OnboardingSteps({ defaultName }: OnboardingStepsProps) {
+  const [showIntro, setShowIntro] = useState(true)
   const [[step, direction], setStep] = useState<[number, number]>([0, 0])
   const [form, setForm] = useState<OnboardingForm>({
     name: defaultName,
@@ -558,7 +560,17 @@ export function OnboardingSteps({ defaultName }: OnboardingStepsProps) {
   const STEPS = [Step0, Step1, Step2, Step3]
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <AnimatePresence mode="wait">
+      {showIntro ? (
+        <OnboardingIntro key="intro" onContinue={() => setShowIntro(false)} />
+      ) : (
+        <motion.div
+          key="form"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.4 }}
+          className="min-h-screen flex flex-col bg-background"
+        >
       {/* Progress bar */}
       <div className="h-1 w-full bg-muted">
         <motion.div
@@ -638,7 +650,9 @@ export function OnboardingSteps({ defaultName }: OnboardingStepsProps) {
           </Button>
         )}
       </div>
-    </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   )
 }
 
