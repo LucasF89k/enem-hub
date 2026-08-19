@@ -1,13 +1,14 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { db } from "@/lib/db"
-import Link from "next/link"
 import { differenceInDays } from "date-fns"
 import { startOfDayBR, addDaysBR } from "@/lib/date-br"
-import { CalendarDays } from "lucide-react"
+import { Flame, Timer, Repeat, Brain, CalendarDays } from "lucide-react"
 
 import { detectTrail, getTrailConfig } from "@/lib/trail"
-import { FocusRing } from "@/components/dashboard/FocusRing"
+import { StudyScoreGauge } from "@/components/dashboard/StudyScoreGauge"
+import { MetricPill } from "@/components/dashboard/MetricPill"
+import { StudyNudgeCard } from "@/components/dashboard/StudyNudgeCard"
 import { QuietStatsRow } from "@/components/dashboard/QuietStatsRow"
 import { TargetInstitutionCard } from "@/components/dashboard/TargetInstitutionCard"
 import { NotasCorteBoard } from "@/components/dashboard/NotasCorteBoard"
@@ -25,7 +26,7 @@ export default async function DashboardPage() {
   const todayStart = startOfDayBR()
   const tomorrowStart = addDaysBR(todayStart, 1)
 
-  const [profile, todayAgg] = await Promise.all([
+  const [profile, todayAgg, dueReviews] = await Promise.all([
     db.userProfile.findUnique({
       where: { userId },
       select: {
@@ -40,6 +41,9 @@ export default async function DashboardPage() {
     db.studySession.aggregate({
       where: { userId, date: { gte: todayStart, lt: tomorrowStart } },
       _sum: { duration: true },
+    }),
+    db.flashcardReview.count({
+      where: { userId, nextReview: { lte: new Date() } },
     }),
   ])
 
@@ -57,28 +61,67 @@ export default async function DashboardPage() {
   const selectedUniId = findUniversidade(profile?.targetInstitution)?.id ?? null
   const examDateISO = profile?.examDate ? profile.examDate.toISOString() : null
 
+  // "Study Score" — composto por Foco (meta do dia), Consistência (streak) e Revisão (flashcards em dia)
+  const focoScore = Math.min(100, dailyGoal > 0 ? (minutesToday / dailyGoal) * 100 : 0)
+  const consistenciaScore = Math.min(100, streak * 12)
+  const revisaoScore = dueReviews === 0 ? 100 : Math.max(20, 100 - dueReviews * 4)
+  const studyScore = Math.round((focoScore + consistenciaScore + revisaoScore) / 3)
+  const scoreTrend: "up" | "down" = studyScore >= 60 ? "up" : "down"
+
   return (
     <div className="mx-auto flex w-full max-w-[460px] flex-col px-6 pb-16 pt-3 sm:px-8">
-      {/* Conteúdo — coluna de foco centralizada */}
+      {/* Hero — inspirado no Opal: gauge de score + pills + streak */}
       <div className="flex flex-col items-center">
-        <div className="text-center">
+        <div className="flex w-full items-center justify-between">
           <h1 className="text-lg font-light text-foreground">
             Olá, <b className="font-medium">{firstName}</b>
           </h1>
+          <div className="flex items-center gap-1 rounded-full border border-border bg-secondary/60 px-3 py-1.5 text-sm font-medium text-warning">
+            <Flame className="h-3.5 w-3.5 fill-warning" />
+            {streak}
+          </div>
         </div>
 
         <div className="my-6">
-          <FocusRing minutesToday={minutesToday} dailyGoalMinutes={dailyGoal} />
+          <StudyScoreGauge score={studyScore} label="Score de Estudo" trend={scoreTrend} />
         </div>
 
-        {/* Um único CTA — o próximo passo vive dentro do Planner */}
-        <Link
-          href="/planner"
-          className="flex items-center gap-2 rounded-full bg-primary px-10 py-3.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
-        >
-          <CalendarDays className="h-4 w-4" />
-          Ver plano de estudos
-        </Link>
+        <div className="flex w-full items-start justify-center gap-4">
+          <MetricPill icon={Timer} value={`${minutesToday}m`} label="Foco" />
+          <MetricPill icon={Repeat} value={streak} label="Consistência" />
+          <MetricPill icon={Brain} value={dueReviews} label="Revisão" />
+        </div>
+
+        <div className="mt-6 w-full">
+          {dueReviews > 0 ? (
+            <StudyNudgeCard
+              icon={Brain}
+              eyebrow="Flashcards"
+              title="Hora de revisar"
+              description={`Você tem ${dueReviews} card${dueReviews === 1 ? "" : "s"} esperando revisão hoje.`}
+              ctaLabel="Revisar agora"
+              href="/flashcards"
+            />
+          ) : minutesToday < dailyGoal ? (
+            <StudyNudgeCard
+              icon={CalendarDays}
+              eyebrow="Plano de hoje"
+              title="Continue firme"
+              description={`Faltam ${Math.max(0, dailyGoal - minutesToday)} min pra bater sua meta de hoje.`}
+              ctaLabel="Ver plano de estudos"
+              href="/planner"
+            />
+          ) : (
+            <StudyNudgeCard
+              icon={CalendarDays}
+              eyebrow="Plano de hoje"
+              title="Meta batida!"
+              description="Você já estudou o suficiente hoje. Que tal adiantar amanhã?"
+              ctaLabel="Ver plano de estudos"
+              href="/planner"
+            />
+          )}
+        </div>
 
         <div className="my-8 h-px w-full bg-border" />
 

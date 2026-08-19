@@ -3,6 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { motion } from "framer-motion"
 import {
   Home,
   BookOpen,
@@ -60,15 +61,22 @@ function itemClass(active: boolean) {
   )
 }
 
-function ActiveBar() {
-  return <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-primary" />
+/** Cápsula de fundo que desliza entre os itens ativos (Opal §4.6/6.6). */
+function ActiveHighlight() {
+  return (
+    <motion.span
+      layoutId="bottom-nav-highlight"
+      className="absolute inset-x-1 inset-y-1 -z-10 rounded-2xl bg-primary/10"
+      transition={{ type: "spring", stiffness: 420, damping: 34 }}
+    />
+  )
 }
 
 function NavLink({ item, active }: { item: Extract<Item, { kind: "link" }>; active: boolean }) {
   const Icon = item.icon
   return (
     <Link href={item.href} className={itemClass(active)} aria-current={active ? "page" : undefined}>
-      {active && <ActiveBar />}
+      {active && <ActiveHighlight />}
       <Icon className="w-5 h-5 shrink-0" strokeWidth={active ? 2.5 : 1.75} />
       <span className="w-full truncate text-center text-[9.5px] font-medium leading-none">{item.label}</span>
     </Link>
@@ -88,7 +96,7 @@ function NavLauncher({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button type="button" className={itemClass(active)} aria-label={`Abrir ${item.label}`}>
-          {active && <ActiveBar />}
+          {active && <ActiveHighlight />}
           <Icon className="w-5 h-5 shrink-0" strokeWidth={active ? 2.5 : 1.75} />
           <span className="w-full truncate text-center text-[9.5px] font-medium leading-none">{item.label}</span>
         </button>

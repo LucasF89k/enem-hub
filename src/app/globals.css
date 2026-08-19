@@ -72,40 +72,54 @@
   /* Amarelo atenção */
   --warning: hsl(38 92% 50%);
   --warning-foreground: hsl(0 0% 5%);
+
+  /* Tokens do gauge/glow "Opal" — fallback sóbrio no light mode */
+  --gauge-track: hsl(220 13% 91%);
+  --gauge-from: hsl(262 83% 58%);
+  --gauge-to: hsl(142 71% 45%);
+  --glow-mint: hsl(142 71% 45%);
+  --glow-purple: hsl(262 83% 58%);
 }
 
-/* ── Dark theme ──────────────────────────────────────────── */
+/* ── Dark theme — paleta inspirada no Opal (dark/mint/glow) ── */
 .dark {
-  --background: hsl(224 71.4% 4.1%);
-  --foreground: hsl(210 20% 98%);
+  --background: hsl(220 26% 4%);       /* #06070A-ish, leve tom azulado */
+  --foreground: hsl(210 20% 97%);      /* #F5F6F7 */
 
-  --card: hsl(224 71.4% 6%);
-  --card-foreground: hsl(210 20% 98%);
+  --card: hsl(213 15% 8%);             /* #0F1215 */
+  --card-foreground: hsl(210 20% 97%);
 
-  --popover: hsl(224 71.4% 5%);
-  --popover-foreground: hsl(210 20% 98%);
+  --popover: hsl(213 15% 7%);
+  --popover-foreground: hsl(210 20% 97%);
 
-  --primary: hsl(263 70% 65%);
+  --primary: hsl(263 65% 68%);
   --primary-foreground: hsl(0 0% 100%);
 
-  --secondary: hsl(215 27.9% 16.9%);
-  --secondary-foreground: hsl(210 20% 98%);
+  --secondary: hsl(210 12% 12%);       /* #171B1F — bg-elevated-2 */
+  --secondary-foreground: hsl(210 20% 97%);
 
-  --muted: hsl(215 27.9% 16.9%);
-  --muted-foreground: hsl(217.9 10.6% 64.9%);
+  --muted: hsl(210 12% 12%);
+  --muted-foreground: hsl(220 6% 60%); /* #9AA0A6 */
 
-  --accent: hsl(142 71% 45%);
-  --accent-foreground: hsl(0 0% 100%);
+  --accent: hsl(157 78% 74%);          /* #7CF2C8 — mint, glow principal */
+  --accent-foreground: hsl(220 26% 6%);
 
-  --destructive: hsl(0 62.8% 30.6%);
-  --destructive-foreground: hsl(0 0% 98%);
+  --destructive: hsl(0 79% 71%);       /* #F26D6D */
+  --destructive-foreground: hsl(220 26% 6%);
 
-  --border: hsl(215 27.9% 16.9%);
-  --input: hsl(215 27.9% 16.9%);
-  --ring: hsl(263 70% 65%);
+  --border: hsl(0 0% 100% / 0.08);
+  --input: hsl(0 0% 100% / 0.08);
+  --ring: hsl(157 78% 74%);
 
-  --warning: hsl(38 92% 50%);
-  --warning-foreground: hsl(0 0% 5%);
+  --warning: hsl(36 91% 57%);          /* #F5A623 — chama de streak */
+  --warning-foreground: hsl(220 26% 6%);
+
+  /* Tokens extras do gauge/glow "Opal" — usados por ScoreGauge/hero */
+  --gauge-track: hsl(0 0% 100% / 0.08);
+  --gauge-from: hsl(206 70% 63%);      /* #5AA9E6 */
+  --gauge-to: hsl(157 78% 74%);        /* #7CF2C8 */
+  --glow-mint: hsl(157 78% 74%);
+  --glow-purple: hsl(252 47% 68%);     /* #8B7FD1 */
 }
 
 /* ── Base styles ─────────────────────────────────────────── */
