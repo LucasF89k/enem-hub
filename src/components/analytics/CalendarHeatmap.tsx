@@ -8,11 +8,11 @@ interface CalendarHeatmapProps {
 }
 
 function getColor(minutes: number): string {
-  if (minutes === 0) return "hsl(var(--muted))"
-  if (minutes < 30) return "hsl(var(--primary) / 0.2)"
-  if (minutes < 60) return "hsl(var(--primary) / 0.45)"
-  if (minutes < 120) return "hsl(var(--primary) / 0.7)"
-  return "hsl(var(--primary))"
+  if (minutes === 0) return "var(--muted)"
+  if (minutes < 30) return "color-mix(in srgb, var(--primary) 20%, transparent)"
+  if (minutes < 60) return "color-mix(in srgb, var(--primary) 45%, transparent)"
+  if (minutes < 120) return "color-mix(in srgb, var(--primary) 70%, transparent)"
+  return "var(--primary)"
 }
 
 const DAY_LABELS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"]
@@ -54,7 +54,7 @@ export function CalendarHeatmap({ data }: CalendarHeatmapProps) {
             x={0}
             y={20 + d * (CELL + GAP) + CELL / 2 + 4}
             fontSize={8}
-            fill="hsl(var(--muted-foreground))"
+            fill="var(--muted-foreground)"
           >
             {DAY_LABELS[d]}
           </text>
@@ -70,7 +70,7 @@ export function CalendarHeatmap({ data }: CalendarHeatmapProps) {
               x={28 + wi * (CELL + GAP)}
               y={10}
               fontSize={8}
-              fill="hsl(var(--muted-foreground))"
+              fill="var(--muted-foreground)"
             >
               {format(firstOfMonth, "MMM", { locale: ptBR })}
             </text>

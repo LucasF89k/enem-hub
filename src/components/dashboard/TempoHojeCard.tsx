@@ -51,7 +51,7 @@ export async function TempoHojeCard({ userId }: { userId: string }) {
               cy={RADIUS + STROKE_WIDTH}
               r={RADIUS}
               fill="none"
-              stroke="hsl(var(--muted))"
+              stroke="var(--muted)"
               strokeWidth={STROKE_WIDTH}
             />
             {/* Progress */}
@@ -60,7 +60,7 @@ export async function TempoHojeCard({ userId }: { userId: string }) {
               cy={RADIUS + STROKE_WIDTH}
               r={RADIUS}
               fill="none"
-              stroke="hsl(var(--primary))"
+              stroke="var(--primary)"
               strokeWidth={STROKE_WIDTH}
               strokeLinecap="round"
               strokeDasharray={CIRCUMFERENCE}

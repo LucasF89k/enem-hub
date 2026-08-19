@@ -26,17 +26,17 @@ export function ScoreLineChart({ data }: ScoreLineChartProps) {
   return (
     <ResponsiveContainer width="100%" height={180}>
       <LineChart data={data} margin={{ top: 8, right: 16, left: 0, bottom: 4 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.5} />
+        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" strokeOpacity={0.5} />
         <XAxis
           dataKey="label"
-          tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+          tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
           axisLine={false}
           tickLine={false}
         />
         <YAxis
           domain={[0, 100]}
           tickFormatter={(v) => `${v}%`}
-          tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+          tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
           axisLine={false}
           tickLine={false}
           width={36}
@@ -46,17 +46,17 @@ export function ScoreLineChart({ data }: ScoreLineChartProps) {
           contentStyle={{
             fontSize: 12,
             borderRadius: 8,
-            border: "1px solid hsl(var(--border))",
-            background: "hsl(var(--card))",
-            color: "hsl(var(--foreground))",
+            border: "1px solid var(--border)",
+            background: "var(--card)",
+            color: "var(--foreground)",
           }}
         />
         <Line
           type="monotone"
           dataKey="score"
-          stroke="hsl(var(--primary))"
+          stroke="var(--primary)"
           strokeWidth={2}
-          dot={{ fill: "hsl(var(--primary))", r: 3, strokeWidth: 0 }}
+          dot={{ fill: "var(--primary)", r: 3, strokeWidth: 0 }}
           activeDot={{ r: 5 }}
         />
       </LineChart>
