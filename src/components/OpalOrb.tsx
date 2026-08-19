@@ -3,72 +3,81 @@
 import { motion } from "framer-motion"
 
 /**
- * O orbe/opala central reutilizado no splash e no intro do onboarding.
- * Não é um "spinner de cor" — tenta simular jogo de cor de opala de
- * verdade: manchas de cor (mint/azul/roxo) sobrepostas em blend "screen"
- * sobre uma base de vidro escura, com brilho especular e sombra interna,
- * e um shimmer lento (hue-rotate) simulando a luz mudando de ângulo.
- * Recriado do zero com CSS — identidade própria, não o asset do Opal.
+ * O cristal facetado central, reutilizado no splash e no intro do
+ * onboarding. Baseado na análise quadro a quadro do vídeo de referência:
+ * cristal de corte irregular tipo "pedra bruta lapidada" — um ápice no
+ * topo, uma "cintura" irregular de facetas no meio, e uma base mais larga
+ * embaixo (não é um leque saindo de um ponto só, senão lê como gráfico de
+ * pizza) — cada faceta plana reflete uma cor diferente (mint/azul/roxo).
+ *
+ * Recriado do zero em SVG (facetas triangulares, sem foto/asset) —
+ * identidade própria, não o modelo 3D do Opal (que é protegido).
  */
 
-export function OpalOrb({ size = 112, spin = true }: { size?: number; spin?: boolean }) {
+const TOP: [number, number] = [58, 6]
+const BOTTOM: [number, number] = [50, 122]
+
+// "Cintura" irregular — pontos de raio variável pra não ficar um círculo
+// perfeito (lê como pedra lapidada à mão, não como sólido geométrico).
+const RIDGE: [number, number][] = [
+  [92, 38],
+  [100, 62],
+  [80, 90],
+  [56, 108],
+  [24, 100],
+  [4, 72],
+  [10, 42],
+  [30, 18],
+]
+
+const CROWN_COLORS = ["#EAF6F2", "#8FF0D6", "#79D3EE", "var(--gauge-from)", "#B9A6E8", "var(--glow-purple)", "#63B8D8", "#3FD8A8"]
+const PAVILION_COLORS = ["#4A6FA8", "var(--glow-purple)", "#2C4A5E", "#3FD8A8", "#5AA9E6", "#8FF0D6", "var(--gauge-from)", "#79D3EE"]
+
+function ring(a: [number, number], b: [number, number]) {
+  return `${a[0]},${a[1]} ${b[0]},${b[1]}`
+}
+
+function facets() {
+  const tris: { d: string; fill: string }[] = []
+  const n = RIDGE.length
+  for (let i = 0; i < n; i++) {
+    const a = RIDGE[i]
+    const b = RIDGE[(i + 1) % n]
+    // Coroa: topo → dois pontos vizinhos da cintura
+    tris.push({ d: `M ${TOP[0]} ${TOP[1]} L ${ring(a, b)} Z`, fill: CROWN_COLORS[i % CROWN_COLORS.length] })
+    // Base: fundo → dois pontos vizinhos da cintura
+    tris.push({ d: `M ${BOTTOM[0]} ${BOTTOM[1]} L ${ring(a, b)} Z`, fill: PAVILION_COLORS[i % PAVILION_COLORS.length] })
+  }
+  return tris
+}
+
+const OUTLINE_PATH =
+  `M ${TOP[0]} ${TOP[1]} ` +
+  RIDGE.map((p) => `L ${p[0]} ${p[1]}`).join(" ") +
+  ` L ${TOP[0]} ${TOP[1]} M ${BOTTOM[0]} ${BOTTOM[1]} ` +
+  RIDGE.slice().reverse().map((p) => `L ${p[0]} ${p[1]}`).join(" ") +
+  ` L ${BOTTOM[0]} ${BOTTOM[1]}`
+
+export function OpalOrb({ size = 112, pedestal = false }: { size?: number; pedestal?: boolean }) {
   return (
     <motion.div
-      animate={spin ? { rotate: 360 } : undefined}
-      transition={spin ? { duration: 50, repeat: Infinity, ease: "linear" } : undefined}
-      style={{ width: size, height: size }}
+      animate={{ rotate: [-2, 2, -2] }}
+      transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
+      style={{ width: size, height: (size * 130) / 112 }}
       className="relative"
     >
-      <svg viewBox="0 0 132 122" className="h-full w-full overflow-visible">
-        <defs>
-          <clipPath id="opal-blob-clip" clipPathUnits="objectBoundingBox">
-            <path
-              transform="scale(0.00758, 0.0082)"
-              d="M 76 4 C 96 2 118 14 126 34 C 134 54 130 78 116 96 C 102 114 78 124 56 118 C 34 112 14 96 6 74 C -2 52 4 26 22 12 C 40 -2 56 6 76 4 Z"
-            />
-          </clipPath>
-          <radialGradient id="opal-base" cx="35%" cy="30%" r="75%">
-            <stop offset="0%" stopColor="#22312f" />
-            <stop offset="55%" stopColor="#0f1a1c" />
-            <stop offset="100%" stopColor="#05080a" />
-          </radialGradient>
-          <radialGradient id="opal-mint" cx="28%" cy="72%" r="46%">
-            <stop offset="0%" stopColor="var(--gauge-to)" stopOpacity="0.95" />
-            <stop offset="100%" stopColor="var(--gauge-to)" stopOpacity="0" />
-          </radialGradient>
-          <radialGradient id="opal-blue" cx="78%" cy="38%" r="48%">
-            <stop offset="0%" stopColor="var(--gauge-from)" stopOpacity="0.9" />
-            <stop offset="100%" stopColor="var(--gauge-from)" stopOpacity="0" />
-          </radialGradient>
-          <radialGradient id="opal-purple" cx="55%" cy="86%" r="42%">
-            <stop offset="0%" stopColor="var(--glow-purple)" stopOpacity="0.8" />
-            <stop offset="100%" stopColor="var(--glow-purple)" stopOpacity="0" />
-          </radialGradient>
-          <radialGradient id="opal-shine" cx="30%" cy="20%" r="22%">
-            <stop offset="0%" stopColor="#ffffff" stopOpacity="0.75" />
-            <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
-          </radialGradient>
-        </defs>
-
-        <g clipPath="url(#opal-blob-clip)">
-          <rect width="132" height="122" fill="url(#opal-base)" />
-          <motion.g
-            animate={{ filter: ["hue-rotate(0deg)", "hue-rotate(18deg)", "hue-rotate(0deg)"] }}
-            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-            style={{ mixBlendMode: "screen" }}
-          >
-            <rect width="132" height="122" fill="url(#opal-mint)" />
-            <rect width="132" height="122" fill="url(#opal-blue)" />
-            <rect width="132" height="122" fill="url(#opal-purple)" />
-          </motion.g>
-          <rect width="132" height="122" fill="url(#opal-shine)" />
-          {/* borda interna escura — dá profundidade de "vidro grosso" */}
-          <path
-            d="M 76 4 C 96 2 118 14 126 34 C 134 54 130 78 116 96 C 102 114 78 124 56 118 C 34 112 14 96 6 74 C -2 52 4 26 22 12 C 40 -2 56 6 76 4 Z"
-            fill="none"
-            stroke="black"
-            strokeOpacity="0.35"
-            strokeWidth="6"
+      <svg viewBox="0 0 112 130" className="h-full w-full overflow-visible">
+        {pedestal && <ellipse cx="54" cy="126" rx="26" ry="6" fill="black" fillOpacity="0.55" />}
+        <g style={{ filter: "drop-shadow(0 6px 18px rgba(0,0,0,0.5))" }}>
+          {facets().map((f, i) => (
+            <path key={i} d={f.d} fill={f.fill} stroke="black" strokeOpacity="0.28" strokeWidth="0.6" />
+          ))}
+          {/* shimmer sutil por cima — respira o brilho sem trocar a cor da faceta */}
+          <motion.path
+            d={OUTLINE_PATH}
+            fill="white"
+            animate={{ opacity: [0.03, 0.12, 0.03] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
           />
         </g>
       </svg>

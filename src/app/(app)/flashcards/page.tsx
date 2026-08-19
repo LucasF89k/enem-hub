@@ -5,7 +5,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ArrowRight } from "lucide-react"
+import { ArrowRight, Brain } from "lucide-react"
 import { SubjectBrowser, type BrowserDiscipline } from "./subject-browser"
 import { CreateFlashcardDialog, type PickTopic } from "@/components/flashcards/CreateFlashcardDialog"
 
@@ -98,11 +98,36 @@ export default async function FlashcardsPage() {
     discipline: t.discipline?.name ?? "Outros",
   }))
 
+  const totalDue = deckStats.reduce((sum, d) => sum + d.due, 0)
+
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
-      <div className="flex items-start justify-between gap-3">
+    <div className="mx-auto max-w-2xl px-4 py-6 space-y-8">
+      {/* Hero — mesmo padrão da Dashboard: número grande com glow + CTA único */}
+      <div className="opal-enter flex flex-col items-center px-4 py-8 text-center">
+        <div className="relative flex h-24 w-24 items-center justify-center">
+          <div className="opal-breathing-glow" aria-hidden />
+          <Brain className="relative z-10 h-8 w-8 text-accent" />
+        </div>
+        <p className="mt-4 text-[52px] font-semibold leading-none tracking-tight text-foreground">
+          {totalDue}
+        </p>
+        <p className="mt-1.5 text-sm font-medium text-muted-foreground">
+          {totalDue === 0 ? "Nenhuma revisão pendente — tudo em dia!" : `card${totalDue === 1 ? "" : "s"} esperando revisão`}
+        </p>
+        {totalDue > 0 && (
+          <Link
+            href="/flashcards/review"
+            className="mt-5 flex items-center gap-2 rounded-full bg-primary px-8 py-3 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+          >
+            Revisar tudo agora
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        )}
+      </div>
+
+      <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Flashcards</h1>
+          <h2 className="text-lg font-semibold text-foreground">Flashcards</h2>
           <p className="text-sm text-muted-foreground">Revisão espaçada com algoritmo SM-2</p>
         </div>
         <CreateFlashcardDialog topics={pickTopics} size="sm" />

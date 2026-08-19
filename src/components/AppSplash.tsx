@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { OpalOrb } from "@/components/OpalOrb"
+import { LogoBuild } from "@/components/LogoBuild"
 
 /**
  * Sequência de abertura do app — roda uma vez por sessão, automática, sem
@@ -43,8 +44,8 @@ export function AppSplash() {
     // imperativo de fases, disparado uma vez ao montar).
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setPhase("logo")
-    const t1 = setTimeout(() => setPhase("rock"), 900)
-    const t2 = setTimeout(() => setPhase("reveal"), 1900)
+    const t1 = setTimeout(() => setPhase("rock"), 2000)
+    const t2 = setTimeout(() => setPhase("reveal"), 3000)
     const t3 = setTimeout(() => {
       setPhase("done")
       try {
@@ -52,7 +53,7 @@ export function AppSplash() {
       } catch {
         /* ignore */
       }
-    }, 3100)
+    }, 4200)
     return () => {
       clearTimeout(t1)
       clearTimeout(t2)
@@ -81,35 +82,10 @@ export function AppSplash() {
             {phase === "logo" && (
               <motion.div
                 key="logo"
-                initial={{ opacity: 0, scale: 0.85 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.3 } }}
-                transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                className="relative z-10 h-28 w-28"
+                exit={{ opacity: 0, scale: 0.92, transition: { duration: 0.3 } }}
+                className="relative z-10"
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/logo-app.png" alt="Vion" className="h-full w-full object-contain" />
-                {/* Brilho varrendo a logo uma vez — recortado na silhueta do PNG via mask-image */}
-                <motion.div
-                  aria-hidden
-                  initial={{ backgroundPositionX: "160%" }}
-                  animate={{ backgroundPositionX: "-160%" }}
-                  transition={{ duration: 1, delay: 0.35, ease: "easeInOut" }}
-                  className="absolute inset-0"
-                  style={{
-                    backgroundImage:
-                      "linear-gradient(105deg, transparent 35%, rgba(255,255,255,0.85) 50%, transparent 65%)",
-                    backgroundSize: "300% 100%",
-                    maskImage: "url(/logo-app.png)",
-                    maskSize: "contain",
-                    maskRepeat: "no-repeat",
-                    maskPosition: "center",
-                    WebkitMaskImage: "url(/logo-app.png)",
-                    WebkitMaskSize: "contain",
-                    WebkitMaskRepeat: "no-repeat",
-                    WebkitMaskPosition: "center",
-                  }}
-                />
+                <LogoBuild />
               </motion.div>
             )}
 

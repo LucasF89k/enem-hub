@@ -64,7 +64,7 @@ export function SubjectBrowser({ disciplines }: { disciplines: BrowserDiscipline
           {filtered.map((d) => (
             <details
               key={d.id}
-              className="group rounded-xl border bg-card overflow-hidden"
+              className="opal-glass-card group overflow-hidden rounded-2xl"
               open={!!q.trim()}
             >
               <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 hover:bg-muted/40">
