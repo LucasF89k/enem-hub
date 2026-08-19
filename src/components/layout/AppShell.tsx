@@ -26,7 +26,7 @@ export function AppShell({ children, user }: AppShellProps) {
   return (
     <>
       {/* Área de conteúdo principal — barra de navegação embaixo em todos os tamanhos */}
-      <div className="min-h-screen flex flex-col">
+      <div className="opal-hero-bg min-h-screen flex flex-col">
         {!hideHeader && <Header user={user} />}
 
         <AnimatePresence mode="wait" initial={false}>

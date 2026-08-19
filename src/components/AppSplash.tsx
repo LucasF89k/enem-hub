@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
+import { OpalOrb } from "@/components/OpalOrb"
 
 /**
  * Sequência de abertura do app — roda uma vez por sessão, automática, sem
@@ -78,16 +79,38 @@ export function AppSplash() {
 
           <AnimatePresence mode="wait">
             {phase === "logo" && (
-              <motion.img
+              <motion.div
                 key="logo"
-                src="/logo-app.png"
-                alt="Vion"
                 initial={{ opacity: 0, scale: 0.85 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.3 } }}
-                transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                className="relative z-10 h-16 w-16 object-contain"
-              />
+                transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                className="relative z-10 h-28 w-28"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/logo-app.png" alt="Vion" className="h-full w-full object-contain" />
+                {/* Brilho varrendo a logo uma vez — recortado na silhueta do PNG via mask-image */}
+                <motion.div
+                  aria-hidden
+                  initial={{ backgroundPositionX: "160%" }}
+                  animate={{ backgroundPositionX: "-160%" }}
+                  transition={{ duration: 1, delay: 0.35, ease: "easeInOut" }}
+                  className="absolute inset-0"
+                  style={{
+                    backgroundImage:
+                      "linear-gradient(105deg, transparent 35%, rgba(255,255,255,0.85) 50%, transparent 65%)",
+                    backgroundSize: "300% 100%",
+                    maskImage: "url(/logo-app.png)",
+                    maskSize: "contain",
+                    maskRepeat: "no-repeat",
+                    maskPosition: "center",
+                    WebkitMaskImage: "url(/logo-app.png)",
+                    WebkitMaskSize: "contain",
+                    WebkitMaskRepeat: "no-repeat",
+                    WebkitMaskPosition: "center",
+                  }}
+                />
+              </motion.div>
             )}
 
             {(phase === "rock" || phase === "reveal") && (
@@ -135,15 +158,10 @@ export function AppSplash() {
                     initial={{ scale: 0.4, opacity: 0 }}
                     animate={{ scale: [0.4, 1.12, 1], opacity: 1 }}
                     transition={{ duration: 0.7, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-                    className="absolute h-28 w-28 rounded-[42%_58%_63%_37%/41%_44%_56%_59%]"
-                    style={{
-                      background:
-                        "conic-gradient(from 120deg, var(--gauge-from), var(--gauge-to), var(--glow-purple), var(--gauge-from))",
-                      filter: "saturate(1.15)",
-                      boxShadow:
-                        "0 0 44px 8px color-mix(in srgb, var(--glow-mint) 40%, transparent), inset 0 0 24px color-mix(in srgb, black 45%, transparent)",
-                    }}
-                  />
+                    className="absolute"
+                  >
+                    <OpalOrb size={112} />
+                  </motion.div>
                 )}
               </motion.div>
             )}

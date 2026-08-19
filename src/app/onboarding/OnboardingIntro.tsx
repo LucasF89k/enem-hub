@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
+import { OpalOrb } from "@/components/OpalOrb"
 
 /**
  * Intro cinematográfica antes do formulário de onboarding — recriando o que
@@ -95,18 +96,7 @@ export function OnboardingIntro({ onContinue }: { onContinue: () => void }) {
           transition={{ duration: 1.8, delay: 0.9, ease: [0.16, 1, 0.3, 1] }}
           className="absolute flex items-center justify-center"
         >
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
-            className="h-28 w-28 rounded-[42%_58%_63%_37%/41%_44%_56%_59%]"
-            style={{
-              background:
-                "conic-gradient(from 120deg, var(--gauge-from), var(--gauge-to), var(--glow-purple), var(--gauge-from))",
-              filter: "saturate(1.15)",
-              boxShadow:
-                "0 0 40px 6px color-mix(in srgb, var(--glow-mint) 35%, transparent), inset 0 0 24px color-mix(in srgb, black 45%, transparent)",
-            }}
-          />
+          <OpalOrb size={112} />
         </motion.div>
       </div>
 

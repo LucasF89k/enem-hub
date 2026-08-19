@@ -63,8 +63,8 @@ export default async function DashboardPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-[460px] flex-col px-6 pb-16 pt-3 sm:px-8">
-      {/* Hero — inspirado no Opal: fundo com profundidade (vinheta + glow), gauge, pills, streak */}
-      <div className="opal-hero-bg flex flex-col items-center">
+      {/* Hero — o fundo com profundidade agora vem do AppShell (app inteiro) */}
+      <div className="flex flex-col items-center">
         <div
           className="opal-enter flex w-full items-center justify-between"
           style={{ animationDelay: "0ms" }}
