@@ -76,13 +76,7 @@ export function AppSplash() {
         <motion.div
           exit={{ opacity: 0 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
-          // Mesma cor do fundo do vídeo, medida nos pixels dele: RGB(24,29,29).
-          // O vídeo não tem canal alpha e seu fundo NÃO é preto absoluto (nem
-          // depois de tentar clampar níveis: o offset volta na reconversão YUV),
-          // então contra um preto real qualquer limite dele desenhava a moldura.
-          // Igualando a cor não existe contraste para formar borda.
-          className="fixed inset-0 z-[999] flex items-center justify-center"
-          style={{ background: "rgb(24,29,29)" }}
+          className="fixed inset-0 z-[999] flex items-center justify-center bg-black"
         >
           {/* brilho de fundo só enquanto a logo está em cena — durante o vídeo
               ele quebraria a fusão com o preto */}
@@ -125,13 +119,7 @@ export function AppSplash() {
                 : { opacity: showingStone ? 1 : 0, scale: 1, y: 0 }
             }
             transition={{ duration: pulling ? 1 : 0.5, ease: [0.16, 1, 0.3, 1] }}
-            // TELA INTEIRA. Enquanto sobrava qualquer área fora do vídeo, a
-            // diferença entre o fundo dele e o da tela desenhava a moldura —
-            // e essa diferença varia ao longo da animação (quando a gema
-            // acende, o encoder escurece o entorno), então não havia cor fixa
-            // que resolvesse. Cobrindo tudo, não existe "fora" para comparar,
-            // e os cacos saem pelas bordas do ecrã em vez de pararem no ar.
-            className="absolute inset-0 z-10"
+            className="relative z-10 aspect-square w-[min(96vw,460px)]"
           >
             <video
               ref={videoRef}
@@ -143,7 +131,18 @@ export function AppSplash() {
               playsInline
               preload="auto"
               onError={() => setFailed(true)}
-              className="h-full w-full object-cover"
+              className="h-full w-full object-contain"
+              // O fundo do vídeo NUNCA chega a preto puro: o pipeline YUV do
+              // H.264 devolve ~RGB(20,25,25) por mais que se force o clamp
+              // (testado com colorlevels, lutrgb, lutyuv e vinheta por multiply
+              // — todos param nessa faixa). Como não dá para igualar a cor de
+              // forma confiável entre dispositivos, o alpha resolve: a máscara
+              // zera BEM antes da borda do elemento, então não existe aresta
+              // possível, independente da cor que o vídeo renderize.
+              style={{
+                maskImage: "radial-gradient(circle, #000 52%, transparent 80%)",
+                WebkitMaskImage: "radial-gradient(circle, #000 52%, transparent 80%)",
+              }}
             />
             {/* Fallback SÓ em caso de falha real (codec indisponível, autoplay
                 bloqueado) — antes ele entrava enquanto o vídeo carregava, e como
