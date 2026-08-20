@@ -137,6 +137,16 @@ export function AppSplash() {
               preload="auto"
               onError={() => setFailed(true)}
               className="h-full w-full object-contain"
+              // O fundo do vídeo não é preto absoluto (o gerador entrega ~RGB
+              // 24,29,29 e a recompressão não zera isso), então a moldura
+              // quadrada dele aparecia recortada sobre o preto da tela. Esta
+              // máscara dissolve as bordas: o miolo fica intacto e o limite
+              // some gradualmente, então não existe mais aresta para enxergar.
+              // O fade começa em 72% do raio — além de onde os cacos chegam.
+              style={{
+                maskImage: "radial-gradient(circle, #000 72%, transparent 94%)",
+                WebkitMaskImage: "radial-gradient(circle, #000 72%, transparent 94%)",
+              }}
             />
             {/* Fallback SÓ em caso de falha real (codec indisponível, autoplay
                 bloqueado) — antes ele entrava enquanto o vídeo carregava, e como
