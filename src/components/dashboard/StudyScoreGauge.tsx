@@ -59,10 +59,21 @@ export function StudyScoreGauge({
     <div className="relative flex h-[270px] w-[270px] items-center justify-center">
       <div className="opal-breathing-glow" aria-hidden />
 
-      {/* A opala vive dentro do anel, na metade de cima */}
-      <div className="absolute left-1/2 top-[13%] -translate-x-1/2">
-        <OpalCrystal size={92} stage={3} />
+      {/* A opala ocupa o miolo do anel — os números ficam POR CIMA dela */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <OpalCrystal size={132} stage={3} slime />
       </div>
+
+      {/* Véu escuro só atrás dos números: sem ele o texto branco some no meio
+          do play-of-color da gema, que é muito claro e saturado. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(ellipse 42% 26% at 50% 54%, rgba(0,0,0,0.72), transparent 75%)",
+        }}
+      />
 
       <svg viewBox="0 0 200 200" className="h-full w-full">
         <defs>
@@ -117,15 +128,18 @@ export function StudyScoreGauge({
         />
       </svg>
 
-      {/* Tempo dentro do anel, logo abaixo da opala */}
-      <div className="absolute inset-x-0 top-[52%] flex flex-col items-center">
+      {/* Tempo SOBRE a opala, no centro do anel */}
+      <div
+        className="absolute inset-0 flex flex-col items-center justify-center"
+        style={{ textShadow: "0 2px 10px rgba(0,0,0,0.85)" }}
+      >
         <div className="flex items-baseline gap-1">
-          <span className="text-[46px] font-semibold leading-none tracking-tight text-foreground">
+          <span className="text-[46px] font-semibold leading-none tracking-tight text-white">
             {display}
           </span>
-          <span className="text-base font-medium text-muted-foreground">/{goalMinutes} min</span>
+          <span className="text-base font-medium text-white/75">/{goalMinutes} min</span>
         </div>
-        <p className="mt-1.5 text-xs font-medium text-muted-foreground">{label}</p>
+        <p className="mt-1.5 text-xs font-medium text-white/70">{label}</p>
       </div>
     </div>
   )
