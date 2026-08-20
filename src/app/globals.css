@@ -153,7 +153,10 @@
 .opal-hero-bg::before {
   content: "";
   position: absolute;
-  inset: -24px -24px auto -24px;
+  /* Lateralmente PRESO em 0: com -24px de cada lado o glow ultrapassava a
+     largura da página e criava uma barra de rolagem horizontal (24px de
+     scrollWidth a mais). Só o topo pode extrapolar. */
+  inset: -24px 0 auto 0;
   height: 420px;
   z-index: -1;
   pointer-events: none;

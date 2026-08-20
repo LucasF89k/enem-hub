@@ -135,6 +135,39 @@ export function OpalCrystal({ size = 150, stage = 3 }: { size?: number; stage?: 
             <stop offset="100%" stopColor="#0A0D10" />
           </linearGradient>
 
+          {/* Textura de rocha: ruído fractal iluminado por uma luz distante.
+              Sem isso os cacos ficam como polígonos chapados de gradiente —
+              é o granulado + o sombreado que dão leitura de pedra real. */}
+          <filter id="rock-tex" x="-15%" y="-15%" width="130%" height="130%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" seed="7" result="n" />
+            <feDiffuseLighting in="n" lightingColor="#9AA3AD" surfaceScale="2.4" result="lit">
+              <feDistantLight azimuth="235" elevation="58" />
+            </feDiffuseLighting>
+            <feComposite in="lit" in2="SourceGraphic" operator="in" result="tex" />
+            <feBlend in="SourceGraphic" in2="tex" mode="multiply" result="mixed" />
+            {/* deforma as bordas: quina reta não parece pedra quebrada */}
+            <feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="3" seed="11" result="warp" />
+            <feDisplacementMap
+              in="mixed"
+              in2="warp"
+              scale="7"
+              xChannelSelector="R"
+              yChannelSelector="G"
+            />
+          </filter>
+
+          {/* Mesma ideia na opala, bem mais sutil: tira a régua das células */}
+          <filter id="opal-warp" x="-10%" y="-10%" width="120%" height="120%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="5" result="w" />
+            <feDisplacementMap
+              in="SourceGraphic"
+              in2="w"
+              scale="4"
+              xChannelSelector="R"
+              yChannelSelector="G"
+            />
+          </filter>
+
           <clipPath id="opal-clip">
             <path d={OPAL} />
           </clipPath>
@@ -155,6 +188,7 @@ export function OpalCrystal({ size = 150, stage = 3 }: { size?: number; stage?: 
         {/* A opala, por baixo dos cacos */}
         <motion.g
           clipPath="url(#opal-clip)"
+          filter="url(#opal-warp)"
           animate={{ opacity: s.opal }}
           transition={{ duration: 1.1, ease: "easeOut" }}
         >
@@ -191,7 +225,11 @@ export function OpalCrystal({ size = 150, stage = 3 }: { size?: number; stage?: 
         </motion.g>
 
         {/* Os cacos de rocha por cima */}
+        {/* dois grupos de propósito: o `style.filter` (CSS) sobrescreveria o
+            atributo `filter` (SVG) se ambos ficassem no mesmo elemento — foi
+            assim que a textura de rocha deixou de ser aplicada. */}
         <g style={{ filter: "drop-shadow(0 8px 20px rgba(0,0,0,0.65))" }}>
+          <g filter="url(#rock-tex)">
           {ROCKS.map((r, i) => (
             <motion.g
               key={i}
@@ -217,6 +255,7 @@ export function OpalCrystal({ size = 150, stage = 3 }: { size?: number; stage?: 
               />
             </motion.g>
           ))}
+          </g>
         </g>
       </svg>
     </motion.div>
