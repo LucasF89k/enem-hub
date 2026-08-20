@@ -2,6 +2,14 @@
 
 > Documento de handoff para Claude Code. Contém tudo que foi implementado, decisões técnicas, armadilhas encontradas e o que falta fazer.
 
+> **Frente de design/animação:** o redesign visual (abertura do app, tema Opal,
+> hero da Home, assets da pedra) está documentado à parte em
+> **[`HANDOFF_OPAL_REDESIGN.md`](./HANDOFF_OPAL_REDESIGN.md)** — leia antes de
+> mexer em `AppSplash`, `LogoBuild`, `OpalCrystal`, `globals.css` ou nos
+> arquivos de `public/opal/`. Ele traz armadilhas bem específicas (Framer
+> Motion dentro de `<mask>`, preto do H.264, `hsl(var(--token))`) que custam
+> horas se forem redescobertas.
+
 ---
 
 ## Stack e Versões (CRÍTICO — leia antes de escrever qualquer código)
