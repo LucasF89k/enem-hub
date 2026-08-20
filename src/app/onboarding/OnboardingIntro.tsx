@@ -2,38 +2,37 @@
 
 import { useEffect, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
-import { OpalOrb } from "@/components/OpalOrb"
+import { OpalCrystal } from "@/components/OpalCrystal"
 
 /**
- * Intro cinematográfica antes do formulário de onboarding — recriando o que
- * o vídeo de referência mostra: uma pedra escura e áspera que a câmera
- * aproxima devagar, rachando/se desfazendo em fragmentos que se afastam,
- * revelando um orbe liso e iridescente por baixo. Legendas curtas em fade
- * acompanham cada fase, e "toque para continuar" pulsa fixo no rodapé.
+ * Intro cinematográfica antes do formulário de onboarding — mesma progressão
+ * do vídeo de referência, em 4 fases, cada uma com sua legenda:
  *
- * Recriado do zero com CSS/SVG/Framer Motion — identidade própria, não o
- * asset 3D do Opal (que é protegido).
+ *   0. rocha bruta opaca ....... "Uma opala só revela seu brilho..."
+ *   1. primeiros veios ......... "Olhe mais de perto."
+ *   2. cacos se afastando ...... "Mais perto..."
+ *   3. opala pura .............. "Seu foco também é assim."
+ *
+ * Recriado do zero em SVG/Framer Motion — identidade própria, não o asset
+ * 3D do Opal (que é protegido).
  */
 
-const CAPTIONS = ["Olha mais de perto.", "Por trás do bruto...", "...tem foco puro."]
-
-// Fragmentos que se soltam da pedra e flutuam pra fora enquanto ela racha
-const SHARDS = [
-  { x: -70, y: -40, rotate: -35, delay: 0.15 },
-  { x: 65, y: -55, rotate: 40, delay: 0.3 },
-  { x: -80, y: 35, rotate: 20, delay: 0.05 },
-  { x: 75, y: 45, rotate: -25, delay: 0.4 },
-  { x: -20, y: -75, rotate: 60, delay: 0.25 },
-  { x: 25, y: 70, rotate: -50, delay: 0.1 },
+const PHASES: { stage: 0 | 1 | 2 | 3; caption: string }[] = [
+  { stage: 0, caption: "Uma opala só revela seu brilho para quem desacelera o bastante para olhar." },
+  { stage: 1, caption: "Olhe mais de perto." },
+  { stage: 2, caption: "Mais perto..." },
+  { stage: 3, caption: "Seu foco também é assim." },
 ]
 
+const PHASE_MS = 2200
+
 export function OnboardingIntro({ onContinue }: { onContinue: () => void }) {
-  const [captionIndex, setCaptionIndex] = useState(0)
+  const [i, setI] = useState(0)
   const [canSkip, setCanSkip] = useState(false)
 
   useEffect(() => {
-    const timers = CAPTIONS.map((_, i) =>
-      setTimeout(() => setCaptionIndex(i), i * 1500),
+    const timers = PHASES.map((_, idx) =>
+      setTimeout(() => setI(idx), idx * PHASE_MS),
     )
     const skipTimer = setTimeout(() => setCanSkip(true), 900)
     return () => {
@@ -51,69 +50,35 @@ export function OnboardingIntro({ onContinue }: { onContinue: () => void }) {
       className="relative flex min-h-screen w-full flex-col items-center justify-center overflow-hidden bg-background px-6 text-center"
       aria-label="Toque para continuar"
     >
-      {/* Vinheta de fundo */}
+      {/* Vinheta de caverna */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "radial-gradient(ellipse 70% 50% at 50% 42%, color-mix(in srgb, var(--glow-mint) 12%, transparent), transparent 70%), radial-gradient(ellipse 90% 60% at 50% 100%, black, transparent 60%)",
+            "radial-gradient(ellipse 70% 50% at 50% 46%, color-mix(in srgb, var(--glow-mint) 10%, transparent), transparent 70%), radial-gradient(ellipse 90% 60% at 50% 100%, black, transparent 60%)",
         }}
       />
 
-      <div className="relative z-10 flex h-44 w-44 items-center justify-center">
-        <div className="opal-breathing-glow" aria-hidden />
-
-        {/* Fragmentos da pedra — se soltam e somem enquanto ela racha */}
-        {SHARDS.map((s, i) => (
-          <motion.span
-            key={i}
-            initial={{ x: 0, y: 0, opacity: 0, rotate: 0, scale: 0.8 }}
-            animate={{ x: s.x, y: s.y, opacity: [0, 0.9, 0], rotate: s.rotate, scale: 0.5 }}
-            transition={{ duration: 1.6, delay: s.delay, ease: "easeOut" }}
-            className="absolute h-3 w-3 rounded-sm bg-[#2a2f35]"
-            style={{ boxShadow: "0 0 6px 1px rgba(0,0,0,0.5)" }}
-          />
-        ))}
-
-        {/* Pedra — áspera, escura, distante — dissolve enquanto a câmera aproxima */}
-        <motion.div
-          initial={{ scale: 0.55, opacity: 1, filter: "blur(0px)" }}
-          animate={{ scale: 0.85, opacity: 0, filter: "blur(3px)" }}
-          transition={{ duration: 1.7, delay: 0.2, ease: [0.4, 0, 0.6, 1] }}
-          className="absolute h-32 w-32"
-          style={{
-            clipPath:
-              "polygon(50% 2%, 68% 10%, 88% 22%, 98% 42%, 92% 65%, 78% 85%, 55% 98%, 32% 92%, 10% 76%, 2% 52%, 8% 28%, 26% 10%)",
-            background: "linear-gradient(155deg, #3a3f45 0%, #1c2024 45%, #0a0c0e 100%)",
-          }}
-        />
-
-        {/* Orbe liso e iridescente — revelado por baixo, cresce e assume o centro */}
-        <motion.div
-          initial={{ scale: 0.6, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 1.8, delay: 0.9, ease: [0.16, 1, 0.3, 1] }}
-          className="absolute flex items-center justify-center"
-        >
-          <OpalOrb size={112} />
-        </motion.div>
-      </div>
-
-      {/* Legenda em cascata */}
-      <div className="relative z-10 mt-10 h-7">
+      {/* Legenda da fase — fica ACIMA da pedra, como no vídeo */}
+      <div className="relative z-10 mb-10 flex h-16 max-w-[300px] items-end">
         <AnimatePresence mode="wait">
           <motion.p
-            key={captionIndex}
+            key={i}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.5 }}
-            className="text-lg font-light text-foreground"
+            className="text-lg font-medium leading-snug text-foreground"
           >
-            {CAPTIONS[captionIndex]}
+            {PHASES[i].caption}
           </motion.p>
         </AnimatePresence>
+      </div>
+
+      {/* A pedra, avançando de fase */}
+      <div className="relative z-10">
+        <OpalCrystal size={190} stage={PHASES[i].stage} />
       </div>
 
       {/* Toque para continuar */}
