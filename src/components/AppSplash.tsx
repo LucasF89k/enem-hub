@@ -16,9 +16,11 @@ import { LogoBuild } from "@/components/LogoBuild"
  * baixo em paralelo) e desaparece sozinha — não bloqueia nada, só cobre.
  */
 
-type Step = "hidden" | "logo" | "s0" | "s1" | "s2" | "s3" | "done"
+type Step = "hidden" | "logo" | "s0" | "s1" | "s2" | "s3" | "pullback" | "done"
 
-const CRYSTAL_STAGE: Record<string, 0 | 1 | 2 | 3> = { s0: 0, s1: 1, s2: 2, s3: 3 }
+// "pullback" continua mostrando a gema pronta (stage 3) — o que muda é a
+// câmera, não a pedra.
+const CRYSTAL_STAGE: Record<string, 0 | 1 | 2 | 3> = { s0: 0, s1: 1, s2: 2, s3: 3, pullback: 3 }
 
 // [passo, quando dispara em ms]
 // A montagem da logo termina em ~1.9s (o wordmark entra com delay 1.35s +
@@ -29,7 +31,8 @@ const TIMELINE: [Step, number][] = [
   ["s1", 3050],
   ["s2", 3750],
   ["s3", 4450],
-  ["done", 5750],
+  ["pullback", 5500],
+  ["done", 6500],
 ]
 
 export function AppSplash() {
@@ -62,7 +65,9 @@ export function AppSplash() {
     return () => timers.forEach(clearTimeout)
   }, [])
 
-  const showingCrystal = step === "s0" || step === "s1" || step === "s2" || step === "s3"
+  const showingCrystal =
+    step === "s0" || step === "s1" || step === "s2" || step === "s3" || step === "pullback"
+  const pulling = step === "pullback"
 
   return (
     <AnimatePresence>
@@ -93,11 +98,16 @@ export function AppSplash() {
             )}
 
             {showingCrystal && (
+              // No "pullback" a câmera recua: a gema encolhe e sobe até onde ela
+              // fica no hero da Home, então o overlay some por cima disso — a
+              // sensação é de continuidade, não de troca de tela.
               <motion.div
                 key="crystal"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+                initial={{ opacity: 0, scale: 0.8, y: 0 }}
+                animate={
+                  pulling ? { opacity: 1, scale: 0.46, y: -190 } : { opacity: 1, scale: 1, y: 0 }
+                }
+                transition={{ duration: pulling ? 1 : 0.7, ease: [0.16, 1, 0.3, 1] }}
                 className="relative z-10"
               >
                 <OpalCrystal size={200} stage={CRYSTAL_STAGE[step]} />

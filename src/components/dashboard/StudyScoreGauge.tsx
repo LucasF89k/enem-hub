@@ -1,16 +1,19 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { OpalCrystal } from "@/components/OpalCrystal"
 
 const R = 90
 const CIRC = 2 * Math.PI * R
 const ARC_FRACTION = 0.75 // arco de 270° (não círculo completo, como no Opal)
 const ARC_LEN = CIRC * ARC_FRACTION
+const START_DEG = 135 // início do arco: embaixo à esquerda
 
 /**
- * Gauge circular estilo Opal: arco de 270° que anima do 0 até a meta de
- * estudo do dia (minutos estudados / meta diária), com count-up sincronizado.
- * Não é um "score" abstrato — é literalmente o progresso da meta de hoje.
+ * Hero da Home: a opala ao centro com o anel de progresso em volta.
+ * O anel é a meta de estudo do dia (minutos / meta), animando do 0 até o
+ * valor junto com o count-up do número, e uma bolinha marca a ponta do
+ * progresso. Não é um "score" abstrato — é o progresso da meta de hoje.
  */
 export function StudyScoreGauge({
   minutes,
@@ -47,9 +50,20 @@ export function StudyScoreGauge({
   // dash precisa ser proporcional ao progresso, ponto.
   const visibleLen = ARC_LEN * progress
 
+  // Bolinha na ponta do progresso (como na referência)
+  const tipRad = ((START_DEG + 270 * progress) * Math.PI) / 180
+  const tipX = 100 + R * Math.cos(tipRad)
+  const tipY = 100 + R * Math.sin(tipRad)
+
   return (
-    <div className="relative flex h-[210px] w-[210px] items-center justify-center">
+    <div className="relative flex h-[270px] w-[270px] items-center justify-center">
       <div className="opal-breathing-glow" aria-hidden />
+
+      {/* A opala vive dentro do anel, na metade de cima */}
+      <div className="absolute left-1/2 top-[13%] -translate-x-1/2">
+        <OpalCrystal size={92} stage={3} />
+      </div>
+
       <svg viewBox="0 0 200 200" className="h-full w-full">
         <defs>
           {/* userSpaceOnUse alinhado à diagonal do arco (135°→45°) — acompanha a curva
@@ -74,10 +88,10 @@ export function StudyScoreGauge({
           r={R}
           fill="none"
           stroke="var(--gauge-track)"
-          strokeWidth={12}
+          strokeWidth={10}
           strokeLinecap="round"
           strokeDasharray={`${ARC_LEN} ${CIRC - ARC_LEN}`}
-          transform="rotate(135 100 100)"
+          transform={`rotate(${START_DEG} 100 100)`}
         />
         {/* progresso — dash = comprimento visível (cresce com a meta), gap gigante
             pra nunca repetir o padrão dentro do círculo */}
@@ -87,16 +101,26 @@ export function StudyScoreGauge({
           r={R}
           fill="none"
           stroke="url(#score-gauge-fill)"
-          strokeWidth={12}
+          strokeWidth={10}
           strokeLinecap="round"
           strokeDasharray={`${visibleLen} ${CIRC}`}
-          transform="rotate(135 100 100)"
+          transform={`rotate(${START_DEG} 100 100)`}
           style={{ filter: "drop-shadow(0 0 4px color-mix(in srgb, var(--glow-mint) 60%, transparent))" }}
         />
+        {/* marcador na ponta do progresso */}
+        <circle
+          cx={tipX}
+          cy={tipY}
+          r={6}
+          fill="var(--gauge-to)"
+          style={{ filter: "drop-shadow(0 0 6px var(--glow-mint))" }}
+        />
       </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center pt-4">
+
+      {/* Tempo dentro do anel, logo abaixo da opala */}
+      <div className="absolute inset-x-0 top-[52%] flex flex-col items-center">
         <div className="flex items-baseline gap-1">
-          <span className="text-[52px] font-semibold leading-none tracking-tight text-foreground">
+          <span className="text-[46px] font-semibold leading-none tracking-tight text-foreground">
             {display}
           </span>
           <span className="text-base font-medium text-muted-foreground">/{goalMinutes} min</span>
