@@ -1,42 +1,36 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
-import { OpalCrystal } from "@/components/OpalCrystal"
 import { LogoBuild } from "@/components/LogoBuild"
 
 /**
  * Sequência de abertura do app — roda uma vez por sessão, automática, sem
- * precisar de toque. Segue a mesma progressão do vídeo de referência:
+ * precisar de toque:
  *
- *   logo se montando → rocha bruta opaca → primeiros veios acendem →
- *   os cacos se afastam → a opala pura fica exposta → entra o app
+ *   logo se montando → a pedra racha, se abre e revela a gema → a câmera
+ *   recua até a posição do hero → entra o app
+ *
+ * O reveal é um VÍDEO, não uma sequência de imagens: a fratura acontece na
+ * geometria da própria pedra (cacos se soltando, partículas), coisa que
+ * crossfade entre quadros estáticos nunca reproduz — dava aparência de
+ * slideshow. As imagens por fase seguem no projeto e são o fallback quando
+ * o vídeo não pode tocar.
  *
  * Fica por cima do conteúdo real (que já está montando/buscando dados por
  * baixo em paralelo) e desaparece sozinha — não bloqueia nada, só cobre.
  */
 
-type Step = "hidden" | "logo" | "s0" | "s1" | "s2" | "s3" | "pullback" | "done"
+type Step = "hidden" | "logo" | "reveal" | "pullback" | "done"
 
-// "pullback" continua mostrando a gema pronta (stage 3) — o que muda é a
-// câmera, não a pedra.
-const CRYSTAL_STAGE: Record<string, 0 | 1 | 2 | 3> = { s0: 0, s1: 1, s2: 2, s3: 3, pullback: 3 }
-
-// [passo, quando dispara em ms]
-// A montagem da logo termina em ~1.9s (o wordmark entra com delay 1.35s +
-// 0.55s de duração), então a primeira fase da pedra só pode começar depois
-// disso — antes eu cortava em 1.8s e o wordmark nem chegava a aparecer.
-const TIMELINE: [Step, number][] = [
-  ["s0", 2350],
-  ["s1", 3050],
-  ["s2", 3750],
-  ["s3", 4450],
-  ["pullback", 5500],
-  ["done", 6500],
-]
+const LOGO_MS = 2350 // a montagem da logo termina em ~1.9s; sobra respiro
+const REVEAL_MS = 5000 // duração do vídeo
+const PULLBACK_MS = 1000
 
 export function AppSplash() {
   const [step, setStep] = useState<Step>("hidden")
+  const [canPlay, setCanPlay] = useState(false)
+  const videoRef = useRef<HTMLVideoElement | null>(null)
 
   useEffect(() => {
     let already = true
@@ -50,23 +44,22 @@ export function AppSplash() {
     // Timeline imperativa de fases, disparada uma vez ao montar.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setStep("logo")
-    const timers = TIMELINE.map(([s, at]) =>
+    const timers = [
+      setTimeout(() => setStep("reveal"), LOGO_MS),
+      setTimeout(() => setStep("pullback"), LOGO_MS + REVEAL_MS),
       setTimeout(() => {
-        setStep(s)
-        if (s === "done") {
-          try {
-            sessionStorage.setItem("splash-shown", "1")
-          } catch {
-            /* ignore */
-          }
+        setStep("done")
+        try {
+          sessionStorage.setItem("splash-shown", "1")
+        } catch {
+          /* ignore */
         }
-      }, at),
-    )
+      }, LOGO_MS + REVEAL_MS + PULLBACK_MS),
+    ]
     return () => timers.forEach(clearTimeout)
   }, [])
 
-  const showingCrystal =
-    step === "s0" || step === "s1" || step === "s2" || step === "s3" || step === "pullback"
+  const showingStone = step === "reveal" || step === "pullback"
   const pulling = step === "pullback"
 
   return (
@@ -75,16 +68,25 @@ export function AppSplash() {
         <motion.div
           exit={{ opacity: 0 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
-          className="fixed inset-0 z-[999] flex items-center justify-center bg-background"
+          // Preto PURO, não var(--background). O vídeo do reveal não tem canal
+          // alpha e seu fundo é #000; com qualquer outro tom aqui, a moldura
+          // quadrada dele fica visível na tela. (mix-blend-mode no vídeo não
+          // resolve: o transform que o Framer aplica no elemento pai cria um
+          // stacking context e o blend não alcança o fundo da splash.)
+          className="fixed inset-0 z-[999] flex items-center justify-center bg-black"
         >
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0"
-            style={{
-              background:
-                "radial-gradient(ellipse 70% 50% at 50% 45%, color-mix(in srgb, var(--glow-mint) 10%, transparent), transparent 70%)",
-            }}
-          />
+          {/* brilho de fundo só enquanto a logo está em cena — durante o vídeo
+              ele quebraria a fusão com o preto */}
+          {step === "logo" && (
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-0"
+              style={{
+                background:
+                  "radial-gradient(ellipse 70% 50% at 50% 45%, color-mix(in srgb, var(--glow-mint) 10%, transparent), transparent 70%)",
+              }}
+            />
+          )}
 
           <AnimatePresence mode="wait">
             {step === "logo" && (
@@ -97,20 +99,42 @@ export function AppSplash() {
               </motion.div>
             )}
 
-            {showingCrystal && (
+            {showingStone && (
               // No "pullback" a câmera recua: a gema encolhe e sobe até onde ela
-              // fica no hero da Home, então o overlay some por cima disso — a
+              // fica no hero da Home, e o overlay some por cima disso — a
               // sensação é de continuidade, não de troca de tela.
               <motion.div
-                key="crystal"
-                initial={{ opacity: 0, scale: 0.8, y: 0 }}
+                key="stone"
+                initial={{ opacity: 0, scale: 0.9, y: 0 }}
                 animate={
-                  pulling ? { opacity: 1, scale: 0.46, y: -190 } : { opacity: 1, scale: 1, y: 0 }
+                  pulling ? { opacity: 1, scale: 0.42, y: -190 } : { opacity: 1, scale: 1, y: 0 }
                 }
-                transition={{ duration: pulling ? 1 : 0.7, ease: [0.16, 1, 0.3, 1] }}
-                className="relative z-10"
+                transition={{ duration: pulling ? 1 : 0.5, ease: [0.16, 1, 0.3, 1] }}
+                className="relative z-10 h-[300px] w-[300px]"
               >
-                <OpalCrystal size={200} stage={CRYSTAL_STAGE[step]} />
+                <video
+                  ref={videoRef}
+                  src="/opal/reveal.mp4"
+                  poster="/opal/stage-0.webp"
+                  autoPlay
+                  muted
+                  playsInline
+                  preload="auto"
+                  onCanPlay={() => setCanPlay(true)}
+                  className="h-full w-full object-contain"
+                />
+                {/* Fallback: se o vídeo não puder tocar (autoplay bloqueado, codec
+                    indisponível), a gema estática entra no lugar para a abertura
+                    não terminar num quadrado preto. */}
+                {!canPlay && (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src="/opal/stage-3.webp"
+                    alt=""
+                    aria-hidden
+                    className="absolute inset-0 h-full w-full object-contain"
+                  />
+                )}
               </motion.div>
             )}
           </AnimatePresence>
