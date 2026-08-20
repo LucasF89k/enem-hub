@@ -14,8 +14,7 @@ import { LogoBuild } from "@/components/LogoBuild"
  * O reveal é um VÍDEO, não uma sequência de imagens: a fratura acontece na
  * geometria da própria pedra (cacos se soltando, partículas), coisa que
  * crossfade entre quadros estáticos nunca reproduz — dava aparência de
- * slideshow. As imagens por fase seguem no projeto e são o fallback quando
- * o vídeo não pode tocar.
+ * slideshow. As imagens por fase seguem no projeto como poster e fallback.
  *
  * Fica por cima do conteúdo real (que já está montando/buscando dados por
  * baixo em paralelo) e desaparece sozinha — não bloqueia nada, só cobre.
@@ -29,7 +28,7 @@ const PULLBACK_MS = 1000
 
 export function AppSplash() {
   const [step, setStep] = useState<Step>("hidden")
-  const [canPlay, setCanPlay] = useState(false)
+  const [failed, setFailed] = useState(false)
   const videoRef = useRef<HTMLVideoElement | null>(null)
 
   useEffect(() => {
@@ -59,6 +58,15 @@ export function AppSplash() {
     return () => timers.forEach(clearTimeout)
   }, [])
 
+  // O play só dispara quando a pedra entra em cena. O elemento <video> em si
+  // é montado desde o início (invisível) para baixar e decodificar durante os
+  // ~2,3s da logo — antes ele só era criado ao trocar de fase e a tela ficava
+  // 2s no preto esperando o carregamento.
+  useEffect(() => {
+    if (step !== "reveal") return
+    videoRef.current?.play().catch(() => setFailed(true))
+  }, [step])
+
   const showingStone = step === "reveal" || step === "pullback"
   const pulling = step === "pullback"
 
@@ -77,67 +85,73 @@ export function AppSplash() {
         >
           {/* brilho de fundo só enquanto a logo está em cena — durante o vídeo
               ele quebraria a fusão com o preto */}
-          {step === "logo" && (
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-0"
-              style={{
-                background:
-                  "radial-gradient(ellipse 70% 50% at 50% 45%, color-mix(in srgb, var(--glow-mint) 10%, transparent), transparent 70%)",
-              }}
-            />
-          )}
+          <AnimatePresence>
+            {step === "logo" && (
+              <motion.div
+                key="glow"
+                exit={{ opacity: 0 }}
+                aria-hidden
+                className="pointer-events-none absolute inset-0"
+                style={{
+                  background:
+                    "radial-gradient(ellipse 70% 50% at 50% 45%, color-mix(in srgb, var(--glow-mint) 10%, transparent), transparent 70%)",
+                }}
+              />
+            )}
+          </AnimatePresence>
 
-          <AnimatePresence mode="wait">
+          <AnimatePresence>
             {step === "logo" && (
               <motion.div
                 key="logo"
                 exit={{ opacity: 0, scale: 0.92, transition: { duration: 0.3 } }}
-                className="relative z-10"
+                className="absolute z-10"
               >
                 <LogoBuild />
               </motion.div>
             )}
-
-            {showingStone && (
-              // No "pullback" a câmera recua: a gema encolhe e sobe até onde ela
-              // fica no hero da Home, e o overlay some por cima disso — a
-              // sensação é de continuidade, não de troca de tela.
-              <motion.div
-                key="stone"
-                initial={{ opacity: 0, scale: 0.9, y: 0 }}
-                animate={
-                  pulling ? { opacity: 1, scale: 0.42, y: -190 } : { opacity: 1, scale: 1, y: 0 }
-                }
-                transition={{ duration: pulling ? 1 : 0.5, ease: [0.16, 1, 0.3, 1] }}
-                className="relative z-10 h-[300px] w-[300px]"
-              >
-                <video
-                  ref={videoRef}
-                  src="/opal/reveal.mp4"
-                  poster="/opal/stage-0.webp"
-                  autoPlay
-                  muted
-                  playsInline
-                  preload="auto"
-                  onCanPlay={() => setCanPlay(true)}
-                  className="h-full w-full object-contain"
-                />
-                {/* Fallback: se o vídeo não puder tocar (autoplay bloqueado, codec
-                    indisponível), a gema estática entra no lugar para a abertura
-                    não terminar num quadrado preto. */}
-                {!canPlay && (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img
-                    src="/opal/stage-3.webp"
-                    alt=""
-                    aria-hidden
-                    className="absolute inset-0 h-full w-full object-contain"
-                  />
-                )}
-              </motion.div>
-            )}
           </AnimatePresence>
+
+          {/* Sempre montado (só invisível fora do reveal) para carregar cedo.
+              No "pullback" a câmera recua: a gema encolhe e sobe até onde ela
+              fica no hero da Home, e o overlay some por cima disso — a
+              sensação é de continuidade, não de troca de tela. */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 0 }}
+            animate={
+              pulling
+                ? { opacity: 1, scale: 0.42, y: -190 }
+                : { opacity: showingStone ? 1 : 0, scale: 1, y: 0 }
+            }
+            transition={{ duration: pulling ? 1 : 0.5, ease: [0.16, 1, 0.3, 1] }}
+            className="relative z-10 h-[300px] w-[300px]"
+          >
+            <video
+              ref={videoRef}
+              src="/opal/reveal.mp4"
+              // O poster é a rocha fechada: é o primeiro quadro do vídeo, então
+              // a espera pelo carregamento não mostra nada fora de lugar.
+              poster="/opal/stage-0.webp"
+              muted
+              playsInline
+              preload="auto"
+              onError={() => setFailed(true)}
+              className="h-full w-full object-contain"
+            />
+            {/* Fallback SÓ em caso de falha real (codec indisponível, autoplay
+                bloqueado) — antes ele entrava enquanto o vídeo carregava, e como
+                era a gema pronta, a abertura mostrava a gema, apagava, e só
+                então começava pela rocha: parecia um bug de renderização. */}
+            {failed && (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                src="/opal/stage-3.webp"
+                alt=""
+                aria-hidden
+                className="absolute inset-0 h-full w-full object-contain"
+              />
+            )}
+          </motion.div>
         </motion.div>
       )}
     </AnimatePresence>
