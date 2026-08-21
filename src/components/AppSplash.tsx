@@ -70,6 +70,22 @@ export function AppSplash() {
     // LOGO_MS só pode começar quando o vídeo realmente começa a rodar.
   }, [])
 
+  // A splash é "fixed inset-0" e cobre a tela toda visualmente, mas o
+  // documento por baixo continua crescendo (o dashboard real já está
+  // montando/renderizando em paralelo) — sem travar o scroll do body, o
+  // navegador mostra a barra de rolagem do body por trás da splash mesmo
+  // sem dar pra rolar nada visível. Trava enquanto ela está em cena, libera
+  // assim que sai (é aí que a barra deve voltar a existir, se a página
+  // precisar dela).
+  useEffect(() => {
+    if (step === "hidden" || step === "done") return
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+    return () => {
+      document.body.style.overflow = prevOverflow
+    }
+  }, [step])
+
   // Dispara o resto da timeline (reveal → pullback → done) a partir do
   // instante em que o vídeo da logo de fato começa a tocar — cobre tanto o
   // caminho feliz (autoplay silencioso funcionou) quanto o caminho do toque
