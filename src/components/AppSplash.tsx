@@ -8,15 +8,14 @@ import { AnimatePresence, motion } from "framer-motion"
 /**
  * Sequência de abertura do app — é a tela de loading do carregamento
  * inicial disfarçada de animação, não um vídeo institucional pra ver toda
- * vez. Só aparece quando as duas condições batem:
+ * vez. Só aparece se nunca rodou nesse aparelho (localStorage, não
+ * sessionStorage — uma vez de verdade, não uma vez por aba/sessão).
  *
- *   1. Nunca rodou nesse aparelho (localStorage, não sessionStorage — uma
- *      vez de verdade, não uma vez por aba/sessão).
- *   2. O documento ainda está carregando quando o componente monta — se
- *      `document.readyState` já é "complete" nesse instante, é navegação
- *      client-side entre páginas do próprio app (SPA), não abertura fria; o
- *      conteúdo real já está pronto por baixo, então não faz sentido cobrir
- *      a tela com uma animação de "carregando".
+ * Não precisa de guard extra pra distinguir "abertura fria" de "navegação
+ * dentro do app": esse componente vive no root layout, que o Next.js NÃO
+ * desmonta/remonta em navegação client-side entre páginas (só o conteúdo
+ * abaixo troca) — o efeito de mount só roda de novo com reload/nova aba de
+ * verdade, que é exatamente quando a splash deve aparecer.
  *
  *   logo se monta (vídeo) → a pedra racha, se abre e revela a gema (vídeo)
  *   → a câmera recua até a posição do hero → entra o app
@@ -65,19 +64,6 @@ export function AppSplash() {
       /* localStorage indisponível (SSR/privado) — mostra mesmo assim */
     }
     if (already) return
-
-    // Documento já pronto quando o componente monta = navegação client-side
-    // entre páginas do app (o conteúdo real já está na tela por baixo), não
-    // abertura fria — a splash existe pra cobrir o carregamento inicial, não
-    // pra aparecer por cima de uma página que já carregou.
-    if (document.readyState === "complete") {
-      try {
-        localStorage.setItem("splash-shown", "1")
-      } catch {
-        /* ignore */
-      }
-      return
-    }
 
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setStep("logo")
