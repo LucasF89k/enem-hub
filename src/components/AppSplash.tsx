@@ -6,16 +6,13 @@ import { AnimatePresence, motion } from "framer-motion"
 // fica no repo sem uso, é o fallback se algum dia precisar de novo.
 
 /**
- * Sequência de abertura do app — é a tela de loading do carregamento
- * inicial disfarçada de animação, não um vídeo institucional pra ver toda
- * vez. Só aparece se nunca rodou nesse aparelho (localStorage, não
- * sessionStorage — uma vez de verdade, não uma vez por aba/sessão).
- *
- * Não precisa de guard extra pra distinguir "abertura fria" de "navegação
- * dentro do app": esse componente vive no root layout, que o Next.js NÃO
- * desmonta/remonta em navegação client-side entre páginas (só o conteúdo
- * abaixo troca) — o efeito de mount só roda de novo com reload/nova aba de
- * verdade, que é exatamente quando a splash deve aparecer.
+ * Sequência de abertura do app — roda TODA VEZ que o app é carregado do
+ * zero (fechou a aba/o navegador e abriu de novo, ou deu refresh). Não tem
+ * gate de "já vi, não mostra mais": esse componente vive no root layout,
+ * que o Next.js não desmonta/remonta em navegação client-side entre páginas
+ * do app (só o conteúdo abaixo troca) — então ela já não reaparece sozinha
+ * navegando dentro do app; só precisa rodar de novo em cada carregamento
+ * fresco de documento, que é justamente quando esse componente monta.
  *
  *   logo se monta (vídeo) → a pedra racha, se abre e revela a gema (vídeo)
  *   → a câmera recua até a posição do hero → entra o app
@@ -25,6 +22,14 @@ import { AnimatePresence, motion } from "framer-motion"
  * bateria/dados) — isso não tem contorno via código. Nesse caso a splash
  * mostra um overlay pedindo um toque; o clique nele é o gesto de usuário
  * que garante o play() em qualquer navegador, sem exceção.
+ *
+ * Esse "toque de autorização" (e só ele) FICA salvo pra sempre em
+ * localStorage: uma vez que o usuário interage com o vídeo, o navegador
+ * registra "media engagement" pro site e passa a liberar autoplay sozinho
+ * dali em diante — então da segunda vez em diante a splash tenta autoplay
+ * direto de novo (sem mostrar o overlay), mesmo em modo economia. O que é
+ * lembrado é a autorização, não "já vi a animação" — a animação em si
+ * continua rodando sempre.
  *
  * As duas fases são VÍDEO, não sequências de imagem: tanto a montagem da
  * logo (anel fechando, seta se formando) quanto a fratura da pedra (cacos
@@ -57,14 +62,6 @@ export function AppSplash() {
   const logoTimersRef = useRef<ReturnType<typeof setTimeout>[]>([])
 
   useEffect(() => {
-    let already = true
-    try {
-      already = localStorage.getItem("splash-shown") === "1"
-    } catch {
-      /* localStorage indisponível (SSR/privado) — mostra mesmo assim */
-    }
-    if (already) return
-
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setStep("logo")
     // A partir daqui a timeline é disparada pelo evento onPlay do vídeo da
@@ -85,14 +82,7 @@ export function AppSplash() {
     logoTimersRef.current = [
       setTimeout(() => setStep("reveal"), LOGO_MS),
       setTimeout(() => setStep("pullback"), LOGO_MS + REVEAL_MS),
-      setTimeout(() => {
-        setStep("done")
-        try {
-          localStorage.setItem("splash-shown", "1")
-        } catch {
-          /* ignore */
-        }
-      }, LOGO_MS + REVEAL_MS + PULLBACK_MS),
+      setTimeout(() => setStep("done"), LOGO_MS + REVEAL_MS + PULLBACK_MS),
     ]
   }
 
@@ -120,6 +110,15 @@ export function AppSplash() {
   }, [step])
 
   function handleTapToPlay() {
+    // O toque em si é o que garante o play() — o registro em localStorage é
+    // só pra saber, na próxima abertura, que esse navegador já tem "media
+    // engagement" com o site e não precisa mostrar o overlay de novo (o
+    // autoplay silencioso tende a já vir liberado sozinho a partir daqui).
+    try {
+      localStorage.setItem("splash-media-consent", "1")
+    } catch {
+      /* ignore */
+    }
     logoVideoRef.current?.play().catch(() => setLogoFailed(true))
   }
 
