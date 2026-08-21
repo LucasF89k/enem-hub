@@ -2,19 +2,21 @@
 
 import { useEffect, useRef, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
-import { LogoBuild } from "@/components/LogoBuild"
+// LogoBuild.tsx (mask-reveal geométrico) deu lugar ao vídeo real do Kling —
+// fica no repo sem uso, é o fallback se algum dia precisar de novo.
 
 /**
  * Sequência de abertura do app — roda uma vez por sessão, automática, sem
  * precisar de toque:
  *
- *   logo se montando → a pedra racha, se abre e revela a gema → a câmera
- *   recua até a posição do hero → entra o app
+ *   logo se monta (vídeo) → a pedra racha, se abre e revela a gema (vídeo)
+ *   → a câmera recua até a posição do hero → entra o app
  *
- * O reveal é um VÍDEO, não uma sequência de imagens: a fratura acontece na
- * geometria da própria pedra (cacos se soltando, partículas), coisa que
- * crossfade entre quadros estáticos nunca reproduz — dava aparência de
- * slideshow. As imagens por fase seguem no projeto como poster e fallback.
+ * As duas fases são VÍDEO, não sequências de imagem: tanto a montagem da
+ * logo (anel fechando, seta se formando) quanto a fratura da pedra (cacos
+ * se soltando, partículas) são movimento de verdade — crossfade entre
+ * quadros estáticos sempre dava aparência de slideshow. As imagens estáticas
+ * seguem no projeto como poster/fallback de cada vídeo.
  *
  * Fica por cima do conteúdo real (que já está montando/buscando dados por
  * baixo em paralelo) e desaparece sozinha — não bloqueia nada, só cobre.
@@ -22,14 +24,15 @@ import { LogoBuild } from "@/components/LogoBuild"
 
 type Step = "hidden" | "logo" | "reveal" | "pullback" | "done"
 
-const LOGO_MS = 2350 // a montagem da logo termina em ~1.9s; sobra respiro
-const REVEAL_MS = 5000 // duração do vídeo
+const LOGO_MS = 4200 // duração do vídeo da logo (4.04s) + respiro
+const REVEAL_MS = 5000 // duração do vídeo da pedra
 const PULLBACK_MS = 1000
 
 export function AppSplash() {
   const [step, setStep] = useState<Step>("hidden")
-  const [failed, setFailed] = useState(false)
-  const videoRef = useRef<HTMLVideoElement | null>(null)
+  const [logoFailed, setLogoFailed] = useState(false)
+  const [stoneFailed, setStoneFailed] = useState(false)
+  const stoneVideoRef = useRef<HTMLVideoElement | null>(null)
 
   useEffect(() => {
     let already = true
@@ -58,13 +61,13 @@ export function AppSplash() {
     return () => timers.forEach(clearTimeout)
   }, [])
 
-  // O play só dispara quando a pedra entra em cena. O elemento <video> em si
-  // é montado desde o início (invisível) para baixar e decodificar durante os
-  // ~2,3s da logo — antes ele só era criado ao trocar de fase e a tela ficava
-  // 2s no preto esperando o carregamento.
+  // O vídeo da pedra é pré-carregado durante a fase da logo (mesma lógica
+  // de antes) — assim que a logo sai de cena ele já está pronto pra tocar,
+  // sem os ~2s de tela preta que apareciam quando ele só começava a baixar
+  // na hora da troca de fase.
   useEffect(() => {
     if (step !== "reveal") return
-    videoRef.current?.play().catch(() => setFailed(true))
+    stoneVideoRef.current?.play().catch(() => setStoneFailed(true))
   }, [step])
 
   const showingStone = step === "reveal" || step === "pullback"
@@ -78,31 +81,37 @@ export function AppSplash() {
           transition={{ duration: 0.6, ease: "easeOut" }}
           className="fixed inset-0 z-[999] flex items-center justify-center bg-black"
         >
-          {/* brilho de fundo só enquanto a logo está em cena — durante o vídeo
-              ele quebraria a fusão com o preto */}
-          <AnimatePresence>
-            {step === "logo" && (
-              <motion.div
-                key="glow"
-                exit={{ opacity: 0 }}
-                aria-hidden
-                className="pointer-events-none absolute inset-0"
-                style={{
-                  background:
-                    "radial-gradient(ellipse 70% 50% at 50% 45%, color-mix(in srgb, var(--glow-mint) 10%, transparent), transparent 70%)",
-                }}
-              />
-            )}
-          </AnimatePresence>
-
+          {/* Logo se montando — vídeo, não mais o mask-reveal geométrico do
+              LogoBuild.tsx. object-cover: o app é 100% mobile e o vídeo já
+              nasceu em 9:16, mas nenhum aparelho bate essa proporção exata
+              (iPhone é mais alongado, ~19.5:9), então object-contain deixaria
+              tarjas. cover evita tarja recortando só a margem preta de cima/
+              baixo, que já sobra generosa em volta da logo. */}
           <AnimatePresence>
             {step === "logo" && (
               <motion.div
                 key="logo"
-                exit={{ opacity: 0, scale: 0.92, transition: { duration: 0.3 } }}
-                className="absolute z-10"
+                exit={{ opacity: 0, transition: { duration: 0.35 } }}
+                className="absolute inset-0 z-10"
               >
-                <LogoBuild />
+                <video
+                  src="/opal/logo-reveal.mp4"
+                  poster="/opal/stage-0.webp"
+                  autoPlay
+                  muted
+                  playsInline
+                  preload="auto"
+                  onError={() => setLogoFailed(true)}
+                  className="h-full w-full object-cover"
+                />
+                {logoFailed && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src="/logo-app.png"
+                    alt="Vion"
+                    className="absolute inset-0 m-auto h-40 w-40 object-contain"
+                  />
+                )}
               </motion.div>
             )}
           </AnimatePresence>
@@ -122,7 +131,7 @@ export function AppSplash() {
             className="relative z-10 aspect-square w-[min(96vw,460px)]"
           >
             <video
-              ref={videoRef}
+              ref={stoneVideoRef}
               src="/opal/reveal.mp4"
               // O poster é a rocha fechada: é o primeiro quadro do vídeo, então
               // a espera pelo carregamento não mostra nada fora de lugar.
@@ -130,7 +139,7 @@ export function AppSplash() {
               muted
               playsInline
               preload="auto"
-              onError={() => setFailed(true)}
+              onError={() => setStoneFailed(true)}
               className="h-full w-full object-contain"
               // O fundo do vídeo NUNCA chega a preto puro: o pipeline YUV do
               // H.264 devolve ~RGB(20,25,25) por mais que se force o clamp
@@ -148,7 +157,7 @@ export function AppSplash() {
                 bloqueado) — antes ele entrava enquanto o vídeo carregava, e como
                 era a gema pronta, a abertura mostrava a gema, apagava, e só
                 então começava pela rocha: parecia um bug de renderização. */}
-            {failed && (
+            {stoneFailed && (
               /* eslint-disable-next-line @next/next/no-img-element */
               <img
                 src="/opal/stage-3.webp"
