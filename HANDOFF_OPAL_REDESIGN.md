@@ -53,11 +53,14 @@ Geradas pelo usuário no ChatGPT (uso comercial permitido) e processadas por
 `scripts/prepare-opal.js`:
 
 ```
-public/opal/stage-0.webp   rocha opaca         114 KB
-public/opal/stage-1.webp   primeiros veios     117 KB
-public/opal/stage-2.webp   cacos se abrindo    158 KB
-public/opal/stage-3.webp   gema exposta         98 KB
-public/opal/reveal.mp4     vídeo do reveal     894 KB
+public/opal/stage-0.webp     rocha opaca              114 KB
+public/opal/stage-1.webp     primeiros veios          117 KB
+public/opal/stage-2.webp     cacos se abrindo         158 KB
+public/opal/stage-3.webp     gema exposta              98 KB
+public/opal/reveal.mp4       vídeo do reveal (pedra)  892 KB — pendente de
+                              regeração sem estilhaços caindo (§5, item 1)
+public/opal/logo-reveal.mp4  vídeo da logo montando   280 KB — 9:16, full
+                              bleed via object-cover, faststart
 ```
 
 Os PNGs originais estão em `C:\Users\lucas.lourenco\Downloads\Nova pasta`
@@ -86,13 +89,22 @@ Realistic rock fracture physics, premium Apple-style product animation,
 cinematic, smooth ease-in-out. locked camera, no text, no logo.
 ```
 
-Reprocessamento do arquivo baixado (tira a marca d'água do Kling e reduz):
+Reprocessamento do arquivo baixado (tira a marca d'água do Kling, reduz, e
+**sempre** termina com faststart — ver armadilha na seção 3):
 
 ```bash
 ffmpeg -i "<mp4 do Kling>" \
   -vf "drawbox=x=670:y=880:w=290:h=80:color=black:t=fill,scale=600:600" \
-  -c:v h264_mf -b:v 1500k -pix_fmt yuv420p -an -y public/opal/reveal.mp4
+  -c:v h264_mf -b:v 1500k -pix_fmt yuv420p -an -y public/opal/reveal-raw.mp4
+ffmpeg -i public/opal/reveal-raw.mp4 -c copy -movflags +faststart \
+  -y public/opal/reveal.mp4
 ```
+
+> Confira o box do `drawbox` em CADA geração nova — o Kling não coloca a
+> marca d'água sempre no mesmo lugar/tamanho entre vídeos diferentes (ex.:
+> o vídeo da logo tinha "◯ KlingAI 3.0 Omni", mais largo que o box herdado
+> do vídeo da pedra, e sobrou um pedaço visível). Extraia um frame do source
+> cru e confira visualmente antes de assumir as mesmas coordenadas.
 
 > O ffmpeg do sistema é o do Free Download Manager
 > (`C:\Program Files\Softdeluxe\Free Download Manager\ffmpeg.exe`).
@@ -163,6 +175,56 @@ real (`onError`); quem cobre o carregamento é o `poster`.
 ### `object-cover` em vídeo quadrado numa tela vertical
 Amplia ~1.7x e corta a pedra pela metade. Em tela larga fica pior ainda.
 
+### MP4 sem `+faststart` trava a splash no mobile
+O `ffmpeg` sem `-movflags +faststart` grava o átomo `moov` (índice/metadata
+do arquivo) no FINAL do MP4 — desktop toca assim numa boa (baixa o arquivo
+inteiro rápido o bastante), mas navegador mobile trava esperando o moov
+antes de decodificar qualquer frame: apareceu como vídeo congelado sem
+tocar. Fix sem recodificar: `ffmpeg -i in.mp4 -c copy -movflags +faststart
+out.mp4` — só reordena os átomos do container. Checar com `xxd -l 64
+arquivo.mp4`: `moov` tem que vir logo depois de `ftyp`, antes de `mdat`.
+
+### `autoPlay` via atributo JSX falha mais no mobile que `.play()` imperativo
+Um `<video autoPlay muted playsInline>` que só monta um instante depois da
+navegação (dentro de `AnimatePresence`, por exemplo) tem taxa de rejeição de
+autoplay maior no Chrome/Safari mobile do que chamar `.play()` num
+`useEffect` depois do mount — e mesmo assim, forçar `el.muted = true` e
+`el.playsInline = true` diretamente no objeto DOM (via ref) logo antes do
+`.play()`, não só via prop, evita uma corrida de timing que também derruba
+autoplay silenciosamente.
+
+### Rejeição de `.play()` NÃO é sinônimo de vídeo quebrado
+A Promise de `.play()` rejeita por vários motivos que não são falha de
+decodificação (readyState não ideal, corrida com a política de autoplay).
+Tratar qualquer rejeição como erro fatal (mostrar fallback estático) faz o
+fallback aparecer JUNTO com o vídeo que na verdade tocou normalmente logo
+em seguida — dois logos sobrepostos. Quem decide "falha real" é o `onError`
+do elemento, não o catch do `.play()`.
+
+### Modo economia de bateria/dados bloqueia autoplay de vídeo — sem contorno via código
+No mobile, com o navegador em modo economia (Chrome "Saver de dados" ou
+equivalente), a política de autoplay é recusada pelo próprio SO mesmo com
+`muted`+`playsInline` corretos. Não tem flag nem técnica que force isso.
+A solução que funciona em qualquer motor de renderização (browser hoje, um
+WebView nativo se o app for empacotado pra loja no futuro) é: quando
+`.play()` rejeita, mostrar um overlay pedindo um toque — o clique é o único
+gesto de usuário que garante `.play()` sem exceção. Bônus: depois da
+primeira interação real com vídeo, o navegador registra "media engagement"
+pro site e passa a liberar autoplay sozinho nas próximas aberturas, então
+o overlay tende a só aparecer uma vez por navegador na prática.
+
+### A splash é tela de loading, não "vista uma vez" — cuidado com o storage
+Ela deve rodar em TODO carregamento fresco do documento (fechou a aba e
+abriu de novo), não só na primeira vez do usuário no aparelho. Guardar um
+flag "splash-shown" em `localStorage` (pra nunca mais mostrar) ou checar
+`document.readyState` no mount pra tentar detectar "SPA nav vs. abertura
+fria" são as duas armadilhas em que essa sessão caiu — a segunda partia de
+uma premissa errada (achar que o componente remonta em navegação
+client-side; não remonta, ele vive no root layout, que o Next.js mantém
+montado entre trocas de rota). O único estado que vale a pena persistir pra
+sempre é a autorização de mídia do toque (ver item acima), não "já vi a
+splash".
+
 ---
 
 ## 4. Como validar mudanças visuais
@@ -191,11 +253,18 @@ jeito confiável de provar que não há moldura (procure degrau = 0.00).
 
 ## 5. Pendências
 
-1. **Confirmar a correção da moldura no celular.** O último commit (`fd97313`)
-   troca a estratégia de "casar cor" para "alpha zero antes da borda". Foi
-   verificado por medição (degrau 0.00 em dois momentos), mas o usuário ainda
-   não validou no aparelho dele. Era o problema em aberto quando a sessão
-   encerrou.
+1. **Regerar o vídeo da pedra sem os estilhaços caindo.** Ideia do usuário
+   (21/08, sessão de correção de bugs de produção): em vez dos cacos da
+   rocha se soltando e caindo pra fora de quadro — que é o que força cobrir
+   uma área imprevisível de "queda" e é a origem de quase toda a dor de
+   cabeça de moldura/borda documentada abaixo — os cacos ficam **flutuando**
+   ao redor da gema (não caem), e depois a gema resultante desliza suave até
+   a posição final dela na Home. Mais fácil de mascarar sem revelar borda:
+   a área a esconder passa a ser só o entorno da gema flutuando, que já é
+   exatamente o que a máscara radial (`maskImage` em `AppSplash.tsx`) faz
+   hoje — não precisa inventar nada novo de CSS, só o vídeo precisa nascer
+   assim. Prompt do Kling deve pedir explicitamente câmera travada, cacos
+   orbitando/flutuando sem física de queda, sem sair do enquadramento.
 
 2. **Telas ainda sem redesenho estrutural:** Simulados, Redação, Planner,
    Analytics, Perfil. Elas já herdaram a paleta e o glassmorphism (via o
