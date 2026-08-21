@@ -34,7 +34,10 @@ export function TargetInstitutionCard({
   const reached = hasScore && gap <= 0
 
   return (
-    <div className="mt-8 w-full max-w-[360px] rounded-2xl border px-4 py-3">
+    // w-full, sem max-w: os blocos vizinhos do hero ocupam a largura toda, e
+    // um card mais estreito no meio deles lê como desalinhado mesmo estando
+    // centralizado — as bordas é que precisam bater.
+    <div className="mt-8 w-full rounded-2xl border px-4 py-3">
       <div className="flex items-center gap-3">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10">
           <GraduationCap className="h-4 w-4 text-primary" />

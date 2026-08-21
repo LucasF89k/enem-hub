@@ -81,10 +81,17 @@ export default async function AnalyticsPage() {
     if (uq.isCorrect) areaStats[area].correct++
   }
 
-  const radarData = Object.entries(areaStats).map(([area, s]) => ({
-    area: AREA_SHORT[area] ?? area,
-    pct: s.total > 0 ? Math.round((s.correct / s.total) * 100) : 0,
-  }))
+  // Sempre as 4 áreas do ENEM, mesmo sem questões respondidas: o gráfico é uma
+  // comparação entre elas, e mostrar só as já respondidas escondia justamente as
+  // áreas intocadas — que são a informação mais acionável ali.
+  const radarData = Object.keys(AREA_SHORT).map((slug) => {
+    const s = areaStats[slug] ?? { correct: 0, total: 0 }
+    return {
+      area: AREA_SHORT[slug],
+      pct: s.total > 0 ? Math.round((s.correct / s.total) * 100) : 0,
+      total: s.total,
+    }
+  })
 
   // Score line chart
   const lineData = simulados.map((s, i) => ({

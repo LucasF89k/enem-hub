@@ -1,42 +1,65 @@
 "use client"
 
-import {
-  RadarChart,
-  Radar,
-  PolarGrid,
-  PolarAngleAxis,
-  ResponsiveContainer,
-} from "recharts"
-
 interface AreaRadarChartProps {
-  data: { area: string; pct: number }[]
+  data: { area: string; pct: number; total: number }[]
 }
 
+/**
+ * Acerto por área, em barras.
+ *
+ * Era um radar, mas o radar só fecha uma forma legível com 3+ eixos e aqui ele
+ * recebia apenas as áreas em que o usuário já tinha respondido algo — com uma
+ * única área virava uma linha com um ponto na ponta, sem leitura possível.
+ * Barras funcionam com qualquer quantidade, e ainda deixam comparar as áreas
+ * lado a lado, que é a pergunta real ("onde estou pior?").
+ *
+ * A contagem de questões aparece junto de propósito: 50% em 2 questões e 50%
+ * em 200 são coisas muito diferentes, e sem esse número a barra engana.
+ */
 export function AreaRadarChart({ data }: AreaRadarChartProps) {
-  if (data.length === 0) {
+  const answered = data.filter((d) => d.total > 0)
+
+  if (answered.length === 0) {
     return (
-      <div className="flex items-center justify-center h-52 text-sm text-muted-foreground">
+      <div className="flex h-52 items-center justify-center px-6 text-center text-sm text-muted-foreground">
         Responda questões para ver seu desempenho por área
       </div>
     )
   }
 
   return (
-    <ResponsiveContainer width="100%" height={220}>
-      <RadarChart data={data} margin={{ top: 8, right: 24, bottom: 8, left: 24 }}>
-        <PolarGrid stroke="var(--border)" />
-        <PolarAngleAxis
-          dataKey="area"
-          tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
-        />
-        <Radar
-          dataKey="pct"
-          stroke="var(--primary)"
-          fill="var(--primary)"
-          fillOpacity={0.2}
-          strokeWidth={2}
-        />
-      </RadarChart>
-    </ResponsiveContainer>
+    <div className="flex flex-col gap-3 py-1">
+      {data.map((d) => {
+        const semDados = d.total === 0
+        return (
+          <div key={d.area}>
+            <div className="mb-1 flex items-baseline justify-between gap-2">
+              <span className="text-[13px] text-foreground">{d.area}</span>
+              {semDados ? (
+                <span className="text-[11px] text-muted-foreground">sem questões</span>
+              ) : (
+                <span className="text-[11px] tabular-nums text-muted-foreground">
+                  <b className="text-sm font-semibold text-foreground">{d.pct}%</b>
+                  {" · "}
+                  {d.total} {d.total === 1 ? "questão" : "questões"}
+                </span>
+              )}
+            </div>
+            <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--gauge-track)]">
+              {!semDados && (
+                <div
+                  className="h-full rounded-full transition-[width] duration-700 ease-out"
+                  style={{
+                    width: `${Math.max(d.pct, 2)}%`,
+                    background:
+                      "linear-gradient(90deg, var(--gauge-from), var(--gauge-to))",
+                  }}
+                />
+              )}
+            </div>
+          </div>
+        )
+      })}
+    </div>
   )
 }
