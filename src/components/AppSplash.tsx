@@ -160,10 +160,26 @@ export function AppSplash() {
   // O vídeo da pedra é pré-carregado durante a fase da logo (mesma lógica
   // de antes) — assim que a logo sai de cena ele já está pronto pra tocar,
   // sem os ~2s de tela preta que apareciam quando ele só começava a baixar
-  // na hora da troca de fase.
+  // na hora da troca de fase. Mesmo tratamento do vídeo da logo: força
+  // muted/playsInline no elemento DOM (não só via prop JSX) antes do
+  // play() — evita a mesma corrida de autoplay que afetava a logo.
+  //
+  // Junto vai uma rede de segurança: esse vídeo não tem overlay de toque
+  // como a logo, então se ele nunca tocar de verdade (autoplay falha sem
+  // cair no catch, buffering trava) a tela ficaria congelada parada em
+  // "reveal" pra sempre. Confere de novo em ~2s se ainda está pausado —
+  // se sim, cai no fallback estático em vez de deixar a tela congelada.
   useEffect(() => {
     if (step !== "reveal") return
-    stoneVideoRef.current?.play().catch(() => setStoneFailed(true))
+    const el = stoneVideoRef.current
+    if (!el) return
+    el.muted = true
+    el.playsInline = true
+    el.play().catch(() => setStoneFailed(true))
+    const timeout = setTimeout(() => {
+      if (el.paused) setStoneFailed(true)
+    }, 2000)
+    return () => clearTimeout(timeout)
   }, [step])
 
   const showingStone = step === "reveal" || step === "pullback"
