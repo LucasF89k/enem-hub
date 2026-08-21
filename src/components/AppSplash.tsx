@@ -6,11 +6,16 @@ import { AnimatePresence, motion } from "framer-motion"
 // fica no repo sem uso, é o fallback se algum dia precisar de novo.
 
 /**
- * Sequência de abertura do app — roda uma vez por sessão, automática, sem
- * precisar de toque:
+ * Sequência de abertura do app — roda uma vez por sessão:
  *
  *   logo se monta (vídeo) → a pedra racha, se abre e revela a gema (vídeo)
  *   → a câmera recua até a posição do hero → entra o app
+ *
+ * Automática por padrão (autoplay silencioso), mas alguns navegadores
+ * mobile recusam autoplay por política do próprio SO (ex.: modo economia de
+ * bateria/dados) — isso não tem contorno via código. Nesse caso a splash
+ * mostra um overlay pedindo um toque; o clique nele é o gesto de usuário
+ * que garante o play() em qualquer navegador, sem exceção.
  *
  * As duas fases são VÍDEO, não sequências de imagem: tanto a montagem da
  * logo (anel fechando, seta se formando) quanto a fratura da pedra (cacos
@@ -32,8 +37,15 @@ export function AppSplash() {
   const [step, setStep] = useState<Step>("hidden")
   const [logoFailed, setLogoFailed] = useState(false)
   const [stoneFailed, setStoneFailed] = useState(false)
+  // Autoplay silencioso pode ser recusado por política do navegador (ex.:
+  // modo economia de bateria/dados no mobile) — não tem contorno via código
+  // pra isso. O único play() que NUNCA é bloqueado é o que roda dentro de um
+  // gesto do usuário (tap/click), então esse estado liga um overlay que pede
+  // esse toque só quando o autoplay de fato falhou.
+  const [needsTap, setNeedsTap] = useState(false)
   const logoVideoRef = useRef<HTMLVideoElement | null>(null)
   const stoneVideoRef = useRef<HTMLVideoElement | null>(null)
+  const logoTimersRef = useRef<ReturnType<typeof setTimeout>[]>([])
 
   useEffect(() => {
     let already = true
@@ -44,10 +56,24 @@ export function AppSplash() {
     }
     if (already) return
 
-    // Timeline imperativa de fases, disparada uma vez ao montar.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setStep("logo")
-    const timers = [
+    // A partir daqui a timeline é disparada pelo evento onPlay do vídeo da
+    // logo (abaixo), não por um setTimeout fixo no mount — se o autoplay for
+    // recusado e o usuário precisar tocar pra continuar, a contagem de
+    // LOGO_MS só pode começar quando o vídeo realmente começa a rodar.
+  }, [])
+
+  // Dispara o resto da timeline (reveal → pullback → done) a partir do
+  // instante em que o vídeo da logo de fato começa a tocar — cobre tanto o
+  // caminho feliz (autoplay silencioso funcionou) quanto o caminho do toque
+  // manual (needsTap), sem duplicar a lógica de agendamento. onPlay pode
+  // disparar mais de uma vez (buffering, retomar após seek) — só a primeira
+  // conta, daí o guard pelo array já ter timers agendados.
+  function handleLogoPlaying() {
+    if (logoTimersRef.current.length > 0) return
+    setNeedsTap(false)
+    logoTimersRef.current = [
       setTimeout(() => setStep("reveal"), LOGO_MS),
       setTimeout(() => setStep("pullback"), LOGO_MS + REVEAL_MS),
       setTimeout(() => {
@@ -59,7 +85,10 @@ export function AppSplash() {
         }
       }, LOGO_MS + REVEAL_MS + PULLBACK_MS),
     ]
-    return () => timers.forEach(clearTimeout)
+  }
+
+  useEffect(() => {
+    return () => logoTimersRef.current.forEach(clearTimeout)
   }, [])
 
   // autoPlay via atributo HTML é o que o Chrome/Safari mobile mais recusa
@@ -68,28 +97,22 @@ export function AppSplash() {
   // o play() imperativo, o navegador cai pro estado pausado e mostra o
   // controle de play nativo por cima.
   //
-  // MAS existe um caso em que play() rejeita de verdade e não tem contorno
-  // por código: o modo economia de bateria / saver de dados do navegador
-  // mobile bloqueia autoplay de vídeo por política do SO, mesmo com
-  // muted+playsInline certos. Não dá pra forçar — nesse caso a decisão é
-  // pular a splash inteira (indo direto pro app) em vez de deixar o vídeo
-  // parado com o botão de play nativo por cima, que é pior que não ter
-  // splash nenhuma.
+  // Se ainda assim rejeitar (ex.: modo economia de bateria/dados, que
+  // bloqueia autoplay por política do SO independente de muted+playsInline),
+  // não tem contorno silencioso — liga o overlay de toque, cujo próprio
+  // clique é o gesto de usuário que garante o play() em qualquer navegador.
   useEffect(() => {
     if (step !== "logo") return
     const el = logoVideoRef.current
     if (!el) return
     el.muted = true
     el.playsInline = true
-    el.play().catch(() => {
-      setStep("done")
-      try {
-        sessionStorage.setItem("splash-shown", "1")
-      } catch {
-        /* ignore */
-      }
-    })
+    el.play().catch(() => setNeedsTap(true))
   }, [step])
+
+  function handleTapToPlay() {
+    logoVideoRef.current?.play().catch(() => setLogoFailed(true))
+  }
 
   // O vídeo da pedra é pré-carregado durante a fase da logo (mesma lógica
   // de antes) — assim que a logo sai de cena ele já está pronto pra tocar,
@@ -131,6 +154,7 @@ export function AppSplash() {
                   muted
                   playsInline
                   preload="auto"
+                  onPlay={handleLogoPlaying}
                   onError={() => setLogoFailed(true)}
                   className="h-full w-full object-cover"
                 />
@@ -141,6 +165,24 @@ export function AppSplash() {
                     alt="Vion"
                     className="absolute inset-0 m-auto h-40 w-40 object-contain"
                   />
+                )}
+                {/* Autoplay recusado (ex.: modo economia) — o próprio toque
+                    aqui é o gesto de usuário que garante o play() em
+                    qualquer navegador, sem exceção. */}
+                {needsTap && (
+                  <button
+                    type="button"
+                    onClick={handleTapToPlay}
+                    aria-label="Tocar para continuar"
+                    className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/40"
+                  >
+                    <span className="flex h-16 w-16 items-center justify-center rounded-full bg-white/15 backdrop-blur-sm">
+                      <svg viewBox="0 0 24 24" className="ml-1 h-7 w-7 fill-white">
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                    </span>
+                    <span className="text-sm text-white/80">Toque para continuar</span>
+                  </button>
                 )}
               </motion.div>
             )}
