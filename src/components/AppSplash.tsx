@@ -32,6 +32,7 @@ export function AppSplash() {
   const [step, setStep] = useState<Step>("hidden")
   const [logoFailed, setLogoFailed] = useState(false)
   const [stoneFailed, setStoneFailed] = useState(false)
+  const logoVideoRef = useRef<HTMLVideoElement | null>(null)
   const stoneVideoRef = useRef<HTMLVideoElement | null>(null)
 
   useEffect(() => {
@@ -60,6 +61,18 @@ export function AppSplash() {
     ]
     return () => timers.forEach(clearTimeout)
   }, [])
+
+  // autoPlay via atributo HTML é o que o Chrome/Safari mobile mais recusa
+  // quando o <video> monta um instante depois da navegação (aqui ele só
+  // entra no DOM quando step vira "logo", dentro de AnimatePresence) — sem
+  // o play() imperativo, o navegador cai pro estado pausado e mostra o
+  // controle de play nativo por cima. Chamando .play() no efeito, do jeito
+  // que já funcionava pro vídeo da pedra, a Promise pode ser tratada e o
+  // fallback de erro real (autoplay bloqueado de fato) tem como disparar.
+  useEffect(() => {
+    if (step !== "logo") return
+    logoVideoRef.current?.play().catch(() => setLogoFailed(true))
+  }, [step])
 
   // O vídeo da pedra é pré-carregado durante a fase da logo (mesma lógica
   // de antes) — assim que a logo sai de cena ele já está pronto pra tocar,
@@ -95,6 +108,7 @@ export function AppSplash() {
                 className="absolute inset-0 z-10"
               >
                 <video
+                  ref={logoVideoRef}
                   src="/opal/logo-reveal.mp4"
                   autoPlay
                   muted
