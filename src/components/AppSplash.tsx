@@ -66,26 +66,28 @@ export function AppSplash() {
   // quando o <video> monta um instante depois da navegação (aqui ele só
   // entra no DOM quando step vira "logo", dentro de AnimatePresence) — sem
   // o play() imperativo, o navegador cai pro estado pausado e mostra o
-  // controle de play nativo por cima. A Promise do play() rejeita em vários
-  // casos que NÃO são falha real de decodificação (ex.: chamado antes do
-  // readyState ideal, ou a política de autoplay já resolveu sozinha logo
-  // em seguida) — tratar a rejeição como erro fatal foi o que fez o
-  // fallback (logo estática) aparecer JUNTO com o vídeo já tocando. Quem
-  // decide "falha real" é o onError do próprio elemento.
+  // controle de play nativo por cima.
+  //
+  // MAS existe um caso em que play() rejeita de verdade e não tem contorno
+  // por código: o modo economia de bateria / saver de dados do navegador
+  // mobile bloqueia autoplay de vídeo por política do SO, mesmo com
+  // muted+playsInline certos. Não dá pra forçar — nesse caso a decisão é
+  // pular a splash inteira (indo direto pro app) em vez de deixar o vídeo
+  // parado com o botão de play nativo por cima, que é pior que não ter
+  // splash nenhuma.
   useEffect(() => {
     if (step !== "logo") return
     const el = logoVideoRef.current
     if (!el) return
-    // Forçar muted/playsInline no elemento DOM (não só via prop JSX) antes do
-    // play(): é o padrão que evita a corrida de autoplay no Chrome/Safari
-    // mobile — se `muted` não estiver setado no objeto no exato instante do
-    // play(), a política de autoplay recusa e cai pro controle nativo (o
-    // botão de play por cima do vídeo), mesmo com o atributo já presente
-    // no JSX.
     el.muted = true
     el.playsInline = true
     el.play().catch(() => {
-      /* rejeição de play() não é falha de decodificação — onError cobre isso */
+      setStep("done")
+      try {
+        sessionStorage.setItem("splash-shown", "1")
+      } catch {
+        /* ignore */
+      }
     })
   }, [step])
 
