@@ -18,6 +18,10 @@ interface MentorStore {
   pending: PendingSend | null
   addMessage: (msg: Omit<ChatMessage, "id">) => string
   appendToMessage: (id: string, chunk: string) => void
+  /** Descarta a bolha do assistente se ela ficou sem conteúdo (ex.: usuário
+   *  interrompeu antes do primeiro token). Sem isso a bolha vazia continua na
+   *  lista e o indicador de "digitando" nunca some. */
+  dropIfEmpty: (id: string) => void
   setLoading: (v: boolean) => void
   setPending: (p: PendingSend | null) => void
   clear: () => void
@@ -44,6 +48,11 @@ export const useMentorStore = create<MentorStore>((set) => ({
       ),
     }))
   },
+
+  dropIfEmpty: (id) =>
+    set((state) => ({
+      messages: state.messages.filter((m) => !(m.id === id && m.content.trim() === "")),
+    })),
 
   setLoading: (v) => set({ isLoading: v }),
 

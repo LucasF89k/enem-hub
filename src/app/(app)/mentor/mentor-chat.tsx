@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import { useMentorStore } from "@/store/mentor-store"
+import { OpalCrystal } from "@/components/OpalCrystal"
 import { fileToAttachment, isImageDataUrl, ATTACH_ACCEPT } from "@/lib/attach"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -28,10 +29,16 @@ const QUICK_ACTIONS = [
   { label: "Estratégia de prova", text: "Como devo gerir meu tempo durante o ENEM? Me dê uma estratégia prática." },
 ]
 
-function MentorAvatar({ className }: { className?: string }) {
+/**
+ * Avatar do Mentor: a mesma gema da abertura do app.
+ * No cabeçalho ela fica parada; nas bolhas do chat ondula (slime), para dar
+ * sinal de "vivo" durante a conversa.
+ */
+function MentorAvatar({ size = 32, slime = false }: { size?: number; slime?: boolean }) {
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img src="/logo-app.png" alt="Vion" className={cn("object-contain", className)} />
+    <span className="shrink-0" style={{ width: size, height: size }}>
+      <OpalCrystal size={size} stage={3} slime={slime} icon />
+    </span>
   )
 }
 
@@ -305,7 +312,7 @@ export function MentorChat() {
   const topicId = searchParams.get("topicId") ?? undefined
   const planner = searchParams.get("planner") === "1"
 
-  const { messages, isLoading, addMessage, appendToMessage, setLoading, clear } =
+  const { messages, isLoading, addMessage, appendToMessage, dropIfEmpty, setLoading, clear } =
     useMentorStore()
   const pending = useMentorStore((s) => s.pending)
   const setPending = useMentorStore((s) => s.setPending)
@@ -315,6 +322,7 @@ export function MentorChat() {
   const bottomRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const abortRef = useRef<AbortController | null>(null)
+  const streamingIdRef = useRef<string | null>(null)
   const startedRef = useRef(false)
   const imageInputRef = useRef<HTMLInputElement>(null)
 
@@ -361,6 +369,7 @@ export function MentorChat() {
 
       // Add empty assistant message for streaming
       const assistantId = addMessage({ role: "assistant", content: "" })
+      streamingIdRef.current = assistantId
 
       setLoading(true)
 
@@ -398,11 +407,23 @@ export function MentorChat() {
         const reader = response.body!.getReader()
         const decoder = new TextDecoder()
 
+        let received = 0
         while (true) {
           const { done, value } = await reader.read()
           if (done) break
           const chunk = decoder.decode(value, { stream: true })
+          received += chunk.length
           appendToMessage(assistantId, chunk)
+        }
+
+        // Stream fechou sem nenhum token: sem isto a bolha ficava vazia e os
+        // pontinhos rodavam indefinidamente, dando a impressão de que o Mentor
+        // simplesmente ignorou a mensagem.
+        if (received === 0) {
+          appendToMessage(
+            assistantId,
+            "⚠️ Não consegui gerar uma resposta agora. Tente enviar de novo.",
+          )
         }
       } catch (err) {
         if ((err as Error).name !== "AbortError") {
@@ -411,6 +432,7 @@ export function MentorChat() {
       } finally {
         setLoading(false)
         abortRef.current = null
+        streamingIdRef.current = null
       }
     },
     [isLoading, messages, topicId, planner, addMessage, appendToMessage, setLoading, clear]
@@ -451,6 +473,9 @@ export function MentorChat() {
 
   function handleStop() {
     abortRef.current?.abort()
+    // Se nada chegou a ser escrito, remove a bolha — do contrário sobra uma
+    // bolha vazia do assistente no histórico depois do stop.
+    if (streamingIdRef.current) dropIfEmpty(streamingIdRef.current)
     setLoading(false)
   }
 
@@ -459,7 +484,7 @@ export function MentorChat() {
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2 border-b shrink-0">
         <div className="flex items-center gap-2">
-          <MentorAvatar className="h-8 w-8" />
+          <MentorAvatar size={30} />
           <div>
             <p className="text-sm font-semibold leading-none">Mentor ENEM</p>
             <p className="text-[10px] text-muted-foreground">Seu tutor pessoal</p>
@@ -487,7 +512,7 @@ export function MentorChat() {
               msg.role === "user" ? "justify-end" : "justify-start"
             )}
           >
-            {msg.role === "assistant" && <MentorAvatar className="h-8 w-8 shrink-0 mt-0.5" />}
+            {msg.role === "assistant" && <MentorAvatar size={32} slime />}
 
             <div
               className={cn(
@@ -508,8 +533,15 @@ export function MentorChat() {
                         <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-ul:my-1 prose-li:my-0.5 prose-headings:my-1">
                           <ReactMarkdown remarkPlugins={[remarkGfm]}>{cleaned}</ReactMarkdown>
                         </div>
-                      ) : (
+                      ) : isLoading ? (
                         <TypingDots />
+                      ) : (
+                        // Sem conteúdo e sem carregamento = foi interrompido.
+                        // Antes isto caía direto no <TypingDots />, então os
+                        // pontinhos ficavam rodando para sempre depois do stop.
+                        <span className="text-xs italic text-muted-foreground">
+                          Resposta interrompida.
+                        </span>
                       )}
                       {plan && !isLoading && <ApplyPlanCard plan={plan} />}
                       {folha && !isLoading && <ApplyImportedPlanCard plan={folha} />}
@@ -563,7 +595,7 @@ export function MentorChat() {
 
         {isLoading && messages[messages.length - 1]?.role !== "assistant" && (
           <div className="flex gap-2.5 justify-start">
-            <MentorAvatar className="h-8 w-8 shrink-0" />
+            <MentorAvatar size={32} slime />
             <div className="bg-muted rounded-2xl rounded-tl-sm px-4 py-2.5">
               <TypingDots />
             </div>

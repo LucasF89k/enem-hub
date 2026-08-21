@@ -183,6 +183,19 @@ Regras do JSON:
     const hasAttach = typeof image === 'string' && /^data:(image\/|application\/pdf)/.test(image)
     const attachIsImage = hasAttach && (image as string).startsWith('data:image/')
 
+    // Anexo sem texto: os provedores precisam de uma instrução, senão devolvem
+    // resposta vazia e o chat fica mudo. O cliente já manda um texto padrão,
+    // mas outras telas empurram mensagens por aqui (ex.: foto da redação), então
+    // a proteção fica também no servidor.
+    if (hasAttach && Array.isArray(messages) && messages.length > 0) {
+      const last = messages[messages.length - 1]
+      if (last?.role !== 'assistant' && !String(last?.content ?? '').trim()) {
+        last.content = attachIsImage
+          ? 'Analise esta imagem e me ajude (resolva/explique a questão).'
+          : 'Analise este documento e me ajude com ele.'
+      }
+    }
+
     // Mensagens no formato OpenAI (MiMo). MiMo lê imagem nativamente; PDF não →
     // nesse caso vai só o texto e o Gemini (fallback) é quem lê o PDF.
     const buildOpenAIMessages = (): OpenAI.Chat.ChatCompletionMessageParam[] => {
@@ -262,37 +275,57 @@ Regras do JSON:
       throw new Error('Nenhuma chave de IA configurada (MIMO_API_KEYS ou GEMINI_API_KEYS)')
     }
 
-    let gen: AsyncGenerator<string> | null = null
-    let firstChunk: IteratorResult<string> | null = null
-    let lastErr: unknown = null
-    for (const start of starters) {
-      try {
-        const g = start()
-        const first = await g.next() // 429/erro estoura aqui → tenta o próximo provedor
-        gen = g
-        firstChunk = first
-        break
-      } catch (e) {
-        lastErr = e
-        continue
-      }
-    }
-    if (!gen || !firstChunk) throw lastErr ?? new Error('Falha ao iniciar o Mentor')
-
+    // O stream é devolvido IMEDIATAMENTE e a escolha do provedor acontece
+    // dentro dele. Antes, o `await g.next()` do primeiro token rodava fora da
+    // Response, então o navegador ficava sem resposta HTTP durante todo o
+    // raciocínio do modelo (mimo-v2.5 é de reasoning: pensa antes de emitir o
+    // primeiro token). O tempo do modelo é o mesmo, mas a conexão abre na hora
+    // e deixa de arriscar timeout de gateway.
     const readable = new ReadableStream({
       async start(controller) {
         const enc = new TextEncoder()
-        try {
-          let res = firstChunk!
-          while (!res.done) {
-            if (res.value) controller.enqueue(enc.encode(res.value))
-            res = await gen!.next()
+        let sent = false
+        let lastErr: unknown = null
+
+        for (const start of starters) {
+          try {
+            const g = start()
+            let res = await g.next() // 429/erro estoura aqui → tenta o próximo
+            while (!res.done) {
+              if (res.value) {
+                controller.enqueue(enc.encode(res.value))
+                sent = true
+              }
+              res = await g.next()
+            }
+            if (sent) break
+            // provedor encerrou sem emitir nada → tenta o próximo da lista
+          } catch (e) {
+            lastErr = e
+            // Se já foi enviado conteúdo não dá para trocar de provedor no meio:
+            // encerra com o que chegou em vez de duplicar a resposta.
+            if (sent) break
           }
-        } catch {
-          /* erro no meio do stream — encerra o que já veio */
-        } finally {
-          controller.close()
         }
+
+        // Nenhum provedor produziu texto. Sem isto o cliente recebia 200 com
+        // corpo vazio e a bolha ficava muda — foi o que acontecia ao mandar só
+        // uma imagem e o provedor recusar o anexo.
+        if (!sent) {
+          const msg = lastErr instanceof Error ? lastErr.message : String(lastErr ?? '')
+          const isQuota =
+            /429|quota|rate.?limit|RESOURCE_EXHAUSTED|Too Many Requests|insufficient/i.test(msg)
+          controller.enqueue(
+            enc.encode(
+              isQuota
+                ? '⚠️ O Mentor atingiu o limite de uso gratuito por enquanto. Tente novamente em alguns minutos.'
+                : '⚠️ Não consegui gerar uma resposta agora. Tente enviar de novo.',
+            ),
+          )
+          console.error('[Mentor] nenhum provedor respondeu:', lastErr)
+        }
+
+        controller.close()
       },
     })
 

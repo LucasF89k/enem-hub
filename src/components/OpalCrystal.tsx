@@ -25,33 +25,39 @@ export function OpalCrystal({
   size = 150,
   stage = 3,
   slime = false,
+  icon = false,
 }: {
   size?: number
   stage?: 0 | 1 | 2 | 3
   /** ondulação contínua de gelatina — usada na gema exposta, no hero da Home */
   slime?: boolean
+  /** modo ícone: sem flutuação e sem halo. Em tamanho pequeno (avatar de chat,
+   *  cabeçalho) o balanço lê como tremido e o halo desfocado vira um borrão. */
+  icon?: boolean
 }) {
   return (
     <motion.div
-      animate={{ y: [-5, 5, -5], rotate: [-2, 2, -2] }}
-      transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
+      animate={icon ? undefined : { y: [-5, 5, -5], rotate: [-2, 2, -2] }}
+      transition={icon ? undefined : { duration: 9, repeat: Infinity, ease: "easeInOut" }}
       style={{ width: size, height: size }}
       className="relative"
     >
       {/* Halo — a luz que escapa da pedra, cresce conforme ela se abre */}
-      <motion.div
-        aria-hidden
-        className="absolute left-1/2 top-1/2 -z-10 -translate-x-1/2 -translate-y-1/2 rounded-full"
-        style={{
-          width: size * 1.15,
-          height: size * 1.15,
-          background:
-            "radial-gradient(circle, color-mix(in srgb, var(--glow-mint) 42%, transparent), transparent 70%)",
-          filter: "blur(18px)",
-        }}
-        animate={{ opacity: [0.25 + stage * 0.16, 0.45 + stage * 0.16, 0.25 + stage * 0.16] }}
-        transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut" }}
-      />
+      {!icon && (
+        <motion.div
+          aria-hidden
+          className="absolute left-1/2 top-1/2 -z-10 -translate-x-1/2 -translate-y-1/2 rounded-full"
+          style={{
+            width: size * 1.15,
+            height: size * 1.15,
+            background:
+              "radial-gradient(circle, color-mix(in srgb, var(--glow-mint) 42%, transparent), transparent 70%)",
+            filter: "blur(18px)",
+          }}
+          animate={{ opacity: [0.25 + stage * 0.16, 0.45 + stage * 0.16, 0.25 + stage * 0.16] }}
+          transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut" }}
+        />
+      )}
 
       {/* As 4 fases empilhadas — só a opacidade muda entre elas */}
       {STAGES.map((s) => (
