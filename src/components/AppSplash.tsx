@@ -74,7 +74,17 @@ export function AppSplash() {
   // decide "falha real" é o onError do próprio elemento.
   useEffect(() => {
     if (step !== "logo") return
-    logoVideoRef.current?.play().catch(() => {
+    const el = logoVideoRef.current
+    if (!el) return
+    // Forçar muted/playsInline no elemento DOM (não só via prop JSX) antes do
+    // play(): é o padrão que evita a corrida de autoplay no Chrome/Safari
+    // mobile — se `muted` não estiver setado no objeto no exato instante do
+    // play(), a política de autoplay recusa e cai pro controle nativo (o
+    // botão de play por cima do vídeo), mesmo com o atributo já presente
+    // no JSX.
+    el.muted = true
+    el.playsInline = true
+    el.play().catch(() => {
       /* rejeição de play() não é falha de decodificação — onError cobre isso */
     })
   }, [step])
