@@ -66,12 +66,17 @@ export function AppSplash() {
   // quando o <video> monta um instante depois da navegação (aqui ele só
   // entra no DOM quando step vira "logo", dentro de AnimatePresence) — sem
   // o play() imperativo, o navegador cai pro estado pausado e mostra o
-  // controle de play nativo por cima. Chamando .play() no efeito, do jeito
-  // que já funcionava pro vídeo da pedra, a Promise pode ser tratada e o
-  // fallback de erro real (autoplay bloqueado de fato) tem como disparar.
+  // controle de play nativo por cima. A Promise do play() rejeita em vários
+  // casos que NÃO são falha real de decodificação (ex.: chamado antes do
+  // readyState ideal, ou a política de autoplay já resolveu sozinha logo
+  // em seguida) — tratar a rejeição como erro fatal foi o que fez o
+  // fallback (logo estática) aparecer JUNTO com o vídeo já tocando. Quem
+  // decide "falha real" é o onError do próprio elemento.
   useEffect(() => {
     if (step !== "logo") return
-    logoVideoRef.current?.play().catch(() => setLogoFailed(true))
+    logoVideoRef.current?.play().catch(() => {
+      /* rejeição de play() não é falha de decodificação — onError cobre isso */
+    })
   }, [step])
 
   // O vídeo da pedra é pré-carregado durante a fase da logo (mesma lógica
