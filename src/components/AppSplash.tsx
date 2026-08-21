@@ -109,6 +109,22 @@ export function AppSplash() {
     return () => logoTimersRef.current.forEach(clearTimeout)
   }, [])
 
+  // Rede de segurança: se por qualquer motivo o vídeo nunca disparar onPlay
+  // (trava em buffering, autoplay falha sem cair no catch, decodificação
+  // trava) a timeline inteira ficaria presa em "logo" pra sempre — e como a
+  // splash é fixed inset-0 com z-999, ela bloqueia o app inteiro atrás dela
+  // indefinidamente. Um travamento de vídeo nunca pode travar o app. Se a
+  // timeline não avançou sozinha depois de um tempo bem generoso (~1.5x a
+  // duração real do vídeo), força a passagem de fase mesmo assim.
+  useEffect(() => {
+    if (step !== "logo") return
+    const timeout = setTimeout(() => {
+      handleLogoPlaying()
+    }, LOGO_MS + 1800)
+    return () => clearTimeout(timeout)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step])
+
   // autoPlay via atributo HTML é o que o Chrome/Safari mobile mais recusa
   // quando o <video> monta um instante depois da navegação (aqui ele só
   // entra no DOM quando step vira "logo", dentro de AnimatePresence) — sem
