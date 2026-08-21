@@ -96,7 +96,6 @@ export function AppSplash() {
               >
                 <video
                   src="/opal/logo-reveal.mp4"
-                  poster="/opal/stage-0.webp"
                   autoPlay
                   muted
                   playsInline
