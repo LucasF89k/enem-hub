@@ -1,6 +1,6 @@
 "use client"
 
-import { format, startOfWeek, addDays, subDays } from "date-fns"
+import { format, startOfWeek, addDays, startOfYear, endOfYear } from "date-fns"
 import { ptBR } from "date-fns/locale"
 
 interface CalendarHeatmapProps {
@@ -18,12 +18,18 @@ function getColor(minutes: number): string {
 const DAY_LABELS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"]
 
 export function CalendarHeatmap({ data }: CalendarHeatmapProps) {
+  // Ano-calendário (jan→dez), não uma janela rolante de 365 dias — era isso
+  // que fazia a faixa começar em "ago" e voltar pra "ago" no ano seguinte,
+  // uma ordem de mês que não bate com o que qualquer pessoa espera de um
+  // calendário. Os dias depois de hoje (dez ainda não vivido) continuam
+  // mascarados pelo mesmo `isFuture` de antes.
   const today = new Date()
-  const startDate = subDays(today, 364)
+  const yearStart = startOfYear(today)
+  const yearEnd = endOfYear(today)
 
   const weeks: Date[][] = []
-  let current = startOfWeek(startDate, { weekStartsOn: 0 })
-  while (current <= today) {
+  let current = startOfWeek(yearStart, { weekStartsOn: 0 })
+  while (current <= yearEnd) {
     const week: Date[] = []
     for (let d = 0; d < 7; d++) week.push(addDays(current, d))
     weeks.push(week)
@@ -42,13 +48,22 @@ export function CalendarHeatmap({ data }: CalendarHeatmapProps) {
   // ficava sem identificação — a faixa abria num mês anônimo.
   const monthLabels: { x: number; label: string }[] = []
   let lastMonth = -1
+  const targetYear = today.getFullYear()
   weeks.forEach((week, wi) => {
-    const m = week[0].getMonth()
+    const first = week[0]
+    // A primeira semana do ano quase sempre começa num domingo de dezembro do
+    // ano anterior (é só o preenchimento pra fechar a semana, não faz parte do
+    // ano exibido). Rotular essa semana criava um "dez" colado no "jan" logo
+    // ao lado — os dois rótulos quase se sobrepunham. As células continuam
+    // aparecendo normalmente (se houver estudo registrado nesses dias, ele
+    // mostra); só o rótulo de mês de fora do ano-alvo é que não entra.
+    if (first.getFullYear() !== targetYear) return
+    const m = first.getMonth()
     if (m !== lastMonth) {
       lastMonth = m
       monthLabels.push({
         x: LEFT + wi * (CELL + GAP),
-        label: format(week[0], "MMM", { locale: ptBR }),
+        label: format(first, "MMM", { locale: ptBR }),
       })
     }
   })
@@ -64,7 +79,7 @@ export function CalendarHeatmap({ data }: CalendarHeatmapProps) {
         height={totalHeight}
         preserveAspectRatio="xMinYMid meet"
         role="img"
-        aria-label="Atividade de estudo nos últimos 365 dias"
+        aria-label={`Atividade de estudo em ${today.getFullYear()}`}
       >
         {/* Day labels */}
         {[1, 3, 5].map((d) => (

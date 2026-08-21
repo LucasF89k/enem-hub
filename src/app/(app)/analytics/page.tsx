@@ -210,7 +210,7 @@ export default async function AnalyticsPage() {
       {/* Calendar heatmap */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-base">Atividade — últimos 365 dias</CardTitle>
+          <CardTitle className="text-base">Atividade em {new Date().getFullYear()}</CardTitle>
         </CardHeader>
         <CardContent>
           <CalendarHeatmap data={heatmap} />
