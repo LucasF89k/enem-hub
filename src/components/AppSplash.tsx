@@ -48,7 +48,13 @@ const REVEAL_MS = 5000 // duração do vídeo da pedra
 const PULLBACK_MS = 1000
 
 export function AppSplash() {
-  const [step, setStep] = useState<Step>("hidden")
+  // Começa direto em "logo", não em "hidden": entre o primeiro paint (SSR/
+  // hydration) e o useEffect abaixo rodar (setStep("logo")) existe um frame
+  // em que nada cobre a tela — o dashboard real por baixo pinta e some de
+  // novo assim que a splash entra, dando um "pisca" visível antes da
+  // animação começar. Começando já como "logo" a splash cobre a tela desde
+  // o primeiro render, sem esse intervalo.
+  const [step, setStep] = useState<Step>("logo")
   const [logoFailed, setLogoFailed] = useState(false)
   const [stoneFailed, setStoneFailed] = useState(false)
   // Autoplay silencioso pode ser recusado por política do navegador (ex.:
@@ -61,14 +67,11 @@ export function AppSplash() {
   const stoneVideoRef = useRef<HTMLVideoElement | null>(null)
   const logoTimersRef = useRef<ReturnType<typeof setTimeout>[]>([])
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setStep("logo")
-    // A partir daqui a timeline é disparada pelo evento onPlay do vídeo da
-    // logo (abaixo), não por um setTimeout fixo no mount — se o autoplay for
-    // recusado e o usuário precisar tocar pra continuar, a contagem de
-    // LOGO_MS só pode começar quando o vídeo realmente começa a rodar.
-  }, [])
+  // A timeline (reveal → pullback → done) é disparada pelo evento onPlay do
+  // vídeo da logo (abaixo), não por um setTimeout fixo no mount — se o
+  // autoplay for recusado e o usuário precisar tocar pra continuar, a
+  // contagem de LOGO_MS só pode começar quando o vídeo realmente começa a
+  // rodar.
 
   // A splash é "fixed inset-0" e cobre a tela toda visualmente, mas o
   // documento por baixo continua crescendo (o dashboard real já está
