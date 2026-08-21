@@ -6,7 +6,17 @@ import { AnimatePresence, motion } from "framer-motion"
 // fica no repo sem uso, é o fallback se algum dia precisar de novo.
 
 /**
- * Sequência de abertura do app — roda uma vez por sessão:
+ * Sequência de abertura do app — é a tela de loading do carregamento
+ * inicial disfarçada de animação, não um vídeo institucional pra ver toda
+ * vez. Só aparece quando as duas condições batem:
+ *
+ *   1. Nunca rodou nesse aparelho (localStorage, não sessionStorage — uma
+ *      vez de verdade, não uma vez por aba/sessão).
+ *   2. O documento ainda está carregando quando o componente monta — se
+ *      `document.readyState` já é "complete" nesse instante, é navegação
+ *      client-side entre páginas do próprio app (SPA), não abertura fria; o
+ *      conteúdo real já está pronto por baixo, então não faz sentido cobrir
+ *      a tela com uma animação de "carregando".
  *
  *   logo se monta (vídeo) → a pedra racha, se abre e revela a gema (vídeo)
  *   → a câmera recua até a posição do hero → entra o app
@@ -50,11 +60,24 @@ export function AppSplash() {
   useEffect(() => {
     let already = true
     try {
-      already = sessionStorage.getItem("splash-shown") === "1"
+      already = localStorage.getItem("splash-shown") === "1"
     } catch {
-      /* sessionStorage indisponível (SSR/privado) — mostra mesmo assim */
+      /* localStorage indisponível (SSR/privado) — mostra mesmo assim */
     }
     if (already) return
+
+    // Documento já pronto quando o componente monta = navegação client-side
+    // entre páginas do app (o conteúdo real já está na tela por baixo), não
+    // abertura fria — a splash existe pra cobrir o carregamento inicial, não
+    // pra aparecer por cima de uma página que já carregou.
+    if (document.readyState === "complete") {
+      try {
+        localStorage.setItem("splash-shown", "1")
+      } catch {
+        /* ignore */
+      }
+      return
+    }
 
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setStep("logo")
@@ -79,7 +102,7 @@ export function AppSplash() {
       setTimeout(() => {
         setStep("done")
         try {
-          sessionStorage.setItem("splash-shown", "1")
+          localStorage.setItem("splash-shown", "1")
         } catch {
           /* ignore */
         }
