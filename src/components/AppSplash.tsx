@@ -6,13 +6,17 @@ import { AnimatePresence, motion } from "framer-motion"
 // fica no repo sem uso, é o fallback se algum dia precisar de novo.
 
 /**
- * Sequência de abertura do app — roda TODA VEZ que o app é carregado do
- * zero (fechou a aba/o navegador e abriu de novo, ou deu refresh). Não tem
- * gate de "já vi, não mostra mais": esse componente vive no root layout,
- * que o Next.js não desmonta/remonta em navegação client-side entre páginas
- * do app (só o conteúdo abaixo troca) — então ela já não reaparece sozinha
- * navegando dentro do app; só precisa rodar de novo em cada carregamento
- * fresco de documento, que é justamente quando esse componente monta.
+ * Sequência de abertura do app — roda no carregamento inicial do app
+ * (fechou a aba/o navegador e abriu de novo, ou deu refresh), UMA VEZ por
+ * sessão de aba (sessionStorage — dura enquanto a aba está aberta, reseta
+ * ao fechar). Esse componente vive no root layout, que o Next.js não
+ * desmonta/remonta em navegação client-side entre páginas do app (só o
+ * conteúdo abaixo troca) — então em teoria ela já não reapareceria sozinha
+ * navegando dentro do app sem precisar do gate. Ele existe mesmo assim como
+ * cinto de segurança: se alguma navegação específica de aparelho/rede cair
+ * num fallback de reload completo de documento no meio do uso, a splash não
+ * volta a cobrir a tela — só reaparece se a aba/navegador for fechado de
+ * verdade e reaberto.
  *
  *   logo se monta (vídeo) → a pedra racha, se abre e revela a gema (vídeo)
  *   → a câmera recua até a posição do hero → entra o app
@@ -48,13 +52,25 @@ const REVEAL_MS = 5000 // duração do vídeo da pedra
 const PULLBACK_MS = 1000
 
 export function AppSplash() {
-  // Começa direto em "logo", não em "hidden": entre o primeiro paint (SSR/
-  // hydration) e o useEffect abaixo rodar (setStep("logo")) existe um frame
-  // em que nada cobre a tela — o dashboard real por baixo pinta e some de
-  // novo assim que a splash entra, dando um "pisca" visível antes da
-  // animação começar. Começando já como "logo" a splash cobre a tela desde
-  // o primeiro render, sem esse intervalo.
-  const [step, setStep] = useState<Step>("logo")
+  // Começa direto em "logo" (cobre a tela já no primeiro paint, sem o
+  // frame de "pisca" que existiria se começasse em "hidden" e só virasse
+  // "logo" dentro de um useEffect) — EXCETO se essa aba já rodou a splash
+  // nessa sessão de navegador, caso em que começa direto em "done".
+  //
+  // Isso é cinto de segurança contra qualquer navegação que acabe
+  // remontando o root layout dentro do app (idealmente nunca acontece —
+  // Next.js não desmonta o layout em navegação client-side normal — mas se
+  // algo específico de aparelho/rede cair num fallback de reload completo
+  // no meio do uso, a splash não deve voltar a cobrir a tela: sessionStorage
+  // dura enquanto a aba está aberta, então cobre exatamente essa situação
+  // sem contradizer "roda de novo se fechar e abrir aba/navegador").
+  const [step, setStep] = useState<Step>(() => {
+    try {
+      return sessionStorage.getItem("splash-ran") === "1" ? "done" : "logo"
+    } catch {
+      return "logo"
+    }
+  })
   const [logoFailed, setLogoFailed] = useState(false)
   const [stoneFailed, setStoneFailed] = useState(false)
   // Autoplay silencioso pode ser recusado por política do navegador (ex.:
@@ -101,7 +117,17 @@ export function AppSplash() {
     logoTimersRef.current = [
       setTimeout(() => setStep("reveal"), LOGO_MS),
       setTimeout(() => setStep("pullback"), LOGO_MS + REVEAL_MS),
-      setTimeout(() => setStep("done"), LOGO_MS + REVEAL_MS + PULLBACK_MS),
+      setTimeout(() => {
+        setStep("done")
+        // Marca "já rodou nessa aba" só agora que a sequência de fato
+        // terminou — é o que impede a splash de voltar a cobrir a tela se
+        // alguma navegação dentro do app remontar o root layout.
+        try {
+          sessionStorage.setItem("splash-ran", "1")
+        } catch {
+          /* ignore */
+        }
+      }, LOGO_MS + REVEAL_MS + PULLBACK_MS),
     ]
   }
 
