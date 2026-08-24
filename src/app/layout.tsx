@@ -4,7 +4,7 @@ import { Toaster } from "sonner"
 import { ServiceWorkerRegistrar } from "@/components/pwa/ServiceWorkerRegistrar"
 import { OfflineBanner } from "@/components/pwa/OfflineBanner"
 import { InstallPrompt } from "@/components/pwa/InstallPrompt"
-import { AppSplash } from "@/components/AppSplash"
+import { AppSplash } from "@/components/AppSplashLoader"
 import "./globals.css"
 
 const inter = Inter({
