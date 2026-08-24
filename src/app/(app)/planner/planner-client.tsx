@@ -221,7 +221,7 @@ export function PlannerClient({ weekStart, items, hasPlan, dailyGoal }: PlannerC
       try {
         await generatePlan(formData)
         toast.success("Plano gerado com sucesso!")
-        window.location.reload()
+        router.refresh()
       } catch {
         toast.error("Erro ao gerar plano. Tente novamente.")
       }
@@ -235,7 +235,7 @@ export function PlannerClient({ weekStart, items, hasPlan, dailyGoal }: PlannerC
         const result = await recalibratePlan()
         if (result.success) {
           toast.success("Plano recalibrado com base no seu desempenho!")
-          window.location.reload()
+          router.refresh()
         } else {
           toast.error(result.error ?? "Erro ao recalibrar")
         }
@@ -256,7 +256,7 @@ export function PlannerClient({ weekStart, items, hasPlan, dailyGoal }: PlannerC
       const res = await deletePlan()
       if (res.success) {
         toast.success("Plano excluído.")
-        window.location.reload()
+        router.refresh()
       } else {
         toast.error("Erro ao excluir o plano.")
       }
@@ -293,7 +293,7 @@ export function PlannerClient({ weekStart, items, hasPlan, dailyGoal }: PlannerC
       if (res.success) {
         toast.success(dialog.mode === "add" ? "Atividade adicionada!" : "Atividade atualizada!")
         setItemDialog(null)
-        window.location.reload()
+        router.refresh()
       } else {
         toast.error(res.error ?? "Erro ao salvar")
       }
@@ -308,7 +308,7 @@ export function PlannerClient({ weekStart, items, hasPlan, dailyGoal }: PlannerC
         toast.success("Atividade removida")
       } catch {
         toast.error("Erro ao remover")
-        window.location.reload()
+        router.refresh()
       }
     })
   }

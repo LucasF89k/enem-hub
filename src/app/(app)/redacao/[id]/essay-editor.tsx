@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, useTransition } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import {
@@ -109,6 +110,7 @@ export function EssayEditor({
   feedback,
   errors,
 }: EssayEditorProps) {
+  const router = useRouter()
   const [body, setBody] = useState(initialBody)
   const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "unsaved">("saved")
   const [scores, setScores] = useState({
@@ -181,7 +183,7 @@ export function EssayEditor({
         return
       }
       toast.success("Redação avaliada com sucesso!")
-      window.location.reload()
+      router.refresh()
     })
   }
 
