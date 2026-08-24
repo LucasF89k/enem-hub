@@ -238,6 +238,7 @@ export function AppSplash() {
                   autoPlay
                   muted
                   playsInline
+                  controls={false}
                   preload="auto"
                   onPlay={handleLogoPlaying}
                   onError={() => setLogoFailed(true)}
@@ -295,6 +296,7 @@ export function AppSplash() {
               poster="/opal/stage-0.webp"
               muted
               playsInline
+              controls={false}
               preload="auto"
               onError={() => setStoneFailed(true)}
               className="h-full w-full object-contain"

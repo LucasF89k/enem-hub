@@ -15,6 +15,16 @@ import dynamic from "next/dynamic"
 //
 // dynamic(..., { ssr: false }) só é permitido dentro de um Client
 // Component — layout.tsx é Server Component por padrão, daí esse wrapper.
+//
+// `loading`: enquanto o chunk do AppSplash (que agora é client-only, indo
+// num JS bundle separado) ainda está baixando, esse fallback cobre a tela
+// com um div preto puro — sem vídeo, sem depender de nada assíncrono. Sem
+// isso existia uma janela real (variável, dependendo de quão rápido o
+// chunk carrega) onde nada cobria a tela ainda, e quando o <video> do
+// AppSplash finalmente montava, podia aparecer por um instante no tamanho
+// intrínseco dele com o controle nativo do navegador por cima — antes do
+// autoPlay/play() imperativo rodarem synchronous o bastante.
 export const AppSplash = dynamic(() => import("@/components/AppSplash").then((m) => m.AppSplash), {
   ssr: false,
+  loading: () => <div className="fixed inset-0 z-[999] bg-black" />,
 })
