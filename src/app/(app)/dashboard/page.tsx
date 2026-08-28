@@ -6,6 +6,7 @@ import { startOfDayBR, addDaysBR } from "@/lib/date-br"
 import { Timer, Repeat, Brain, CalendarDays } from "lucide-react"
 
 import { detectTrail, getTrailConfig } from "@/lib/trail"
+import { effectiveStreak } from "@/lib/xp"
 import { StudyScoreGauge } from "@/components/dashboard/StudyScoreGauge"
 import { MetricPill } from "@/components/dashboard/MetricPill"
 import { StudyNudgeCard } from "@/components/dashboard/StudyNudgeCard"
@@ -31,6 +32,7 @@ export default async function DashboardPage() {
       where: { userId },
       select: {
         streak: true,
+        lastStudyDate: true,
         examDate: true,
         estimatedScore: true,
         dailyStudyGoal: true,
@@ -49,7 +51,7 @@ export default async function DashboardPage() {
 
   const minutesToday = todayAgg._sum.duration ?? 0
   const dailyGoal = profile?.dailyStudyGoal ?? 120
-  const streak = profile?.streak ?? 0
+  const streak = effectiveStreak(profile?.streak ?? 0, profile?.lastStudyDate ?? null)
   const estimatedScore = profile?.estimatedScore ?? 0
   const daysUntilExam = profile?.examDate
     ? Math.max(0, differenceInDays(profile.examDate, new Date()))

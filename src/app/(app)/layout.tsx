@@ -3,6 +3,7 @@ import { redirect } from "next/navigation"
 import { db } from "@/lib/db"
 import { AppShell } from "@/components/layout/AppShell"
 import { ForceLogout } from "@/components/auth/ForceLogout"
+import { effectiveStreak } from "@/lib/xp"
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await auth()
@@ -17,7 +18,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     }),
     db.userProfile.findUnique({
       where: { userId: session.user.id },
-      select: { currentLevel: true, totalXP: true, streak: true },
+      select: { currentLevel: true, totalXP: true, streak: true, lastStudyDate: true },
     }),
   ])
 
@@ -29,7 +30,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     image: dbUser?.image ?? session.user.image ?? null,
     level: profile?.currentLevel ?? 1,
     totalXP: profile?.totalXP ?? 0,
-    streak: profile?.streak ?? 0,
+    streak: effectiveStreak(profile?.streak ?? 0, profile?.lastStudyDate ?? null),
   }
 
   return <AppShell user={user}>{children}</AppShell>

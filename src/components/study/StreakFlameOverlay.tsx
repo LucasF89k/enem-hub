@@ -1,7 +1,9 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import { Lottie } from "lottie-react"
+import fireAnimation from "./fire.json"
 
 interface Props {
   open: boolean
@@ -18,6 +20,9 @@ interface Props {
  * feedback de streak do Duolingo/Opal.
  */
 export function StreakFlameOverlay({ open, onClose, streakIncreased, streak, xp = 10 }: Props) {
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
+
   useEffect(() => {
     if (!open) return
     const t = setTimeout(onClose, streakIncreased ? 2600 : 1600)
@@ -75,38 +80,20 @@ export function StreakFlameOverlay({ open, onClose, streakIncreased, streak, xp 
               )
             })}
 
-            {/* a chama */}
+            {/* a chama — Lottie */}
             <motion.div
-              initial={{ scale: 0.2, y: 24, opacity: 0 }}
+              initial={{ scale: 0.3, y: 24, opacity: 0 }}
               animate={{ scale: 1, y: 0, opacity: 1 }}
-              transition={{ type: "spring", stiffness: 260, damping: 16, delay: 0.05 }}
+              transition={{ type: "spring", stiffness: 240, damping: 18, delay: 0.05 }}
             >
-              <motion.div
-                animate={{ rotate: [-2.5, 2.5, -1.5, 2, -2.5], scale: [1, 1.04, 0.98, 1.03, 1] }}
-                transition={{ duration: 0.9, repeat: Infinity, ease: "easeInOut" }}
-              >
-                <svg width="96" height="120" viewBox="0 0 96 120" fill="none">
-                  <defs>
-                    <linearGradient id="flame-outer" x1="48" y1="8" x2="48" y2="116" gradientUnits="userSpaceOnUse">
-                      <stop offset="0" stopColor="#FFD36B" />
-                      <stop offset="0.45" stopColor="#F5A623" />
-                      <stop offset="1" stopColor="#F26D6D" />
-                    </linearGradient>
-                    <linearGradient id="flame-inner" x1="48" y1="34" x2="48" y2="112" gradientUnits="userSpaceOnUse">
-                      <stop offset="0" stopColor="#FFF6D8" />
-                      <stop offset="1" stopColor="#FFC24B" />
-                    </linearGradient>
-                  </defs>
-                  <path
-                    d="M48 6c6 16 26 26 26 52a26 26 0 0 1-52 0c0-8 3-14 7-20-13 6-24 18-24 40a44 44 0 0 0 88 0c0-38-26-50-45-72z"
-                    fill="url(#flame-outer)"
-                  />
-                  <path
-                    d="M50 44c3 9 13 15 13 30a15 15 0 0 1-30 0c0-8 5-14 9-19-1 10 8 14 8 6 0-9-4-14 0-17z"
-                    fill="url(#flame-inner)"
-                  />
-                </svg>
-              </motion.div>
+              {mounted && (
+                <Lottie
+                  src={fireAnimation}
+                  loop
+                  autoplay
+                  style={{ width: 150, height: 150 }}
+                />
+              )}
             </motion.div>
 
             {/* texto */}

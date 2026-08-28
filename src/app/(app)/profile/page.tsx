@@ -3,6 +3,7 @@ import { redirect } from "next/navigation"
 import { db } from "@/lib/db"
 import { getTrailConfig } from "@/lib/trail"
 import { ACHIEVEMENT_DEFS } from "@/lib/achievements"
+import { effectiveStreak } from "@/lib/xp"
 import { differenceInDays } from "date-fns"
 import Link from "next/link"
 import { AvatarUpload } from "@/components/profile/AvatarUpload"
@@ -46,6 +47,7 @@ export default async function ProfilePage() {
         totalXP: true,
         streak: true,
         longestStreak: true,
+        lastStudyDate: true,
         trail: true,
         estimatedScore: true,
       },
@@ -131,7 +133,7 @@ export default async function ProfilePage() {
         {/* 3 métricas com ícone "glow" */}
         <div className="relative z-10 mt-7 flex items-start justify-center gap-3">
           <MetricGlow icon={<Hourglass className="h-6 w-6" />} value={focusLabel} label="Horas de foco" tint="text-primary" />
-          <MetricGlow icon={<Flame className="h-6 w-6 fill-current" />} value={String(profile?.streak ?? 0)} label="Dias seguidos" tint="text-warning" />
+          <MetricGlow icon={<Flame className="h-6 w-6 fill-current" />} value={String(effectiveStreak(profile?.streak ?? 0, profile?.lastStudyDate ?? null))} label="Dias seguidos" tint="text-warning" />
           <MetricGlow
             icon={<Globe2 className="h-6 w-6" />}
             value={rankPercent !== null ? `Top ${rankPercent}%` : "--"}
