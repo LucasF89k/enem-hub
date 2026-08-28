@@ -112,26 +112,18 @@ export default async function StudyPage() {
               key={area.slug}
               href={`/study/${area.slug}`}
               style={{ animationDelay: `${i * 70}ms` }}
-              className={`opal-glass-card opal-enter group flex flex-col gap-4 rounded-2xl border ${accent.border} p-5 transition-transform hover:-translate-y-0.5`}
+              className={`opal-enter group flex flex-col gap-4 rounded-2xl border bg-card ${accent.border} p-4 transition-transform hover:-translate-y-0.5`}
             >
-              <div className="flex items-start justify-between">
-                <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${accent.iconBg}`}>
-                  <Icon className={`h-5 w-5 ${accent.icon}`} strokeWidth={1.75} />
-                </div>
-                <span className="text-xs text-muted-foreground">
-                  {area.disciplines.length} disciplinas
-                </span>
+              <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${accent.iconBg}`}>
+                <Icon className={`h-5 w-5 ${accent.icon}`} strokeWidth={1.75} />
               </div>
 
-              <div className="space-y-0.5">
+              <div className="space-y-1">
                 <h2 className="text-base font-semibold leading-tight">{area.name}</h2>
                 <p className="text-xs text-muted-foreground">
                   {studiedTopics} de {totalTopics} tópicos
                 </p>
-              </div>
-
-              <div className="space-y-1.5">
-                <Progress value={progressPct} className={`h-1 ${accent.bar}`} />
+                <Progress value={progressPct} className={`mt-2 h-1 ${accent.bar}`} />
               </div>
             </Link>
           )
@@ -149,7 +141,7 @@ export default async function StudyPage() {
               key={href}
               href={href}
               style={{ animationDelay: `${(areas.length + i) * 70}ms` }}
-              className="opal-glass-card opal-enter flex items-center gap-3 rounded-2xl p-3.5 transition-colors hover:bg-muted/40 active:scale-[0.99]"
+              className="opal-enter flex items-center gap-3 rounded-2xl border border-border bg-card p-3.5 transition-colors hover:bg-muted/40 active:scale-[0.99]"
             >
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10">
                 <Icon className="h-4 w-4 text-primary" strokeWidth={1.75} />

@@ -17,12 +17,29 @@ export function AppShell({ children, user }: AppShellProps) {
   const pathname = usePathname()
   const isExam = EXAM_ROUTE.test(pathname)
   // O Mentor tem cabeçalho próprio — esconde a barra de topo para não empilhar logos.
-  const hideHeader = pathname === "/mentor" || pathname.startsWith("/mentor/")
+  const isMentor = pathname === "/mentor" || pathname.startsWith("/mentor/")
+  const hideHeader = isMentor
   // A Home ganha um fundo de galáxia; o resto do app mantém a vinheta padrão.
   const isHome = pathname === "/dashboard"
 
   if (isExam) {
     return <>{children}</>
+  }
+
+  // Mentor: tela de altura fixa (nunca rola a página). A área de mensagens
+  // rola por dentro; o input fica colado acima da BottomNav.
+  if (isMentor) {
+    return (
+      <>
+        <div
+          className="fixed inset-x-0 top-0 overflow-hidden"
+          style={{ bottom: "calc(3.5rem + env(safe-area-inset-bottom))" }}
+        >
+          {children}
+        </div>
+        <BottomNav />
+      </>
+    )
   }
 
   return (
