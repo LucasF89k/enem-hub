@@ -46,7 +46,7 @@ function MentorMascot({ size = 30 }: { size?: number }) {
 function MentorAvatar({ size = 32, slime = false }: { size?: number; slime?: boolean }) {
   return (
     <span className="shrink-0" style={{ width: size, height: size }}>
-      <OpalCrystal size={size} stage={3} slime={slime} slimeScale={5} icon />
+      <OpalCrystal size={size} stage={3} slime={slime} icon />
     </span>
   )
 }

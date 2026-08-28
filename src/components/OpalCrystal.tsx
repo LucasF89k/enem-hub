@@ -11,9 +11,7 @@ import { motion } from "framer-motion"
  *   stage 3 — a gema pura, exposta
  *
  * As artes são imagens reais (geradas para o projeto e recortadas por
- * `scripts/prepare-opal.js`, que remove o fundo preto por flood fill). Antes
- * isso era desenhado à mão em SVG e nunca ia passar de uma aproximação de
- * pedra; com as imagens a leitura é fotorrealista.
+ * `scripts/prepare-opal.js`, que remove o fundo preto por flood fill).
  *
  * A troca entre fases é um crossfade: as quatro ficam empilhadas e só a opacidade
  * muda, então não há "pulo" de forma nem recarregamento no meio da animação.
@@ -26,41 +24,49 @@ export function OpalCrystal({
   stage = 3,
   slime = false,
   icon = false,
-  slimeScale = 12,
 }: {
   size?: number
   stage?: 0 | 1 | 2 | 3
-  /** ondulação contínua de gelatina — usada na gema exposta, no hero da Home */
+  /** ondulação contínua e suave — "gelatina viva" */
   slime?: boolean
-  /** modo ícone: sem flutuação e sem halo. Em tamanho pequeno (avatar de chat,
-   *  cabeçalho) o balanço lê como tremido e o halo desfocado vira um borrão. */
+  /** modo ícone: sem halo (em avatar pequeno o blur vira borrão). */
   icon?: boolean
-  /** intensidade do deslocamento do slime (px). Em avatares pequenos precisa
-   *  ser maior pra a ondulação ficar perceptível. */
+  /** @deprecated não usado — mantido pra não quebrar chamadas antigas */
   slimeScale?: number
 }) {
-  const slimeId = `opal-slime-${slimeScale}`
-
-  // Movimento do wrapper: no modo normal flutua e gira devagar; no modo ícone
-  // com slime, um wobble sutil e contínuo — garante vida visível mesmo em
-  // avatar pequeno, onde só o filtro SVG mal se percebe.
-  const wrapperAnim = icon
-    ? slime
-      ? { scale: [1, 1.06, 0.97, 1.04, 1], rotate: [0, 1.5, -1.5, 1, 0] }
+  // Movimento do wrapper. Tudo em transform (composto na GPU), curvas longas e
+  // senoidais — nada de recalcular filtro por frame, então não trava.
+  //   - modo normal (hero): flutua e gira devagar
+  //   - modo ícone + slime (bolha do chat): respiração + leve deriva orgânica,
+  //     bem lenta e fluida
+  //   - modo ícone sem slime (cabeçalho): parado
+  const wrapperAnim = !icon
+    ? { y: [-5, 5, -5], rotate: [-2, 2, -2] }
+    : slime
+      ? {
+          scale: [1, 1.045, 0.985, 1.03, 1],
+          y: [0, -1.5, 0.8, -1, 0],
+          rotate: [0, 1, -0.6, 0.4, 0],
+        }
       : undefined
-    : { y: [-5, 5, -5], rotate: [-2, 2, -2] }
-  const wrapperTransition = icon
-    ? { duration: 2.4, repeat: Infinity, ease: "easeInOut" as const }
-    : { duration: 9, repeat: Infinity, ease: "easeInOut" as const }
+
+  const wrapperTransition = !icon
+    ? { duration: 9, repeat: Infinity, ease: "easeInOut" as const }
+    : { duration: 6, repeat: Infinity, ease: "easeInOut" as const }
+
+  // Deformação "gelatina": um filtro SVG ESTÁTICO (sem <animate>, custo só uma
+  // vez). Combinado com o movimento suave do wrapper, dá leitura de algo mole
+  // e vivo sem o engasgo de animar feTurbulence.
+  const useJelly = slime
 
   return (
     <motion.div
       animate={wrapperAnim}
       transition={wrapperAnim ? wrapperTransition : undefined}
-      style={{ width: size, height: size }}
+      style={{ width: size, height: size, willChange: "transform" }}
       className="relative"
     >
-      {/* Halo — a luz que escapa da pedra, cresce conforme ela se abre */}
+      {/* Halo — a luz que escapa da pedra */}
       {!icon && (
         <motion.div
           aria-hidden
@@ -86,51 +92,33 @@ export function OpalCrystal({
           aria-hidden={s !== stage}
           draggable={false}
           className="absolute inset-0 h-full w-full select-none object-contain"
-          style={
-            slime && s === 3 ? { filter: `url(#${slimeId})`, willChange: "filter" } : undefined
-          }
+          style={useJelly && s === 3 ? { filter: "url(#opal-jelly)" } : undefined}
           initial={false}
           animate={{ opacity: s === stage ? 1 : 0 }}
           transition={{ duration: 0.9, ease: "easeOut" }}
         />
       ))}
 
-      {/* Filtro do "slime": a frequência do ruído oscila, deformando a gema como
-          gelatina, em loop infinito. Animado por SMIL (<animate>) de propósito —
-          o Framer Motion não anima atributos dentro de <filter> de forma
-          confiável. Só é montado quando o efeito é pedido. */}
-      {slime && (
-        <svg
-          width="1"
-          height="1"
-          className="pointer-events-none absolute"
-          style={{ position: "absolute", overflow: "hidden" }}
-          aria-hidden
-        >
+      {/* Filtro estático — deformação fixa, calculada uma vez, sem <animate>.
+          A "vida" vem do transform do wrapper, que nunca trava. */}
+      {useJelly && (
+        <svg width="0" height="0" className="pointer-events-none absolute" aria-hidden>
           <defs>
-            <filter id={slimeId} x="-30%" y="-30%" width="160%" height="160%">
-              <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="2" seed="5" result="w">
-                <animate
-                  attributeName="baseFrequency"
-                  dur="4s"
-                  values="0.014;0.03;0.02;0.036;0.014"
-                  repeatCount="indefinite"
-                />
-              </feTurbulence>
+            <filter id="opal-jelly" x="-20%" y="-20%" width="140%" height="140%">
+              <feTurbulence
+                type="fractalNoise"
+                baseFrequency="0.016"
+                numOctaves="2"
+                seed="7"
+                result="n"
+              />
               <feDisplacementMap
                 in="SourceGraphic"
-                in2="w"
-                scale={slimeScale}
+                in2="n"
+                scale="6"
                 xChannelSelector="R"
                 yChannelSelector="G"
-              >
-                <animate
-                  attributeName="scale"
-                  dur="4s"
-                  values={`${slimeScale};${slimeScale * 1.8};${slimeScale};${slimeScale * 1.4};${slimeScale}`}
-                  repeatCount="indefinite"
-                />
-              </feDisplacementMap>
+              />
             </filter>
           </defs>
         </svg>
