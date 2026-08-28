@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { OpalCrystal } from "@/components/OpalCrystal"
 
 const R = 90
 const CIRC = 2 * Math.PI * R
@@ -59,19 +58,23 @@ export function StudyScoreGauge({
     <div className="relative flex h-[270px] w-[270px] items-center justify-center">
       <div className="opal-breathing-glow" aria-hidden />
 
-      {/* A opala ocupa o miolo do anel — os números ficam POR CIMA dela */}
+      {/* O mascote ocupa o miolo do anel — os números ficam POR CIMA dele */}
       <div className="absolute inset-0 flex items-center justify-center">
-        <OpalCrystal size={132} stage={3} slime />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/opal/mascote.webp"
+          alt=""
+          className="h-[150px] w-[150px] object-contain drop-shadow-[0_0_22px_rgba(124,242,200,0.35)]"
+        />
       </div>
 
-      {/* Véu escuro só atrás dos números: sem ele o texto branco some no meio
-          do play-of-color da gema, que é muito claro e saturado. */}
+      {/* Véu escuro só atrás dos números, pra o texto branco não sumir no mascote */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "radial-gradient(ellipse 42% 26% at 50% 54%, rgba(0,0,0,0.72), transparent 75%)",
+            "radial-gradient(ellipse 44% 24% at 50% 52%, rgba(0,0,0,0.68), transparent 75%)",
         }}
       />
 
