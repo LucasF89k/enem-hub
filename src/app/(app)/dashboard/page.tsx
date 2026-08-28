@@ -66,7 +66,7 @@ export default async function DashboardPage() {
       {/* Hero — o fundo com profundidade agora vem do AppShell (app inteiro) */}
       <div className="flex flex-col items-center">
         <div
-          className="opal-enter flex w-full items-center justify-between"
+          className="opal-enter flex w-full items-center gap-3"
           style={{ animationDelay: "0ms" }}
         >
           <h1 className="text-lg font-light text-foreground">

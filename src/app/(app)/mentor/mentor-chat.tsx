@@ -679,7 +679,7 @@ export function MentorChat() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Pergunte ao Mentor ENEM… (Enter para enviar)"
+            placeholder="Pergunte ao Mentor ENEM…"
             className="resize-none min-h-[44px] max-h-32 text-sm"
             rows={1}
             disabled={isLoading}
