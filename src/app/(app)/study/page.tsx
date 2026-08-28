@@ -11,6 +11,7 @@ import {
   Layers,
   ClipboardList,
   PenLine,
+  CalendarRange,
   ChevronRight,
   type LucideIcon,
 } from "lucide-react"
@@ -63,6 +64,7 @@ const SHORTCUTS: { icon: LucideIcon; title: string; sub: string; href: string }[
   { icon: Layers, title: "Flashcards", sub: "Revisão espaçada (SM-2)", href: "/flashcards" },
   { icon: ClipboardList, title: "Simulados", sub: "Provas no estilo ENEM", href: "/simulados" },
   { icon: PenLine, title: "Redação", sub: "Escreva e receba correção", href: "/redacao" },
+  { icon: CalendarRange, title: "Plano de estudos", sub: "Sua rotina no Planner", href: "/planner" },
 ]
 
 export default async function StudyPage() {
@@ -91,14 +93,14 @@ export default async function StudyPage() {
   const studiedSet = new Set(studiedSessions.map((s) => s.topicId))
 
   return (
-    <div className="mx-auto max-w-5xl space-y-8 px-4 py-6">
+    <div className="mx-auto max-w-5xl space-y-5 px-4 py-5">
       <div>
-        <h1 className="text-2xl font-bold">Estudar</h1>
-        <p className="text-sm text-muted-foreground">Escolha uma área para começar</p>
+        <h1 className="text-xl font-bold">Estudar</h1>
+        <p className="text-xs text-muted-foreground">Escolha uma área para começar</p>
       </div>
 
       {/* Áreas */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-2 gap-3">
         {areas.map((area, i) => {
           const Icon = AREA_ICON[area.slug] ?? BookOpen
           const accent = AREA_ACCENT[area.slug] ?? FALLBACK_ACCENT
@@ -111,19 +113,19 @@ export default async function StudyPage() {
             <Link
               key={area.slug}
               href={`/study/${area.slug}`}
-              style={{ animationDelay: `${i * 70}ms` }}
-              className={`opal-enter group flex flex-col gap-4 rounded-2xl border bg-card ${accent.border} p-4 transition-transform hover:-translate-y-0.5`}
+              style={{ animationDelay: `${i * 60}ms` }}
+              className={`opal-enter group flex flex-col gap-3 rounded-2xl border bg-card ${accent.border} p-3.5 transition-transform hover:-translate-y-0.5`}
             >
-              <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${accent.iconBg}`}>
-                <Icon className={`h-5 w-5 ${accent.icon}`} strokeWidth={1.75} />
+              <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${accent.iconBg}`}>
+                <Icon className={`h-4 w-4 ${accent.icon}`} strokeWidth={1.75} />
               </div>
 
               <div className="space-y-1">
-                <h2 className="text-base font-semibold leading-tight">{area.name}</h2>
-                <p className="text-xs text-muted-foreground">
+                <h2 className="text-sm font-semibold leading-tight">{area.name}</h2>
+                <p className="text-[11px] text-muted-foreground">
                   {studiedTopics} de {totalTopics} tópicos
                 </p>
-                <Progress value={progressPct} className={`mt-2 h-1 ${accent.bar}`} />
+                <Progress value={progressPct} className={`mt-1.5 h-1 ${accent.bar}`} />
               </div>
             </Link>
           )
@@ -132,7 +134,7 @@ export default async function StudyPage() {
 
       {/* Atalhos */}
       <div className="space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
           Atalhos
         </p>
         <div className="flex flex-col gap-2">
@@ -140,15 +142,15 @@ export default async function StudyPage() {
             <Link
               key={href}
               href={href}
-              style={{ animationDelay: `${(areas.length + i) * 70}ms` }}
-              className="opal-enter flex items-center gap-3 rounded-2xl border border-border bg-card p-3.5 transition-colors hover:bg-muted/40 active:scale-[0.99]"
+              style={{ animationDelay: `${(areas.length + i) * 60}ms` }}
+              className="opal-enter flex items-center gap-3 rounded-2xl border border-border bg-card p-3 transition-colors hover:bg-muted/40 active:scale-[0.99]"
             >
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
                 <Icon className="h-4 w-4 text-primary" strokeWidth={1.75} />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold leading-tight">{title}</p>
-                <p className="truncate text-xs text-muted-foreground">{sub}</p>
+                <p className="text-[13px] font-semibold leading-tight">{title}</p>
+                <p className="truncate text-[11px] text-muted-foreground">{sub}</p>
               </div>
               <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
             </Link>
