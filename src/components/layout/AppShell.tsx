@@ -26,17 +26,12 @@ export function AppShell({ children, user }: AppShellProps) {
     return <>{children}</>
   }
 
-  // Mentor: tela de altura fixa (nunca rola a página). A área de mensagens
-  // rola por dentro; o input fica colado acima da BottomNav.
+  // Mentor: a própria tela se posiciona (fixed) até a BottomNav; aqui só
+  // não envolvemos em <main> com padding, pra não sobrar espaço.
   if (isMentor) {
     return (
       <>
-        <div
-          className="fixed inset-x-0 top-0 overflow-hidden"
-          style={{ bottom: "calc(3.5rem + env(safe-area-inset-bottom))" }}
-        >
-          {children}
-        </div>
+        {children}
         <BottomNav />
       </>
     )
