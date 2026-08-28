@@ -11,7 +11,6 @@ import {
   Layers,
   ClipboardList,
   PenLine,
-  CalendarRange,
   ChevronRight,
   type LucideIcon,
 } from "lucide-react"
@@ -64,7 +63,6 @@ const SHORTCUTS: { icon: LucideIcon; title: string; sub: string; href: string }[
   { icon: Layers, title: "Flashcards", sub: "Revisão espaçada (SM-2)", href: "/flashcards" },
   { icon: ClipboardList, title: "Simulados", sub: "Provas no estilo ENEM", href: "/simulados" },
   { icon: PenLine, title: "Redação", sub: "Escreva e receba correção", href: "/redacao" },
-  { icon: CalendarRange, title: "Plano de estudos", sub: "Sua rotina no Planner", href: "/planner" },
 ]
 
 export default async function StudyPage() {
