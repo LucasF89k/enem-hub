@@ -29,10 +29,20 @@ const QUICK_ACTIONS = [
   { label: "Estratégia de prova", text: "Como devo gerir meu tempo durante o ENEM? Me dê uma estratégia prática." },
 ]
 
-/**
- * Avatar do Mentor: a gema de opala. No cabeçalho fica parada; nas bolhas
- * do chat ondula (slime) bem visível, pra dar sinal de "vivo".
- */
+/** Mascote — usado no cabeçalho ("Mentor ENEM"). */
+function MentorMascot({ size = 30 }: { size?: number }) {
+  return (
+    <span
+      className="inline-block shrink-0 overflow-hidden rounded-full"
+      style={{ width: size, height: size }}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/opal/mascote.webp" alt="Mentor" className="h-full w-full object-cover" />
+    </span>
+  )
+}
+
+/** Avatar das bolhas do chat: a gema de opala ondulando (slime). */
 function MentorAvatar({ size = 32, slime = false }: { size?: number; slime?: boolean }) {
   return (
     <span className="shrink-0" style={{ width: size, height: size }}>
@@ -486,7 +496,7 @@ export function MentorChat() {
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2 border-b shrink-0">
         <div className="flex items-center gap-2">
-          <MentorAvatar size={30} slime />
+          <MentorMascot size={30} />
           <div>
             <p className="text-sm font-semibold leading-none">Mentor ENEM</p>
             <p className="text-[10px] text-muted-foreground">Seu tutor pessoal</p>
