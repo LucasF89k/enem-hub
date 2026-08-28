@@ -43,3 +43,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 /scripts/.claude-extract/
+
+# Design work (mockups, artboards) — não versionar
+.design-work/

@@ -2,13 +2,17 @@ import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { db } from "@/lib/db"
 import Link from "next/link"
-import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import {
   FlaskConical,
   Globe,
   BookOpen,
   Calculator,
+  Layers,
+  ClipboardList,
+  PenLine,
+  CalendarRange,
+  ChevronRight,
   type LucideIcon,
 } from "lucide-react"
 
@@ -21,12 +25,47 @@ const AREA_ICON: Record<string, LucideIcon> = {
   matematica: Calculator,
 }
 
-const AREA_STYLE: Record<string, { bg: string; text: string; border: string }> = {
-  "ciencias-natureza": { bg: "bg-green-500/10", text: "text-green-600 dark:text-green-400", border: "border-green-500/20" },
-  "ciencias-humanas":  { bg: "bg-blue-500/10",  text: "text-blue-600 dark:text-blue-400",  border: "border-blue-500/20" },
-  linguagens:          { bg: "bg-purple-500/10", text: "text-purple-600 dark:text-purple-400", border: "border-purple-500/20" },
-  matematica:          { bg: "bg-orange-500/10", text: "text-orange-600 dark:text-orange-400", border: "border-orange-500/20" },
+/** Cor de acento por área — borda, ícone e barra de progresso. */
+const AREA_ACCENT: Record<string, { border: string; iconBg: string; icon: string; bar: string }> = {
+  "ciencias-natureza": {
+    border: "border-sky-500/20",
+    iconBg: "bg-sky-500/12",
+    icon: "text-sky-400",
+    bar: "[&>div]:bg-sky-400",
+  },
+  "ciencias-humanas": {
+    border: "border-primary/25",
+    iconBg: "bg-primary/12",
+    icon: "text-primary",
+    bar: "[&>div]:bg-primary",
+  },
+  linguagens: {
+    border: "border-violet-500/25",
+    iconBg: "bg-violet-500/14",
+    icon: "text-violet-400",
+    bar: "[&>div]:bg-violet-400",
+  },
+  matematica: {
+    border: "border-amber-500/22",
+    iconBg: "bg-amber-500/12",
+    icon: "text-amber-400",
+    bar: "[&>div]:bg-amber-400",
+  },
 }
+
+const FALLBACK_ACCENT = {
+  border: "border-border",
+  iconBg: "bg-muted",
+  icon: "text-foreground",
+  bar: "",
+}
+
+const SHORTCUTS: { icon: LucideIcon; title: string; sub: string; href: string }[] = [
+  { icon: Layers, title: "Flashcards", sub: "Revisão espaçada (SM-2)", href: "/flashcards" },
+  { icon: ClipboardList, title: "Simulados", sub: "Provas no estilo ENEM", href: "/simulados" },
+  { icon: PenLine, title: "Redação", sub: "Escreva e receba correção", href: "/redacao" },
+  { icon: CalendarRange, title: "Plano de estudos", sub: "Sua rotina no Planner", href: "/planner" },
+]
 
 export default async function StudyPage() {
   const session = await auth()
@@ -54,16 +93,17 @@ export default async function StudyPage() {
   const studiedSet = new Set(studiedSessions.map((s) => s.topicId))
 
   return (
-    <div className="px-4 py-6 max-w-5xl mx-auto space-y-6">
+    <div className="mx-auto max-w-5xl space-y-8 px-4 py-6">
       <div>
         <h1 className="text-2xl font-bold">Estudar</h1>
         <p className="text-sm text-muted-foreground">Escolha uma área para começar</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {areas.map((area) => {
+      {/* Áreas */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {areas.map((area, i) => {
           const Icon = AREA_ICON[area.slug] ?? BookOpen
-          const style = AREA_STYLE[area.slug] ?? { bg: "bg-muted", text: "text-foreground", border: "border-border" }
+          const accent = AREA_ACCENT[area.slug] ?? FALLBACK_ACCENT
           const topicIds = area.disciplines.flatMap((d) => d.topics.map((t) => t.id))
           const totalTopics = topicIds.length
           const studiedTopics = topicIds.filter((id) => studiedSet.has(id)).length
@@ -73,39 +113,57 @@ export default async function StudyPage() {
             <Link
               key={area.slug}
               href={`/study/${area.slug}`}
-              className={[
-                "group flex flex-col gap-4 rounded-xl border p-5 transition-all",
-                "hover:shadow-md hover:-translate-y-0.5",
-                style.bg,
-                style.border,
-              ].join(" ")}
+              style={{ animationDelay: `${i * 70}ms` }}
+              className={`opal-glass-card opal-enter group flex flex-col gap-4 rounded-2xl border ${accent.border} p-5 transition-transform hover:-translate-y-0.5`}
             >
               <div className="flex items-start justify-between">
-                <div className={["p-2.5 rounded-lg", style.bg, "border", style.border].join(" ")}>
-                  <Icon className={["h-7 w-7", style.text].join(" ")} />
+                <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${accent.iconBg}`}>
+                  <Icon className={`h-5 w-5 ${accent.icon}`} strokeWidth={1.75} />
                 </div>
-                <Badge variant="secondary" className="text-xs">
-                  {totalTopics} tópicos
-                </Badge>
+                <span className="text-xs text-muted-foreground">
+                  {area.disciplines.length} disciplinas
+                </span>
               </div>
 
-              <div className="space-y-1">
-                <h2 className="text-lg font-semibold leading-tight">{area.name}</h2>
+              <div className="space-y-0.5">
+                <h2 className="text-base font-semibold leading-tight">{area.name}</h2>
                 <p className="text-xs text-muted-foreground">
-                  {area.disciplines.length} disciplinas
+                  {studiedTopics} de {totalTopics} tópicos
                 </p>
               </div>
 
-              <div className="space-y-1">
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>{studiedTopics}/{totalTopics} estudados</span>
-                  <span>{progressPct}%</span>
-                </div>
-                <Progress value={progressPct} className="h-1.5" />
+              <div className="space-y-1.5">
+                <Progress value={progressPct} className={`h-1 ${accent.bar}`} />
               </div>
             </Link>
           )
         })}
+      </div>
+
+      {/* Atalhos */}
+      <div className="space-y-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Atalhos
+        </p>
+        <div className="flex flex-col gap-2">
+          {SHORTCUTS.map(({ icon: Icon, title, sub, href }, i) => (
+            <Link
+              key={href}
+              href={href}
+              style={{ animationDelay: `${(areas.length + i) * 70}ms` }}
+              className="opal-glass-card opal-enter flex items-center gap-3 rounded-2xl p-3.5 transition-colors hover:bg-muted/40 active:scale-[0.99]"
+            >
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                <Icon className="h-4 w-4 text-primary" strokeWidth={1.75} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold leading-tight">{title}</p>
+                <p className="truncate text-xs text-muted-foreground">{sub}</p>
+              </div>
+              <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+            </Link>
+          ))}
+        </div>
       </div>
     </div>
   )

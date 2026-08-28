@@ -43,11 +43,15 @@ interface HeaderProps {
 
 export function Header({ actions, className, user }: HeaderProps) {
   const pathname = usePathname()
+  const onHome = pathname === "/dashboard"
 
   return (
     <header
       className={cn(
-        "flex items-center h-12 px-4 gap-3 border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-40 shrink-0",
+        "flex items-center h-12 px-4 gap-3 sticky top-0 z-40 shrink-0 transition-colors",
+        onHome
+          ? "border-b border-transparent bg-transparent"
+          : "border-b border-border bg-background/80 backdrop-blur-sm",
         className
       )}
     >

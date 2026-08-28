@@ -223,3 +223,18 @@
     animation: none;
   }
 }
+
+/* Fundo de galáxia da Home — drift bem lento, sem "pular" (alternate). */
+@keyframes opal-space-drift {
+  0%   { transform: translate3d(0, 0, 0) scale(1.04); }
+  50%  { transform: translate3d(2.5%, -2%, 0) scale(1.08); }
+  100% { transform: translate3d(-2%, 1.5%, 0) scale(1.05); }
+}
+.opal-space-drift {
+  animation: opal-space-drift 44s ease-in-out infinite alternate;
+}
+@media (prefers-reduced-motion: reduce) {
+  .opal-space-drift {
+    animation: none;
+  }
+}
