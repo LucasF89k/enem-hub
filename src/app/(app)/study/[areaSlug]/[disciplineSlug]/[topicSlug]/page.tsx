@@ -3,7 +3,7 @@ import { redirect, notFound } from "next/navigation"
 import { db } from "@/lib/db"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
-import { ChevronRight, Star, Flame } from "lucide-react"
+import { ChevronLeft, Star, Flame } from "lucide-react"
 import { FavoriteButton } from "@/components/study/FavoriteButton"
 import { TopicTabs } from "./topic-tabs"
 import { FavoriteType } from "@prisma/client"
@@ -134,26 +134,15 @@ export default async function TopicPage({
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6 space-y-5">
-      {/* Breadcrumb + favorite */}
-      <div className="flex items-start justify-between gap-2">
-        <nav className="flex items-center gap-1 text-xs text-muted-foreground flex-wrap">
-          <Link href="/study" className="hover:text-foreground transition-colors">
-            Estudar
-          </Link>
-          <ChevronRight className="h-3 w-3 shrink-0" />
-          <Link href={`/study/${areaSlug}`} className="hover:text-foreground transition-colors">
-            {topic.discipline.area.name}
-          </Link>
-          <ChevronRight className="h-3 w-3 shrink-0" />
-          <Link
-            href={`/study/${areaSlug}/${disciplineSlug}`}
-            className="hover:text-foreground transition-colors"
-          >
-            {topic.discipline.name}
-          </Link>
-          <ChevronRight className="h-3 w-3 shrink-0" />
-          <span className="text-foreground font-medium">{topic.name}</span>
-        </nav>
+      {/* Voltar + favorite */}
+      <div className="flex items-center justify-between gap-2">
+        <Link
+          href={`/study/${areaSlug}/${disciplineSlug}`}
+          aria-label="Voltar"
+          className="-ml-2 flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        >
+          <ChevronLeft className="h-5 w-5" />
+        </Link>
         <FavoriteButton
           type={FavoriteType.CONTENT}
           itemId={topic.id}

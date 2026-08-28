@@ -4,11 +4,8 @@ import { db } from "@/lib/db"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { ChevronRight, BookOpen, type LucideIcon } from "lucide-react"
+import { ChevronRight, ChevronLeft, BookOpen, type LucideIcon } from "lucide-react"
 import {
-  FlaskConical,
-  Globe,
-  Calculator,
   Dna,
   FlaskRound,
   Atom,
@@ -30,13 +27,6 @@ export async function generateMetadata({ params }: { params: Promise<{ areaSlug:
   return { title: area ? `${area.name} — Vion` : "Área" }
 }
 
-const AREA_ICON: Record<string, LucideIcon> = {
-  "ciencias-natureza": FlaskConical,
-  "ciencias-humanas": Globe,
-  linguagens: BookOpen,
-  matematica: Calculator,
-}
-
 const DISCIPLINE_ICON: Record<string, LucideIcon> = {
   biologia:   Dna,
   quimica:    FlaskRound,
@@ -51,13 +41,6 @@ const DISCIPLINE_ICON: Record<string, LucideIcon> = {
   "artes-educacao-fisica": Palette,
   algebra:    PiSquare,
   geometria:  Shapes,
-}
-
-const AREA_HEADER: Record<string, string> = {
-  "ciencias-natureza": "from-green-600/20 to-transparent",
-  "ciencias-humanas":  "from-blue-600/20 to-transparent",
-  linguagens:          "from-purple-600/20 to-transparent",
-  matematica:          "from-orange-600/20 to-transparent",
 }
 
 const AREA_BADGE: Record<string, string> = {
@@ -95,30 +78,19 @@ export default async function AreaPage({ params }: { params: Promise<{ areaSlug:
   })
   const studiedSet = new Set(studiedSessions.map((s) => s.topicId))
 
-  const AreaIcon = AREA_ICON[areaSlug] ?? BookOpen
-  const headerGradient = AREA_HEADER[areaSlug] ?? "from-primary/20 to-transparent"
   const badgeClass = AREA_BADGE[areaSlug] ?? ""
 
   return (
     <div className="max-w-3xl mx-auto">
-      {/* Header */}
-      <div className={`bg-gradient-to-b ${headerGradient} px-4 pt-6 pb-8`}>
-        {/* Breadcrumb */}
-        <nav className="flex items-center gap-1 text-xs text-muted-foreground mb-4">
-          <Link href="/study" className="hover:text-foreground transition-colors">Estudar</Link>
-          <ChevronRight className="h-3 w-3" />
-          <span className="text-foreground font-medium">{area.name}</span>
-        </nav>
-
-        <div className="flex items-center gap-3">
-          <AreaIcon className="h-8 w-8 text-foreground" />
-          <div>
-            <h1 className="text-2xl font-bold">{area.name}</h1>
-            <p className="text-sm text-muted-foreground">
-              {area.disciplines.length} disciplinas · {allTopicIds.length} tópicos
-            </p>
-          </div>
-        </div>
+      {/* Header — só a seta de voltar */}
+      <div className="px-2 pt-3 pb-1">
+        <Link
+          href="/study"
+          aria-label="Voltar"
+          className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        >
+          <ChevronLeft className="h-5 w-5" />
+        </Link>
       </div>
 
       {/* Disciplines */}

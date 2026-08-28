@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import { useMentorStore } from "@/store/mentor-store"
-import { OpalCrystal } from "@/components/OpalCrystal"
 import { fileToAttachment, isImageDataUrl, ATTACH_ACCEPT } from "@/lib/attach"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -30,14 +29,20 @@ const QUICK_ACTIONS = [
 ]
 
 /**
- * Avatar do Mentor: a mesma gema da abertura do app.
- * No cabeçalho ela fica parada; nas bolhas do chat ondula (slime), para dar
- * sinal de "vivo" durante a conversa.
+ * Avatar do Mentor: o mascote do app.
  */
-function MentorAvatar({ size = 32, slime = false }: { size?: number; slime?: boolean }) {
+function MentorAvatar({ size = 32 }: { size?: number; slime?: boolean }) {
   return (
-    <span className="shrink-0" style={{ width: size, height: size }}>
-      <OpalCrystal size={size} stage={3} slime={slime} icon />
+    <span
+      className="inline-block shrink-0 overflow-hidden rounded-full"
+      style={{ width: size, height: size }}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/opal/mascote.webp"
+        alt="Mentor"
+        className="h-full w-full object-cover"
+      />
     </span>
   )
 }
