@@ -3,7 +3,7 @@ import { redirect, notFound } from "next/navigation"
 import { db } from "@/lib/db"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
-import { ChevronRight, ChevronLeft, CheckCircle2, Star, Flame } from "lucide-react"
+import { ChevronRight, CheckCircle2, Star, Flame } from "lucide-react"
 
 export async function generateMetadata({
   params,
@@ -52,14 +52,21 @@ export default async function DisciplinePage({
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6 space-y-5">
-      {/* Header — só a seta de voltar */}
-      <Link
-        href={`/study/${areaSlug}`}
-        aria-label="Voltar"
-        className="-ml-2 flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-      >
-        <ChevronLeft className="h-5 w-5" />
-      </Link>
+      {/* Breadcrumb */}
+      <nav className="flex items-center gap-1 text-xs text-muted-foreground flex-wrap">
+        <Link href="/study" className="hover:text-foreground transition-colors">Estudar</Link>
+        <ChevronRight className="h-3 w-3 shrink-0" />
+        <Link href={`/study/${areaSlug}`} className="hover:text-foreground transition-colors">
+          {discipline.area.name}
+        </Link>
+        <ChevronRight className="h-3 w-3 shrink-0" />
+        <span className="text-foreground font-medium">{discipline.name}</span>
+      </nav>
+
+      <div>
+        <h1 className="text-2xl font-bold">{discipline.name}</h1>
+        <p className="text-sm text-muted-foreground">{discipline.topics.length} tópicos</p>
+      </div>
 
       <div className="space-y-2">
         {discipline.topics.map((topic) => {
