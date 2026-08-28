@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import ReactMarkdown from "react-markdown"
+import { OpalCrystal } from "@/components/OpalCrystal"
 import remarkGfm from "remark-gfm"
 import { useMentorStore } from "@/store/mentor-store"
 import { fileToAttachment, isImageDataUrl, ATTACH_ACCEPT } from "@/lib/attach"
@@ -29,20 +30,13 @@ const QUICK_ACTIONS = [
 ]
 
 /**
- * Avatar do Mentor: o mascote do app.
+ * Avatar do Mentor: a gema de opala. No cabeçalho fica parada; nas bolhas
+ * do chat ondula (slime) bem visível, pra dar sinal de "vivo".
  */
-function MentorAvatar({ size = 32 }: { size?: number; slime?: boolean }) {
+function MentorAvatar({ size = 32, slime = false }: { size?: number; slime?: boolean }) {
   return (
-    <span
-      className="inline-block shrink-0 overflow-hidden rounded-full"
-      style={{ width: size, height: size }}
-    >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/opal/mascote.webp"
-        alt="Mentor"
-        className="h-full w-full object-cover"
-      />
+    <span className="shrink-0" style={{ width: size, height: size }}>
+      <OpalCrystal size={size} stage={3} slime={slime} slimeScale={5} icon />
     </span>
   )
 }
@@ -492,7 +486,7 @@ export function MentorChat() {
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2 border-b shrink-0">
         <div className="flex items-center gap-2">
-          <MentorAvatar size={30} />
+          <MentorAvatar size={30} slime />
           <div>
             <p className="text-sm font-semibold leading-none">Mentor ENEM</p>
             <p className="text-[10px] text-muted-foreground">Seu tutor pessoal</p>

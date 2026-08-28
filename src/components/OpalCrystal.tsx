@@ -26,6 +26,7 @@ export function OpalCrystal({
   stage = 3,
   slime = false,
   icon = false,
+  slimeScale = 12,
 }: {
   size?: number
   stage?: 0 | 1 | 2 | 3
@@ -34,7 +35,12 @@ export function OpalCrystal({
   /** modo ícone: sem flutuação e sem halo. Em tamanho pequeno (avatar de chat,
    *  cabeçalho) o balanço lê como tremido e o halo desfocado vira um borrão. */
   icon?: boolean
+  /** intensidade do deslocamento do slime (px). Em avatares pequenos precisa
+   *  ser maior pra a ondulação ficar perceptível. */
+  slimeScale?: number
 }) {
+  const slimeId = `opal-slime-${slimeScale}`
+
   return (
     <motion.div
       animate={icon ? undefined : { y: [-5, 5, -5], rotate: [-2, 2, -2] }}
@@ -69,7 +75,7 @@ export function OpalCrystal({
           draggable={false}
           className="absolute inset-0 h-full w-full select-none object-contain"
           style={
-            slime && s === 3 ? { filter: "url(#opal-slime)", willChange: "filter" } : undefined
+            slime && s === 3 ? { filter: `url(#${slimeId})`, willChange: "filter" } : undefined
           }
           initial={false}
           animate={{ opacity: s === stage ? 1 : 0 }}
@@ -84,19 +90,19 @@ export function OpalCrystal({
       {slime && (
         <svg width="0" height="0" className="absolute" aria-hidden>
           <defs>
-            <filter id="opal-slime" x="-15%" y="-15%" width="130%" height="130%">
+            <filter id={slimeId} x="-20%" y="-20%" width="140%" height="140%">
               <feTurbulence type="fractalNoise" baseFrequency="0.014" numOctaves="2" seed="5" result="w">
                 <animate
                   attributeName="baseFrequency"
-                  dur="9s"
-                  values="0.012;0.022;0.016;0.012"
+                  dur="6s"
+                  values="0.012;0.024;0.016;0.012"
                   repeatCount="indefinite"
                 />
               </feTurbulence>
               <feDisplacementMap
                 in="SourceGraphic"
                 in2="w"
-                scale="12"
+                scale={slimeScale}
                 xChannelSelector="R"
                 yChannelSelector="G"
               />
