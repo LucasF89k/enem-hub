@@ -224,14 +224,27 @@
   }
 }
 
-/* Fundo de galáxia da Home — drift bem lento, sem "pular" (alternate). */
+/* Nebulosa da Home — só um halo no topo, atrás do cristal. Some pras bordas
+   e principalmente pra base, emendando com o fundo escuro sem linha dura. */
+.opal-nebula {
+  -webkit-mask-image:
+    radial-gradient(115% 78% at 50% 30%, #000 42%, transparent 82%),
+    linear-gradient(180deg, #000 55%, transparent 100%);
+  mask-image:
+    radial-gradient(115% 78% at 50% 30%, #000 42%, transparent 82%),
+    linear-gradient(180deg, #000 55%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+}
+
+/* Drift bem lento da nebulosa, sem "pular" (alternate). */
 @keyframes opal-space-drift {
-  0%   { transform: translate3d(0, 0, 0) scale(1.04); }
-  50%  { transform: translate3d(2.5%, -2%, 0) scale(1.08); }
-  100% { transform: translate3d(-2%, 1.5%, 0) scale(1.05); }
+  0%   { transform: translate3d(0, 0, 0) scale(1.06); }
+  50%  { transform: translate3d(2%, -1.5%, 0) scale(1.1); }
+  100% { transform: translate3d(-1.5%, 1%, 0) scale(1.07); }
 }
 .opal-space-drift {
-  animation: opal-space-drift 44s ease-in-out infinite alternate;
+  animation: opal-space-drift 48s ease-in-out infinite alternate;
 }
 @media (prefers-reduced-motion: reduce) {
   .opal-space-drift {

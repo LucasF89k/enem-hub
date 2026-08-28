@@ -43,13 +43,14 @@ interface HeaderProps {
 
 export function Header({ actions, className, user }: HeaderProps) {
   const pathname = usePathname()
-  const onHome = pathname === "/dashboard"
+  // Telas com hero próprio (fundo de galáxia): header transparente, sem borda.
+  const transparentHeader = pathname === "/dashboard" || pathname === "/profile"
 
   return (
     <header
       className={cn(
         "flex items-center h-12 px-4 gap-3 sticky top-0 z-40 shrink-0 transition-colors",
-        onHome
+        transparentHeader
           ? "border-b border-transparent bg-transparent"
           : "border-b border-border bg-background/80 backdrop-blur-sm",
         className

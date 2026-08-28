@@ -27,32 +27,30 @@ export function AppShell({ children, user }: AppShellProps) {
 
   return (
     <>
-      {/* Fundo de galáxia — só na Home, atrás de tudo, com drift lento */}
-      {isHome && (
-        <div
-          aria-hidden
-          className="pointer-events-none fixed inset-x-0 top-0 -z-10 h-[620px] overflow-hidden bg-background"
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/opal/space-bg.webp"
-            alt=""
-            className="opal-space-drift absolute -inset-[8%] h-[116%] w-[116%] object-cover opacity-90 motion-reduce:animate-none"
-          />
-          {/* glow atrás da gema + fade pro fundo na base, pra não ter linha dura */}
-          <div className="absolute inset-0 bg-[radial-gradient(closest-side,color-mix(in_srgb,var(--glow-mint)_10%,transparent),transparent_70%)] bg-[length:70%_55%] bg-[position:50%_36%] bg-no-repeat" />
-          <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-transparent to-background" />
-        </div>
-      )}
-
       {/* Área de conteúdo principal — barra de navegação embaixo em todos os tamanhos */}
-      <div className={`${isHome ? "" : "opal-hero-bg"} flex min-h-screen flex-col`}>
+      <div className={`relative ${isHome ? "" : "opal-hero-bg"} flex min-h-screen flex-col`}>
+        {/* Nebulosa da Home — só um halo atrás do cristal, no topo da tela.
+            Rola junto com a página (não é fixed) e some nas bordas via máscara radial. */}
+        {isHome && (
+          <div
+            aria-hidden
+            className="opal-nebula pointer-events-none absolute inset-x-0 top-0 z-0 h-[460px] overflow-hidden"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/opal/space-bg.webp"
+              alt=""
+              className="opal-space-drift h-full w-full object-cover motion-reduce:animate-none"
+            />
+          </div>
+        )}
+
         {!hideHeader && <Header user={user} />}
 
         <AnimatePresence mode="wait" initial={false}>
           <motion.main
             key={pathname}
-            className="flex-1 pb-24"
+            className="relative z-10 flex-1 pb-24"
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}

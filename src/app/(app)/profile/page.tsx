@@ -2,14 +2,23 @@ import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { db } from "@/lib/db"
 import { getTrailConfig } from "@/lib/trail"
-import { differenceInDays, format } from "date-fns"
-import { ptBR } from "date-fns/locale"
+import { ACHIEVEMENT_DEFS } from "@/lib/achievements"
+import { differenceInDays } from "date-fns"
 import Link from "next/link"
 import { AvatarUpload } from "@/components/profile/AvatarUpload"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Settings, Flame, Zap, Trophy, Target, Calendar, Clock, BookOpen, GraduationCap } from "lucide-react"
+import {
+  Hourglass,
+  Flame,
+  Globe2,
+  Target,
+  Trophy,
+  Calendar,
+  Clock,
+  GraduationCap,
+  ChevronRight,
+  Lock,
+} from "lucide-react"
 import { findCurso } from "@/constants/cursos"
 import { findUniversidade } from "@/constants/universidades"
 
@@ -20,7 +29,7 @@ export default async function ProfilePage() {
   if (!session?.user?.id) redirect("/login")
   const userId = session.user.id
 
-  const [user, profile, questionStats, simuladoStats] = await Promise.all([
+  const [user, profile, focusAgg, myXPRow, earnedRows] = await Promise.all([
     db.user.findUnique({
       where: { id: userId },
       select: { name: true, email: true, image: true, createdAt: true },
@@ -41,12 +50,11 @@ export default async function ProfilePage() {
         estimatedScore: true,
       },
     }),
-    db.userQuestion.aggregate({
+    db.studySession.aggregate({ where: { userId }, _sum: { duration: true } }),
+    db.userProfile.findUnique({ where: { userId }, select: { totalXP: true } }),
+    db.userAchievement.findMany({
       where: { userId },
-      _count: { _all: true },
-    }),
-    db.userSimulado.count({
-      where: { userId, status: "COMPLETED" },
+      select: { earnedAt: true, achievement: { select: { condition: true } } },
     }),
   ])
 
@@ -64,170 +72,217 @@ export default async function ProfilePage() {
   const xpToNext = profile ? 500 - (profile.totalXP % 500) : 500
   const levelProgress = profile ? ((profile.totalXP % 500) / 500) * 100 : 0
 
+  // ── Horas de foco (total acumulado) ──
+  const focusMinutes = focusAgg._sum.duration ?? 0
+  const focusHours = focusMinutes / 60
+  const focusLabel =
+    focusMinutes === 0
+      ? "--"
+      : focusHours >= 10
+        ? `${Math.round(focusHours)}h`
+        : `${(Math.round(focusHours * 10) / 10).toString().replace(".", ",")}h`
+
+  // ── Posição no ranking global (Top X%) ──
+  const myXP = myXPRow?.totalXP ?? 0
+  const [totalPlayers, ahead] = await Promise.all([
+    db.userProfile.count(),
+    db.userProfile.count({ where: { totalXP: { gt: myXP } } }),
+  ])
+  const rankPercent =
+    totalPlayers > 0 ? Math.max(1, Math.round(((ahead + 1) / totalPlayers) * 100)) : null
+
+  // ── Conquistas ──
+  const earnedKeys = new Set(
+    earnedRows.map((e) => JSON.parse(e.achievement.condition).key as string)
+  )
+  const visibleDefs = ACHIEVEMENT_DEFS.filter((d) => !d.isHidden)
+  const earnedCount = visibleDefs.filter((d) => earnedKeys.has(d.key)).length
+  // Próximas a desbloquear (não ganhas), ordenadas por xpReward — as "mais fáceis" primeiro.
+  const lockedNext = visibleDefs
+    .filter((d) => !earnedKeys.has(d.key))
+    .sort((a, b) => a.xpReward - b.xpReward)
+    .slice(0, 4)
+  const earnedList = visibleDefs.filter((d) => earnedKeys.has(d.key))
+
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-4">
-          <AvatarUpload currentImage={user.image ?? null} initials={initials} />
-          <div>
-            <h1 className="text-xl font-bold">{user.name ?? "Usuário"}</h1>
-            <p className="text-sm text-muted-foreground">{user.email}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Membro desde {format(user.createdAt, "MMM yyyy", { locale: ptBR })}
-            </p>
-          </div>
+    <div className="mx-auto max-w-2xl pb-6">
+      {/* ── Hero com nebulosa (só no topo, atrás do avatar) ── */}
+      <div className="relative -mt-12 overflow-hidden px-4 pt-16 pb-6">
+        <div
+          aria-hidden
+          className="opal-nebula pointer-events-none absolute inset-x-0 top-0 z-0 h-[340px] overflow-hidden"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/opal/space-bg.webp"
+            alt=""
+            className="opal-space-drift h-full w-full object-cover motion-reduce:animate-none"
+          />
         </div>
-        <Button asChild variant="outline" size="sm" className="gap-1.5 shrink-0">
-          <Link href="/profile/settings">
-            <Settings className="h-4 w-4" />
-            Editar
-          </Link>
-        </Button>
+
+        <div className="relative z-10 flex flex-col items-center">
+          <AvatarUpload currentImage={user.image ?? null} initials={initials} />
+          <h1 className="mt-3 text-2xl font-bold tracking-tight">{user.name ?? "Usuário"}</h1>
+          <p className="text-sm text-muted-foreground">
+            Nível {profile?.currentLevel ?? 1} · {(profile?.totalXP ?? 0).toLocaleString("pt-BR")} XP
+          </p>
+        </div>
+
+        {/* 3 métricas com ícone "glow" */}
+        <div className="relative z-10 mt-7 flex items-start justify-center gap-3">
+          <MetricGlow icon={<Hourglass className="h-6 w-6" />} value={focusLabel} label="Horas de foco" tint="text-primary" />
+          <MetricGlow icon={<Flame className="h-6 w-6 fill-current" />} value={String(profile?.streak ?? 0)} label="Dias seguidos" tint="text-warning" />
+          <MetricGlow
+            icon={<Globe2 className="h-6 w-6" />}
+            value={rankPercent !== null ? `Top ${rankPercent}%` : "--"}
+            label="No ranking"
+            tint="text-primary"
+          />
+        </div>
       </div>
 
-      {/* Level & XP */}
+      {/* ── XP bar ── */}
       {profile && (
-        <Card>
-          <CardContent className="pt-4 pb-4">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Trophy className="h-4 w-4 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold">Nível {profile.currentLevel}</p>
-                  <p className="text-xs text-muted-foreground">{profile.totalXP.toLocaleString("pt-BR")} XP total</p>
-                </div>
-              </div>
-              <p className="text-xs text-muted-foreground">{xpToNext} XP para o próximo nível</p>
+        <div className="px-4">
+          <div className="opal-glass-card rounded-2xl p-4">
+            <div className="mb-2 flex items-center justify-between text-xs">
+              <span className="font-semibold text-foreground">Nível {profile.currentLevel}</span>
+              <span className="text-muted-foreground">{xpToNext} XP para o nível {profile.currentLevel + 1}</span>
             </div>
-            <div className="h-2 rounded-full bg-muted overflow-hidden">
+            <div className="h-1.5 overflow-hidden rounded-full bg-muted">
               <div className="h-full rounded-full bg-primary" style={{ width: `${levelProgress}%` }} />
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
-      {/* Stats grid */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Card>
-          <CardContent className="pt-4 pb-4 flex flex-col items-center gap-1">
-            <Flame className="h-5 w-5 text-orange-500" />
-            <p className="text-2xl font-bold">{profile?.streak ?? 0}</p>
-            <p className="text-xs text-muted-foreground text-center">Streak atual</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4 pb-4 flex flex-col items-center gap-1">
-            <Zap className="h-5 w-5 text-yellow-500" />
-            <p className="text-2xl font-bold">{profile?.longestStreak ?? 0}</p>
-            <p className="text-xs text-muted-foreground text-center">Maior streak</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4 pb-4 flex flex-col items-center gap-1">
-            <BookOpen className="h-5 w-5 text-blue-500" />
-            <p className="text-2xl font-bold">{questionStats._count._all}</p>
-            <p className="text-xs text-muted-foreground text-center">Questões</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4 pb-4 flex flex-col items-center gap-1">
-            <Trophy className="h-5 w-5 text-purple-500" />
-            <p className="text-2xl font-bold">{simuladoStats}</p>
-            <p className="text-xs text-muted-foreground text-center">Simulados</p>
-          </CardContent>
-        </Card>
+      {/* ── Conquistas (carrossel horizontal) ── */}
+      <div className="mt-8">
+        <div className="flex items-center justify-between px-4">
+          <h2 className="text-base font-semibold">Conquistas</h2>
+          <Link href="/conquistas" className="flex items-center gap-0.5 text-xs text-muted-foreground hover:text-foreground">
+            {earnedCount}/{visibleDefs.length}
+            <ChevronRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
+
+        <div className="mt-3 flex gap-3 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {earnedList.map((def) => (
+            <div key={def.key} className="flex w-24 shrink-0 flex-col items-center gap-2">
+              <div className="flex h-24 w-24 items-center justify-center rounded-2xl border border-primary/25 bg-primary/8 text-4xl shadow-[0_0_24px_-6px_var(--glow-mint)]">
+                {def.icon}
+              </div>
+              <p className="line-clamp-2 text-center text-xs font-medium leading-tight">{def.name}</p>
+            </div>
+          ))}
+          {lockedNext.map((def) => (
+            <div key={def.key} className="flex w-24 shrink-0 flex-col items-center gap-2">
+              <div className="relative flex h-24 w-24 items-center justify-center rounded-2xl border border-border bg-muted/40 text-4xl grayscale">
+                <span className="opacity-30">{def.icon}</span>
+                <Lock className="absolute h-4 w-4 text-muted-foreground" />
+              </div>
+              <p className="line-clamp-2 text-center text-xs text-muted-foreground leading-tight">{def.name}</p>
+            </div>
+          ))}
+          {earnedList.length === 0 && lockedNext.length === 0 && (
+            <p className="py-6 text-sm text-muted-foreground">Nenhuma conquista ainda.</p>
+          )}
+        </div>
       </div>
 
-      {/* Goals */}
+      {/* ── Metas ── */}
       {profile && (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-              Metas
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm">
-                <Target className="h-4 w-4 text-muted-foreground" />
-                <span>Nota alvo</span>
-              </div>
-              <span className="font-semibold">{profile.targetScore} pts</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm">
-                <Trophy className="h-4 w-4 text-muted-foreground" />
-                <span>Curso</span>
-              </div>
-              <span className="font-semibold">
-                {findCurso(profile.targetCourse)?.nome ?? profile.targetCourse}
-              </span>
-            </div>
+        <div className="mt-6 px-4">
+          <div className="opal-glass-card space-y-3 rounded-2xl p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Metas</p>
+            <Row icon={<Target className="h-4 w-4" />} label="Nota alvo" value={`${profile.targetScore} pts`} />
+            <Row
+              icon={<Trophy className="h-4 w-4" />}
+              label="Curso"
+              value={findCurso(profile.targetCourse)?.nome ?? profile.targetCourse}
+            />
             {(() => {
               const uni = findUniversidade(profile.targetInstitution)
               if (!uni) return null
               return (
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-sm">
-                    <GraduationCap className="h-4 w-4 text-muted-foreground" />
-                    <span>Universidade</span>
-                  </div>
-                  <span className="font-semibold">
-                    {uni.sigla} · {uni.cidade}/{uni.uf}
-                  </span>
-                </div>
+                <Row
+                  icon={<GraduationCap className="h-4 w-4" />}
+                  label="Universidade"
+                  value={`${uni.sigla} · ${uni.cidade}/${uni.uf}`}
+                />
               )
             })()}
             {daysLeft !== null && (
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <span>ENEM</span>
-                </div>
-                <span className="font-semibold">
-                  {daysLeft > 0 ? `${daysLeft} dias` : "Encerrado"}
-                </span>
-              </div>
+              <Row
+                icon={<Calendar className="h-4 w-4" />}
+                label="ENEM"
+                value={daysLeft > 0 ? `${daysLeft} dias` : "Encerrado"}
+              />
             )}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm">
-                <Clock className="h-4 w-4 text-muted-foreground" />
-                <span>Meta diária</span>
-              </div>
-              <span className="font-semibold">{profile.dailyStudyGoal} min</span>
-            </div>
+            <Row icon={<Clock className="h-4 w-4" />} label="Meta diária" value={`${profile.dailyStudyGoal} min`} />
             {trailConfig && (
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm">
-                  <span>Trilha</span>
-                </div>
+                <span className="text-sm">Trilha</span>
                 <Badge variant="outline" className={trailConfig.badgeColor}>
                   {trailConfig.label}
                 </Badge>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
-      {/* Quick links — "Ver minhas conquistas" foi pro header, ao lado do nível */}
-      <div className="flex flex-col gap-2">
-        <Button asChild variant="outline" className="justify-start gap-2">
-          <Link href="/analytics">
-            <Zap className="h-4 w-4" />
-            Ver analytics
-          </Link>
-        </Button>
-        <Button asChild variant="outline" className="justify-start gap-2">
-          <Link href="/profile/settings">
-            <Settings className="h-4 w-4" />
-            Configurações
-          </Link>
-        </Button>
+      {/* ── Links ── */}
+      <div className="mt-6 flex flex-col gap-2 px-4">
+        <LinkRow href="/analytics" label="Ver analytics" />
+        <LinkRow href="/ranking" label="Ranking semanal" />
+        <LinkRow href="/profile/settings" label="Configurações" />
       </div>
+
     </div>
+  )
+}
+
+function MetricGlow({
+  icon,
+  value,
+  label,
+  tint,
+}: {
+  icon: React.ReactNode
+  value: string
+  label: string
+  tint: string
+}) {
+  return (
+    <div className="flex w-24 flex-col items-center gap-1.5 text-center">
+      <div className={`${tint} drop-shadow-[0_0_10px_currentColor]`}>{icon}</div>
+      <p className={`text-lg font-bold leading-none ${tint}`}>{value}</p>
+      <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</p>
+    </div>
+  )
+}
+
+function Row({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2 text-sm">
+        <span className="text-muted-foreground">{icon}</span>
+        <span>{label}</span>
+      </div>
+      <span className="font-semibold">{value}</span>
+    </div>
+  )
+}
+
+function LinkRow({ href, label }: { href: string; label: string }) {
+  return (
+    <Link
+      href={href}
+      className="opal-glass-card flex items-center justify-between rounded-xl px-4 py-3 text-sm transition-colors hover:bg-muted/40"
+    >
+      {label}
+      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+    </Link>
   )
 }
