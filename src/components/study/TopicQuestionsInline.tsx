@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { answerQuestion } from "@/app/actions/question.actions"
+import { StreakFlameOverlay } from "@/components/study/StreakFlameOverlay"
 
 interface Option {
   id: string
@@ -66,6 +67,7 @@ export function TopicQuestionsInline({
   const [startTime, setStartTime] = useState(() => Date.now())
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
+  const [flame, setFlame] = useState<{ streakIncreased: boolean; streak: number } | null>(null)
 
   const wrongSet = useMemo(() => new Set(wrongIds), [wrongIds])
   const counts = useMemo(() => {
@@ -155,7 +157,10 @@ export function TopicQuestionsInline({
         setConfirmed(true)
         setExplanationOpen(!res.isCorrect)
         setAnsweredCount((n) => n + 1)
-        if (res.isCorrect) setCorrectCount((n) => n + 1)
+        if (res.isCorrect) {
+          setCorrectCount((n) => n + 1)
+          setFlame({ streakIncreased: res.streakIncreased, streak: res.newStreak })
+        }
         setError(null)
       } catch {
         setError("Erro ao registrar resposta. Tente novamente.")
@@ -240,6 +245,13 @@ export function TopicQuestionsInline({
 
   return (
     <div className="space-y-4">
+      <StreakFlameOverlay
+        open={flame !== null}
+        onClose={() => setFlame(null)}
+        streakIncreased={flame?.streakIncreased ?? false}
+        streak={flame?.streak ?? 0}
+      />
+
       <FilterBar />
 
       {/* Progresso */}

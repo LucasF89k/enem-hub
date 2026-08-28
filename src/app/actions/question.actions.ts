@@ -16,7 +16,14 @@ export async function answerQuestion(
   questionId: string,
   selectedOptionId: string,
   timeSpentSeconds: number = 0
-): Promise<{ isCorrect: boolean; correctId: string; explanation: string; newAchievements: NewAchievement[] }> {
+): Promise<{
+  isCorrect: boolean
+  correctId: string
+  explanation: string
+  newAchievements: NewAchievement[]
+  streakIncreased: boolean
+  newStreak: number
+}> {
   const session = await auth()
   if (!session?.user?.id) throw new Error("Unauthorized")
   const userId = session.user.id
@@ -47,7 +54,7 @@ export async function answerQuestion(
   // em vez dos 3 min fixos que inflavam o tempo de estudo. Cap de 30 min evita
   // contar uma questão deixada aberta por horas.
   const qMinutes = Math.min(30, Math.round(parsed.timeSpentSeconds / 60))
-  await recordStudyActivity(userId, qMinutes, "QUESTIONS")
+  const activity = await recordStudyActivity(userId, qMinutes, "QUESTIONS")
   const newAchievements = await checkAchievements(userId)
 
   return {
@@ -55,5 +62,7 @@ export async function answerQuestion(
     correctId: question.correctId!,
     explanation: question.explanation,
     newAchievements,
+    streakIncreased: activity.streakIncreased,
+    newStreak: activity.newStreak,
   }
 }

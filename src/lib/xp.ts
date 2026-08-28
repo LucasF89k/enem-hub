@@ -27,11 +27,18 @@ export async function awardXP(userId: string, amount: number): Promise<number> {
  * Records study activity and updates streak on the FIRST activity of each day
  * (Duolingo-style: any study = streak, not tied to a daily goal).
  */
+export interface StudyActivityResult {
+  /** true só quando esta foi a 1ª atividade do dia e o streak incrementou. */
+  streakIncreased: boolean
+  /** valor do streak depois desta atividade (o atual, se não mudou). */
+  newStreak: number
+}
+
 export async function recordStudyActivity(
   userId: string,
   minutes: number = 5,
   type: "QUESTIONS" | "FLASHCARDS" | "SIMULADO" | "CONTENT" | "REDACAO" | "REVISION" = "QUESTIONS"
-): Promise<void> {
+): Promise<StudyActivityResult> {
   const today = startOfDayBR()
   const yesterday = addDaysBR(today, -1)
 
@@ -47,7 +54,8 @@ export async function recordStudyActivity(
       data: { duration: existing.duration + minutes },
     })
     // Session already exists for today — streak was already counted on first activity
-    return
+    const p = await db.userProfile.findUnique({ where: { userId }, select: { streak: true } })
+    return { streakIncreased: false, newStreak: p?.streak ?? 0 }
   }
 
   // First activity of this type today — create session
@@ -61,12 +69,14 @@ export async function recordStudyActivity(
     select: { streak: true, longestStreak: true, lastStudyDate: true },
   })
 
-  if (!profile) return
+  if (!profile) return { streakIncreased: false, newStreak: 0 }
 
   const lastStudyDay = profile.lastStudyDate ? startOfDayBR(profile.lastStudyDate) : null
 
   // Already counted today
-  if (lastStudyDay && lastStudyDay.getTime() === today.getTime()) return
+  if (lastStudyDay && lastStudyDay.getTime() === today.getTime()) {
+    return { streakIncreased: false, newStreak: profile.streak }
+  }
 
   const studiedYesterday =
     lastStudyDay !== null && lastStudyDay.getTime() === yesterday.getTime()
@@ -82,4 +92,6 @@ export async function recordStudyActivity(
       lastStudyDate: new Date(),
     },
   })
+
+  return { streakIncreased: true, newStreak }
 }
