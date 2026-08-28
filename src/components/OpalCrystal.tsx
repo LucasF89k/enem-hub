@@ -41,10 +41,22 @@ export function OpalCrystal({
 }) {
   const slimeId = `opal-slime-${slimeScale}`
 
+  // Movimento do wrapper: no modo normal flutua e gira devagar; no modo ícone
+  // com slime, um wobble sutil e contínuo — garante vida visível mesmo em
+  // avatar pequeno, onde só o filtro SVG mal se percebe.
+  const wrapperAnim = icon
+    ? slime
+      ? { scale: [1, 1.06, 0.97, 1.04, 1], rotate: [0, 1.5, -1.5, 1, 0] }
+      : undefined
+    : { y: [-5, 5, -5], rotate: [-2, 2, -2] }
+  const wrapperTransition = icon
+    ? { duration: 2.4, repeat: Infinity, ease: "easeInOut" as const }
+    : { duration: 9, repeat: Infinity, ease: "easeInOut" as const }
+
   return (
     <motion.div
-      animate={icon ? undefined : { y: [-5, 5, -5], rotate: [-2, 2, -2] }}
-      transition={icon ? undefined : { duration: 9, repeat: Infinity, ease: "easeInOut" }}
+      animate={wrapperAnim}
+      transition={wrapperAnim ? wrapperTransition : undefined}
       style={{ width: size, height: size }}
       className="relative"
     >
@@ -88,14 +100,20 @@ export function OpalCrystal({
           o Framer Motion não anima atributos dentro de <filter> de forma
           confiável. Só é montado quando o efeito é pedido. */}
       {slime && (
-        <svg width="0" height="0" className="absolute" aria-hidden>
+        <svg
+          width="1"
+          height="1"
+          className="pointer-events-none absolute"
+          style={{ position: "absolute", overflow: "hidden" }}
+          aria-hidden
+        >
           <defs>
-            <filter id={slimeId} x="-20%" y="-20%" width="140%" height="140%">
-              <feTurbulence type="fractalNoise" baseFrequency="0.014" numOctaves="2" seed="5" result="w">
+            <filter id={slimeId} x="-30%" y="-30%" width="160%" height="160%">
+              <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="2" seed="5" result="w">
                 <animate
                   attributeName="baseFrequency"
-                  dur="6s"
-                  values="0.012;0.024;0.016;0.012"
+                  dur="4s"
+                  values="0.014;0.03;0.02;0.036;0.014"
                   repeatCount="indefinite"
                 />
               </feTurbulence>
@@ -105,7 +123,14 @@ export function OpalCrystal({
                 scale={slimeScale}
                 xChannelSelector="R"
                 yChannelSelector="G"
-              />
+              >
+                <animate
+                  attributeName="scale"
+                  dur="4s"
+                  values={`${slimeScale};${slimeScale * 1.8};${slimeScale};${slimeScale * 1.4};${slimeScale}`}
+                  repeatCount="indefinite"
+                />
+              </feDisplacementMap>
             </filter>
           </defs>
         </svg>
