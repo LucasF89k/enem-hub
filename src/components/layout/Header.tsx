@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation"
 import Link from "next/link"
-import { Trophy } from "lucide-react"
+import { Trophy, Flame } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { LevelBadge } from "@/components/dashboard/LevelBadge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -38,13 +38,15 @@ function getPageTitle(pathname: string): string {
 interface HeaderProps {
   actions?: React.ReactNode
   className?: string
-  user?: { name?: string | null; image?: string | null; level?: number; totalXP?: number }
+  user?: { name?: string | null; image?: string | null; level?: number; totalXP?: number; streak?: number }
 }
 
 export function Header({ actions, className, user }: HeaderProps) {
   const pathname = usePathname()
   // Telas com hero próprio (fundo de galáxia): header transparente, sem borda.
   const transparentHeader = pathname === "/dashboard" || pathname === "/profile"
+  const onHome = pathname === "/dashboard"
+  const firstName = user?.name?.split(" ")[0] ?? ""
 
   return (
     <header
@@ -63,10 +65,22 @@ export function Header({ actions, className, user }: HeaderProps) {
         <span className="text-lg font-bold tracking-tight">Vion</span>
       </Link>
 
-      {/* Page title — mobile only */}
-      <h1 className="text-base font-semibold text-foreground truncate md:hidden">
-        {getPageTitle(pathname)}
-      </h1>
+      {/* Page title — mobile only. Na Home vira "Olá, Nome" + streak. */}
+      {onHome ? (
+        <div className="flex items-center gap-2.5 md:hidden">
+          <h1 className="text-base font-semibold text-foreground truncate">
+            Olá, {firstName}
+          </h1>
+          <span className="flex items-center gap-1 rounded-full bg-warning/12 px-2 py-0.5 text-xs font-semibold text-warning">
+            <Flame className="h-3 w-3 fill-warning" />
+            {user?.streak ?? 0}
+          </span>
+        </div>
+      ) : (
+        <h1 className="text-base font-semibold text-foreground truncate md:hidden">
+          {getPageTitle(pathname)}
+        </h1>
+      )}
 
       {/* Empurra nível/avatar para a direita */}
       <div className="flex-1" />

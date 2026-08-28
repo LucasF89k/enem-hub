@@ -17,7 +17,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     }),
     db.userProfile.findUnique({
       where: { userId: session.user.id },
-      select: { currentLevel: true, totalXP: true },
+      select: { currentLevel: true, totalXP: true, streak: true },
     }),
   ])
 
@@ -29,6 +29,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     image: dbUser?.image ?? session.user.image ?? null,
     level: profile?.currentLevel ?? 1,
     totalXP: profile?.totalXP ?? 0,
+    streak: profile?.streak ?? 0,
   }
 
   return <AppShell user={user}>{children}</AppShell>

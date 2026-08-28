@@ -7,7 +7,7 @@ import { BottomNav } from "./BottomNav"
 
 interface AppShellProps {
   children: React.ReactNode
-  user?: { name?: string | null; image?: string | null; level?: number; totalXP?: number }
+  user?: { name?: string | null; image?: string | null; level?: number; totalXP?: number; streak?: number }
 }
 
 // Matches /simulados/[id]/[attemptId] (exactly 3 segments, no trailing /result)

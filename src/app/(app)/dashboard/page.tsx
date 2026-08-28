@@ -3,7 +3,7 @@ import { redirect } from "next/navigation"
 import { db } from "@/lib/db"
 import { differenceInDays } from "date-fns"
 import { startOfDayBR, addDaysBR } from "@/lib/date-br"
-import { Flame, Timer, Repeat, Brain, CalendarDays } from "lucide-react"
+import { Timer, Repeat, Brain, CalendarDays } from "lucide-react"
 
 import { detectTrail, getTrailConfig } from "@/lib/trail"
 import { StudyScoreGauge } from "@/components/dashboard/StudyScoreGauge"
@@ -55,30 +55,16 @@ export default async function DashboardPage() {
     ? Math.max(0, differenceInDays(profile.examDate, new Date()))
     : null
   const trailConfig = getTrailConfig(detectTrail(profile?.examDate))
-  const firstName = session.user.name?.split(" ")[0] ?? ""
 
   const curso = findCurso(profile?.targetCourse) ?? findCurso("medicina")!
   const selectedUniId = findUniversidade(profile?.targetInstitution)?.id ?? null
   const examDateISO = profile?.examDate ? profile.examDate.toISOString() : null
 
   return (
-    <div className="mx-auto flex w-full max-w-[460px] flex-col px-6 pb-16 pt-3 sm:px-8">
-      {/* Hero — o fundo com profundidade agora vem do AppShell (app inteiro) */}
+    <div className="mx-auto flex w-full max-w-[460px] flex-col px-6 pb-16 pt-1 sm:px-8">
+      {/* Hero — saudação/streak agora ficam no header (economia de espaço no topo) */}
       <div className="flex flex-col items-center">
-        <div
-          className="opal-enter flex w-full items-center gap-3"
-          style={{ animationDelay: "0ms" }}
-        >
-          <h1 className="text-lg font-light text-foreground">
-            Olá, <b className="font-medium">{firstName}</b>
-          </h1>
-          <div className="opal-glass-card flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-medium text-warning">
-            <Flame className="h-3.5 w-3.5 fill-warning" />
-            {streak}
-          </div>
-        </div>
-
-        <div className="opal-enter my-6" style={{ animationDelay: "70ms" }}>
+        <div className="opal-enter mt-2 mb-5" style={{ animationDelay: "0ms" }}>
           <StudyScoreGauge minutes={minutesToday} goalMinutes={dailyGoal} label="Meta de estudo hoje" />
         </div>
 
