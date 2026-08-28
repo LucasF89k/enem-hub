@@ -491,7 +491,7 @@ export function MentorChat() {
   return (
     <div
       className="fixed inset-x-0 top-0 z-30 flex min-h-0 flex-col overflow-hidden bg-background"
-      style={{ bottom: "calc(3.5rem + env(safe-area-inset-bottom))" }}
+      style={{ bottom: "calc(3.5rem + max(env(safe-area-inset-bottom), 0.5rem))" }}
     >
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2 border-b shrink-0">

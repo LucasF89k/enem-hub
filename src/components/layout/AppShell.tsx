@@ -62,7 +62,8 @@ export function AppShell({ children, user }: AppShellProps) {
         <AnimatePresence mode="wait" initial={false}>
           <motion.main
             key={pathname}
-            className="relative z-10 flex-1 pb-24"
+            className="relative z-10 flex-1"
+            style={{ paddingBottom: "calc(3.5rem + max(env(safe-area-inset-bottom), 0.5rem) + 1.5rem)" }}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}

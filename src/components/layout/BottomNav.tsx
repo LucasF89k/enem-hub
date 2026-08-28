@@ -62,9 +62,10 @@ export function BottomNav() {
   return (
     <nav
       className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/90 backdrop-blur-md"
+      style={{ paddingBottom: "max(env(safe-area-inset-bottom), 0.5rem)" }}
       aria-label="Navegação principal"
     >
-      <div className="mx-auto flex max-w-2xl items-stretch h-14 safe-area-bottom">
+      <div className="mx-auto flex h-14 max-w-2xl items-stretch">
         {ITEMS.map((item) => {
           const Icon = item.icon
           const active = isActive(item)
