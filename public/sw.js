@@ -1,4 +1,4 @@
-const CACHE_VERSION = "v1"
+const CACHE_VERSION = "v2"
 const STATIC_CACHE = `enem-hub-static-${CACHE_VERSION}`
 const DYNAMIC_CACHE = `enem-hub-dynamic-${CACHE_VERSION}`
 
@@ -34,12 +34,20 @@ self.addEventListener("activate", (event) => {
 })
 
 // Helpers
-function isStaticAsset(url) {
+
+// Só CacheFirst pra assets com hash imutável no nome (build do Next) e ícones.
+// Imagens de conteúdo (ex.: /opal/*.webp) NÃO entram aqui — senão uma troca de
+// arte fica presa no cache pra sempre. Essas vão pro stale-while-revalidate.
+function isImmutableAsset(url) {
   return (
     url.pathname.startsWith("/_next/static/") ||
     url.pathname.startsWith("/icons/") ||
-    /\.(png|jpg|jpeg|svg|gif|webp|woff2?|ttf|ico)$/.test(url.pathname)
+    /\.(woff2?|ttf)$/.test(url.pathname)
   )
+}
+
+function isImageAsset(url) {
+  return /\.(png|jpg|jpeg|svg|gif|webp|ico|avif)$/.test(url.pathname)
 }
 
 function isApiRoute(url) {
@@ -100,8 +108,15 @@ self.addEventListener("fetch", (event) => {
   // Skip non-GET
   if (event.request.method !== "GET") return
 
-  if (isStaticAsset(url)) {
+  if (isImmutableAsset(url)) {
     event.respondWith(cacheFirst(event.request))
+    return
+  }
+
+  // Imagens de conteúdo: serve do cache mas revalida em background,
+  // então uma troca de arte aparece no carregamento seguinte.
+  if (isImageAsset(url)) {
+    event.respondWith(staleWhileRevalidate(event.request))
     return
   }
 
