@@ -9,7 +9,7 @@ import {
   MessageCircle,
   Medal,
   User,
-  LineChart,
+  CalendarRange,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -31,10 +31,9 @@ const ITEMS: Item[] = [
     match: ["/flashcards", "/simulados", "/redacao"],
   },
   {
-    icon: LineChart,
-    label: "Progresso",
-    href: "/analytics",
-    match: ["/planner"],
+    icon: CalendarRange,
+    label: "Plano",
+    href: "/planner",
   },
   { icon: MessageCircle, label: "Mentor", href: "/mentor" },
   { icon: Medal, label: "Ranking", href: "/ranking" },
