@@ -4,7 +4,7 @@ import { db } from "@/lib/db"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { ChevronRight, BookOpen, type LucideIcon } from "lucide-react"
+import { ChevronRight, ChevronLeft, BookOpen, type LucideIcon } from "lucide-react"
 import {
   FlaskConical,
   Globe,
@@ -103,12 +103,14 @@ export default async function AreaPage({ params }: { params: Promise<{ areaSlug:
     <div className="max-w-3xl mx-auto">
       {/* Header */}
       <div className={`bg-gradient-to-b ${headerGradient} px-4 pt-6 pb-8`}>
-        {/* Breadcrumb */}
-        <nav className="flex items-center gap-1 text-xs text-muted-foreground mb-4">
-          <Link href="/study" className="hover:text-foreground transition-colors">Estudar</Link>
-          <ChevronRight className="h-3 w-3" />
-          <span className="text-foreground font-medium">{area.name}</span>
-        </nav>
+        {/* Voltar */}
+        <Link
+          href="/study"
+          aria-label="Voltar"
+          className="-ml-2 mb-3 flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        >
+          <ChevronLeft className="h-5 w-5" />
+        </Link>
 
         <div className="flex items-center gap-3">
           <AreaIcon className="h-8 w-8 text-foreground" />
