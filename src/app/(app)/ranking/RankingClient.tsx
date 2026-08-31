@@ -16,9 +16,33 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog"
-import { Medal, Users, Plus, LogIn, Copy, Check, Loader2, Crown } from "lucide-react"
+import {
+  Medal,
+  Users,
+  Plus,
+  LogIn,
+  Copy,
+  Check,
+  Loader2,
+  Crown,
+  BookOpen,
+  PencilRuler,
+  GraduationCap,
+  ChevronUp,
+  ChevronDown,
+  Lock,
+} from "lucide-react"
+import type { LucideIcon } from "lucide-react"
+import type { LeagueTier } from "@prisma/client"
 import { cn } from "@/lib/utils"
 import { createRankingGroup, joinRankingGroup } from "@/app/actions/ranking.actions"
+import {
+  LEAGUE_ORDER,
+  LEAGUE_META,
+  PROMOTE_TOP,
+  DEMOTE_BOTTOM,
+  MIN_ROOM_FOR_PODIUM,
+} from "@/lib/league"
 
 export interface RankEntry {
   userId: string
@@ -34,6 +58,29 @@ export interface GroupData {
   code: string
   isOwner: boolean
   members: RankEntry[]
+}
+
+export interface LeagueEntry {
+  userId: string
+  name: string | null
+  image: string | null
+  level: number
+  monthlyXP: number
+}
+
+export interface LeagueData {
+  tier: LeagueTier
+  season: string
+  daysLeft: number
+  entries: LeagueEntry[]
+}
+
+const TIER_ICON: Record<string, LucideIcon> = {
+  BookOpen,
+  PencilRuler,
+  GraduationCap,
+  Medal,
+  Crown,
 }
 
 function initials(name?: string | null) {
@@ -80,6 +127,190 @@ function RankList({ entries, myId }: { entries: RankEntry[]; myId: string }) {
   )
 }
 
+/* ────────────────────────── LIGA ────────────────────────── */
+
+/** Faixa de escudos das 5 ligas — a atual destacada, futuras trancadas. */
+function LeagueStrip({ tier }: { tier: LeagueTier }) {
+  const currentIdx = LEAGUE_ORDER.indexOf(tier)
+  return (
+    <div className="flex items-center justify-between gap-1">
+      {LEAGUE_ORDER.map((t, i) => {
+        const meta = LEAGUE_META[t]
+        const Icon = TIER_ICON[meta.icon] ?? Medal
+        const isCurrent = i === currentIdx
+        const locked = i > currentIdx
+        return (
+          <div key={t} className="flex flex-1 flex-col items-center gap-1">
+            <div
+              className={cn(
+                "flex h-11 w-11 items-center justify-center rounded-2xl ring-2 transition-colors",
+                isCurrent ? `bg-card ${meta.ring}` : "bg-muted/40 ring-transparent",
+              )}
+            >
+              {locked ? (
+                <Lock className="h-4 w-4 text-muted-foreground/50" />
+              ) : (
+                <Icon className={cn("h-5 w-5", isCurrent ? meta.color : "text-muted-foreground/60")} />
+              )}
+            </div>
+            <span
+              className={cn(
+                "text-[9px] font-medium leading-tight",
+                isCurrent ? "text-foreground" : "text-muted-foreground/60",
+              )}
+            >
+              {meta.label}
+            </span>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+/** Pódio dos 3 primeiros — 2º · 1º · 3º, estilo Transit. */
+function Podium({ top, myId }: { top: LeagueEntry[]; myId: string }) {
+  const [second, first, third] = [top[1], top[0], top[2]]
+  const slot = (e: LeagueEntry | undefined, place: 1 | 2 | 3) => {
+    if (!e) return <div className="flex-1" />
+    const size = place === 1 ? "h-16 w-16" : "h-12 w-12"
+    const pedestal = place === 1 ? "h-20 bg-primary/15" : place === 2 ? "h-14 bg-muted/50" : "h-10 bg-muted/40"
+    const ringColor = place === 1 ? "ring-yellow-400/70" : place === 2 ? "ring-zinc-300/60" : "ring-amber-700/60"
+    return (
+      <div className="flex flex-1 flex-col items-center gap-1.5">
+        {place === 1 && <Crown className="h-4 w-4 text-yellow-400" />}
+        <Avatar className={cn(size, "ring-2", ringColor)}>
+          <AvatarImage src={e.image ?? undefined} alt={e.name ?? "Avatar"} />
+          <AvatarFallback className="bg-primary/15 text-xs font-semibold text-primary">
+            {initials(e.name)}
+          </AvatarFallback>
+        </Avatar>
+        <p className={cn("max-w-[80px] truncate text-center text-xs", e.userId === myId ? "font-bold text-primary" : "font-medium")}>
+          {e.name ?? "Estudante"}
+        </p>
+        <p className="text-[11px] font-semibold tabular-nums text-muted-foreground">
+          {e.monthlyXP.toLocaleString("pt-BR")}
+        </p>
+        <div className={cn("mt-0.5 w-full rounded-t-xl", pedestal)}>
+          <p className="pt-1 text-center text-sm font-extrabold text-foreground/70">{place}º</p>
+        </div>
+      </div>
+    )
+  }
+  return (
+    <div className="flex items-end gap-2 px-2">
+      {slot(second, 2)}
+      {slot(first, 1)}
+      {slot(third, 3)}
+    </div>
+  )
+}
+
+function LeagueTab({ league, myId }: { league: LeagueData | null; myId: string }) {
+  if (!league) {
+    return (
+      <div className="flex flex-col items-center gap-3 rounded-2xl border bg-muted/20 py-14 text-center">
+        <Medal className="h-10 w-10 text-muted-foreground/40" />
+        <p className="font-medium">Sua liga está sendo montada</p>
+        <p className="max-w-xs text-sm text-muted-foreground">
+          Estude um pouco pra entrar na competição deste mês.
+        </p>
+      </div>
+    )
+  }
+
+  const meta = LEAGUE_META[league.tier]
+  const { entries } = league
+  const showPodium = entries.length >= MIN_ROOM_FOR_PODIUM
+  const rest = showPodium ? entries.slice(3) : entries
+  const restStartRank = showPodium ? 4 : 1
+  const isTop = LEAGUE_ORDER.indexOf(league.tier) === LEAGUE_ORDER.length - 1
+  const isBottom = LEAGUE_ORDER.indexOf(league.tier) === 0
+  const demoteFrom = Math.max(0, entries.length - DEMOTE_BOTTOM) // índice global
+
+  return (
+    <div className="space-y-5">
+      <LeagueStrip tier={league.tier} />
+
+      <div className="flex items-center justify-between rounded-2xl border bg-card px-4 py-3">
+        <div>
+          <p className={cn("text-sm font-bold", meta.color)}>Liga {meta.label}</p>
+          <p className="text-[11px] text-muted-foreground">{entries.length} estudantes na sua sala</p>
+        </div>
+        <div className="text-right">
+          <p className="text-sm font-semibold tabular-nums">{league.daysLeft}d</p>
+          <p className="text-[10px] text-muted-foreground">até virar</p>
+        </div>
+      </div>
+
+      {showPodium && <Podium top={entries} myId={myId} />}
+
+      <div className="overflow-hidden rounded-2xl border">
+        {rest.map((e, i) => {
+          const rank = restStartRank + i
+          const globalIdx = showPodium ? i + 3 : i
+          const inPromo = globalIdx < PROMOTE_TOP && !isTop
+          const inDemote = globalIdx >= demoteFrom && !isBottom && entries.length > PROMOTE_TOP
+          const isMe = e.userId === myId
+          const showPromoDivider = inPromo && globalIdx === PROMOTE_TOP - 1
+          const showDemoteDivider = inDemote && globalIdx === demoteFrom
+
+          return (
+            <div key={e.userId}>
+              {showDemoteDivider && (
+                <div className="flex items-center gap-2 bg-destructive/10 px-4 py-1">
+                  <ChevronDown className="h-3 w-3 text-destructive" />
+                  <span className="text-[10px] font-bold uppercase tracking-wide text-destructive">
+                    Zona de queda
+                  </span>
+                </div>
+              )}
+              <div
+                className={cn(
+                  "flex items-center gap-3 px-4 py-3",
+                  isMe && "bg-primary/5",
+                  inPromo && !isMe && "bg-emerald-500/[0.06]",
+                )}
+              >
+                <span className="w-6 text-center text-sm font-semibold tabular-nums text-muted-foreground">
+                  {rank}
+                </span>
+                <Avatar className="h-9 w-9">
+                  <AvatarImage src={e.image ?? undefined} alt={e.name ?? "Avatar"} />
+                  <AvatarFallback className="bg-primary/15 text-[11px] font-medium text-primary">
+                    {initials(e.name)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                  <p className={cn("truncate text-sm", isMe ? "font-semibold" : "font-medium")}>
+                    {e.name ?? "Estudante"}
+                    {isMe && <span className="ml-1 text-xs text-primary">(você)</span>}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">Nível {e.level}</p>
+                </div>
+                {inPromo && <ChevronUp className="h-4 w-4 shrink-0 text-emerald-500" />}
+                {inDemote && <ChevronDown className="h-4 w-4 shrink-0 text-destructive" />}
+                <span className="shrink-0 text-sm font-semibold tabular-nums">
+                  {e.monthlyXP.toLocaleString("pt-BR")}
+                  <span className="ml-0.5 text-[10px] font-normal text-muted-foreground">XP</span>
+                </span>
+              </div>
+              {showPromoDivider && (
+                <div className="flex items-center gap-2 bg-emerald-500/10 px-4 py-1">
+                  <ChevronUp className="h-3 w-3 text-emerald-500" />
+                  <span className="text-[10px] font-bold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">
+                    Zona de subida — top {PROMOTE_TOP}
+                  </span>
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 function CopyCode({ code }: { code: string }) {
   const [copied, setCopied] = useState(false)
   return (
@@ -103,12 +334,14 @@ export function RankingClient({
   myRank,
   myXP,
   groups,
+  league,
 }: {
   myId: string
   global: RankEntry[]
   myRank: number
   myXP: number
   groups: GroupData[]
+  league: LeagueData | null
 }) {
   const router = useRouter()
   const [selectedGroupId, setSelectedGroupId] = useState(groups[0]?.id ?? "")
@@ -151,11 +384,17 @@ export function RankingClient({
         <p className="text-sm text-muted-foreground">Classificação por XP</p>
       </div>
 
-      <Tabs defaultValue="geral">
-        <TabsList className="grid w-full grid-cols-2">
+      <Tabs defaultValue="liga">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="liga">Liga</TabsTrigger>
           <TabsTrigger value="geral">Geral</TabsTrigger>
-          <TabsTrigger value="grupos">Grupos</TabsTrigger>
+          <TabsTrigger value="grupos">Amigos</TabsTrigger>
         </TabsList>
+
+        {/* ── Liga ── */}
+        <TabsContent value="liga" className="mt-4">
+          <LeagueTab league={league} myId={myId} />
+        </TabsContent>
 
         {/* ── Geral ── */}
         <TabsContent value="geral" className="mt-4 space-y-4">

@@ -1,5 +1,6 @@
 import { db } from "@/lib/db"
 import { startOfDayBR, addDaysBR } from "@/lib/date-br"
+import { ensureLeagueMembership, seasonKey } from "@/lib/league"
 
 export function calcLevel(totalXP: number): number {
   return Math.min(99, Math.floor(totalXP / 500) + 1)
@@ -18,6 +19,19 @@ export async function awardXP(userId: string, amount: number): Promise<number> {
       where: { userId },
       data: { currentLevel: newLevel },
     })
+  }
+
+  // XP também conta pra competição mensal da liga.
+  if (amount > 0) {
+    try {
+      await ensureLeagueMembership(userId)
+      await db.leagueMembership.update({
+        where: { userId_season: { userId, season: seasonKey() } },
+        data: { monthlyXP: { increment: amount } },
+      })
+    } catch {
+      // Liga é secundária — nunca quebra o fluxo de XP se algo falhar aqui.
+    }
   }
 
   return amount

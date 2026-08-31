@@ -46,6 +46,7 @@ model User {
   agentInsights    AgentInsight[]
   rankingGroupsOwned  RankingGroup[]       @relation("GroupOwner")
   rankingMemberships  RankingGroupMember[]
+  leagueMemberships   LeagueMembership[]
 }
 
 model PasswordResetToken {
@@ -83,6 +84,53 @@ model RankingGroupMember {
   @@index([userId])
 }
 
+// ============================================================
+// LIGAS (competição mensal estilo Duolingo)
+// ============================================================
+
+enum LeagueTier {
+  INICIANTE
+  VESTIBULANDO
+  APROVADO
+  MEDALHISTA
+  ELITE
+}
+
+/// Uma sala de ~30 pessoas de uma liga, numa temporada (mês).
+model LeagueRoom {
+  id      String     @id @default(cuid())
+  tier    LeagueTier
+  season  String // "2026-08"
+  members LeagueMembership[]
+
+  createdAt DateTime @default(now())
+
+  @@index([tier, season])
+}
+
+model LeagueMembership {
+  id     String     @id @default(cuid())
+  roomId String
+  room   LeagueRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  userId String
+  user   User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  season    String // redundante com room.season, mas facilita o unique/consulta
+  monthlyXP Int    @default(0) // XP só da competição — nasce 0 a cada temporada
+  joinedAt  DateTime @default(now())
+
+  @@unique([userId, season])
+  @@index([roomId])
+  @@index([userId])
+}
+
+/// Registro de qual temporada já teve a virada (promoção/rebaixamento) processada.
+model LeagueSeason {
+  season      String   @id // "2026-08"
+  processedAt DateTime?
+  createdAt   DateTime @default(now())
+}
+
 model UserProfile {
   id             String    @id @default(cuid())
   userId         String    @unique
@@ -96,11 +144,14 @@ model UserProfile {
   dailyStudyGoal    Int       @default(120) // minutos
 
   // Gamification
-  currentLevel   Int       @default(1)
-  totalXP        Int       @default(0)
-  streak         Int       @default(0)
-  longestStreak  Int       @default(0)
+  currentLevel   Int        @default(1)
+  totalXP        Int        @default(0)
+  streak         Int        @default(0)
+  longestStreak  Int        @default(0)
   lastStudyDate  DateTime?
+
+  // Liga atual (persiste entre temporadas; muda na virada do mês)
+  currentTier    LeagueTier @default(INICIANTE)
 
   // Trilha de estudos (detectada automaticamente pela data da prova)
   trail          TrailType @default(EXTENSIVA)
