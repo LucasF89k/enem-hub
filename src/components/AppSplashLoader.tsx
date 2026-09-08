@@ -24,7 +24,11 @@ import dynamic from "next/dynamic"
 // AppSplash finalmente montava, podia aparecer por um instante no tamanho
 // intrínseco dele com o controle nativo do navegador por cima — antes do
 // autoPlay/play() imperativo rodarem synchronous o bastante.
-export const AppSplash = dynamic(() => import("@/components/AppSplash").then((m) => m.AppSplash), {
+const AppSplashDynamic = dynamic(() => import("@/components/AppSplash").then((m) => m.AppSplash), {
   ssr: false,
   loading: () => <div className="fixed inset-0 z-[999] bg-black" />,
 })
+
+export function AppSplash({ isLoggedIn }: { isLoggedIn: boolean }) {
+  return <AppSplashDynamic isLoggedIn={isLoggedIn} />
+}

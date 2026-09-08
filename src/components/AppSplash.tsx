@@ -21,6 +21,11 @@ import { AnimatePresence, motion } from "framer-motion"
  *   logo se monta (vídeo) → a pedra racha, se abre e revela a gema (vídeo)
  *   → a câmera recua até a posição do hero → entra o app
  *
+ * A fase da pedra é uma recompensa de quem já tem conta: só quem chega aqui
+ * com sessão ativa (isLoggedIn) vê logo+pedra. Sem sessão, a splash mostra
+ * só a logo montando e já segue pro login/cadastro — a pedra nunca "racha"
+ * pra quem ainda não tem cadastro.
+ *
  * Automática por padrão (autoplay silencioso), mas alguns navegadores
  * mobile recusam autoplay por política do próprio SO (ex.: modo economia de
  * bateria/dados) — isso não tem contorno via código. Nesse caso a splash
@@ -51,7 +56,7 @@ const LOGO_MS = 4200 // duração do vídeo da logo (4.04s) + respiro
 const REVEAL_MS = 5000 // duração do vídeo da pedra
 const PULLBACK_MS = 1000
 
-export function AppSplash() {
+export function AppSplash({ isLoggedIn }: { isLoggedIn: boolean }) {
   // Começa direto em "logo" (cobre a tela já no primeiro paint, sem o
   // frame de "pisca" que existiria se começasse em "hidden" e só virasse
   // "logo" dentro de um useEffect) — EXCETO se essa aba já rodou a splash
@@ -114,21 +119,28 @@ export function AppSplash() {
   function handleLogoPlaying() {
     if (logoTimersRef.current.length > 0) return
     setNeedsTap(false)
-    logoTimersRef.current = [
-      setTimeout(() => setStep("reveal"), LOGO_MS),
-      setTimeout(() => setStep("pullback"), LOGO_MS + REVEAL_MS),
-      setTimeout(() => {
-        setStep("done")
-        // Marca "já rodou nessa aba" só agora que a sequência de fato
-        // terminou — é o que impede a splash de voltar a cobrir a tela se
-        // alguma navegação dentro do app remontar o root layout.
-        try {
-          sessionStorage.setItem("splash-ran", "1")
-        } catch {
-          /* ignore */
-        }
-      }, LOGO_MS + REVEAL_MS + PULLBACK_MS),
-    ]
+
+    const finish = () => {
+      setStep("done")
+      // Marca "já rodou nessa aba" só agora que a sequência de fato
+      // terminou — é o que impede a splash de voltar a cobrir a tela se
+      // alguma navegação dentro do app remontar o root layout.
+      try {
+        sessionStorage.setItem("splash-ran", "1")
+      } catch {
+        /* ignore */
+      }
+    }
+
+    // Sem sessão: só a logo, direto pro login/cadastro — a pedra é
+    // reservada pra quem já tem conta.
+    logoTimersRef.current = isLoggedIn
+      ? [
+          setTimeout(() => setStep("reveal"), LOGO_MS),
+          setTimeout(() => setStep("pullback"), LOGO_MS + REVEAL_MS),
+          setTimeout(finish, LOGO_MS + REVEAL_MS + PULLBACK_MS),
+        ]
+      : [setTimeout(finish, LOGO_MS)]
   }
 
   useEffect(() => {
@@ -274,58 +286,63 @@ export function AppSplash() {
             )}
           </AnimatePresence>
 
-          {/* Sempre montado (só invisível fora do reveal) para carregar cedo.
-              No "pullback" a câmera recua: a gema encolhe e sobe até onde ela
-              fica no hero da Home, e o overlay some por cima disso — a
-              sensação é de continuidade, não de troca de tela. */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 0 }}
-            animate={
-              pulling
-                ? { opacity: 1, scale: 0.42, y: -190 }
-                : { opacity: showingStone ? 1 : 0, scale: 1, y: 0 }
-            }
-            transition={{ duration: pulling ? 1 : 0.5, ease: [0.16, 1, 0.3, 1] }}
-            className="relative z-10 aspect-square w-[min(96vw,460px)]"
-          >
-            <video
-              ref={stoneVideoRef}
-              src="/opal/reveal.mp4"
-              // O poster é a rocha fechada: é o primeiro quadro do vídeo, então
-              // a espera pelo carregamento não mostra nada fora de lugar.
-              poster="/opal/stage-0.webp"
-              muted
-              playsInline
-              controls={false}
-              preload="auto"
-              onError={() => setStoneFailed(true)}
-              className="h-full w-full object-contain"
-              // O fundo do vídeo NUNCA chega a preto puro: o pipeline YUV do
-              // H.264 devolve ~RGB(20,25,25) por mais que se force o clamp
-              // (testado com colorlevels, lutrgb, lutyuv e vinheta por multiply
-              // — todos param nessa faixa). Como não dá para igualar a cor de
-              // forma confiável entre dispositivos, o alpha resolve: a máscara
-              // zera BEM antes da borda do elemento, então não existe aresta
-              // possível, independente da cor que o vídeo renderize.
-              style={{
-                maskImage: "radial-gradient(circle, #000 52%, transparent 80%)",
-                WebkitMaskImage: "radial-gradient(circle, #000 52%, transparent 80%)",
-              }}
-            />
-            {/* Fallback SÓ em caso de falha real (codec indisponível, autoplay
-                bloqueado) — antes ele entrava enquanto o vídeo carregava, e como
-                era a gema pronta, a abertura mostrava a gema, apagava, e só
-                então começava pela rocha: parecia um bug de renderização. */}
-            {stoneFailed && (
-              /* eslint-disable-next-line @next/next/no-img-element */
-              <img
-                src="/opal/stage-3.webp"
-                alt=""
-                aria-hidden
-                className="absolute inset-0 h-full w-full object-contain"
+          {/* Só monta pra quem já tem conta — a pedra é a recompensa de quem
+              chega logado. Sem sessão nem baixa o vídeo (preload="auto"
+              puxaria o arquivo inteiro à toa pra quem nunca vai vê-lo). Uma
+              vez montado, fica sempre no DOM (só invisível fora do reveal)
+              pra carregar cedo. No "pullback" a câmera recua: a gema encolhe
+              e sobe até onde ela fica no hero da Home, e o overlay some por
+              cima disso — a sensação é de continuidade, não de troca de tela. */}
+          {isLoggedIn && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 0 }}
+              animate={
+                pulling
+                  ? { opacity: 1, scale: 0.42, y: -190 }
+                  : { opacity: showingStone ? 1 : 0, scale: 1, y: 0 }
+              }
+              transition={{ duration: pulling ? 1 : 0.5, ease: [0.16, 1, 0.3, 1] }}
+              className="relative z-10 aspect-square w-[min(96vw,460px)]"
+            >
+              <video
+                ref={stoneVideoRef}
+                src="/opal/reveal.mp4"
+                // O poster é a rocha fechada: é o primeiro quadro do vídeo, então
+                // a espera pelo carregamento não mostra nada fora de lugar.
+                poster="/opal/stage-0.webp"
+                muted
+                playsInline
+                controls={false}
+                preload="auto"
+                onError={() => setStoneFailed(true)}
+                className="h-full w-full object-contain"
+                // O fundo do vídeo NUNCA chega a preto puro: o pipeline YUV do
+                // H.264 devolve ~RGB(20,25,25) por mais que se force o clamp
+                // (testado com colorlevels, lutrgb, lutyuv e vinheta por multiply
+                // — todos param nessa faixa). Como não dá para igualar a cor de
+                // forma confiável entre dispositivos, o alpha resolve: a máscara
+                // zera BEM antes da borda do elemento, então não existe aresta
+                // possível, independente da cor que o vídeo renderize.
+                style={{
+                  maskImage: "radial-gradient(circle, #000 52%, transparent 80%)",
+                  WebkitMaskImage: "radial-gradient(circle, #000 52%, transparent 80%)",
+                }}
               />
-            )}
-          </motion.div>
+              {/* Fallback SÓ em caso de falha real (codec indisponível, autoplay
+                  bloqueado) — antes ele entrava enquanto o vídeo carregava, e como
+                  era a gema pronta, a abertura mostrava a gema, apagava, e só
+                  então começava pela rocha: parecia um bug de renderização. */}
+              {stoneFailed && (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src="/opal/stage-3.webp"
+                  alt=""
+                  aria-hidden
+                  className="absolute inset-0 h-full w-full object-contain"
+                />
+              )}
+            </motion.div>
+          )}
         </motion.div>
       )}
     </AnimatePresence>

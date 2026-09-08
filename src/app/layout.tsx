@@ -5,6 +5,7 @@ import { ServiceWorkerRegistrar } from "@/components/pwa/ServiceWorkerRegistrar"
 import { OfflineBanner } from "@/components/pwa/OfflineBanner"
 import { InstallPrompt } from "@/components/pwa/InstallPrompt"
 import { AppSplash } from "@/components/AppSplashLoader"
+import { auth } from "@/lib/auth"
 import "./globals.css"
 
 const inter = Inter({
@@ -49,11 +50,16 @@ export const viewport: Viewport = {
   ],
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  // Decide aqui (server, antes de qualquer paint) se a splash mostra a pedra:
+  // quem não tem sessão ainda não "ganhou" a pedra — só vê a logo montando
+  // e segue pro login/cadastro. Quem já tem conta vê as duas fases.
+  const session = await auth()
+  const isLoggedIn = !!session
   return (
     <html
       lang="pt-BR"
@@ -71,7 +77,7 @@ export default function RootLayout({
       <body className="min-h-screen bg-background text-foreground font-sans antialiased">
         <ServiceWorkerRegistrar />
         <OfflineBanner />
-        <AppSplash />
+        <AppSplash isLoggedIn={isLoggedIn} />
         {children}
         <InstallPrompt />
         <Toaster position="bottom-right" richColors />
