@@ -72,7 +72,7 @@ export default async function AnalyticsPage() {
     heatmap[key] = (heatmap[key] ?? 0) + s.duration
   }
 
-  // Radar data — accuracy by area
+  // Radar data: accuracy by area
   const areaStats: Record<string, { correct: number; total: number }> = {}
   for (const uq of userQuestions) {
     const area = uq.question.areaSlug ?? "outros"
@@ -83,7 +83,7 @@ export default async function AnalyticsPage() {
 
   // Sempre as 4 áreas do ENEM, mesmo sem questões respondidas: o gráfico é uma
   // comparação entre elas, e mostrar só as já respondidas escondia justamente as
-  // áreas intocadas — que são a informação mais acionável ali.
+  // áreas intocadas, que são a informação mais acionável ali.
   const radarData = Object.keys(AREA_SHORT).map((slug) => {
     const s = areaStats[slug] ?? { correct: 0, total: 0 }
     return {
@@ -99,7 +99,7 @@ export default async function AnalyticsPage() {
     score: Math.round(s.scoreTotal ?? 0),
   }))
 
-  // Critical topics — areaSlug + topicId for questions answered wrong >60%
+  // Critical topics: areaSlug + topicId for questions answered wrong >60%
   const topicStats: Record<string, { correct: number; total: number; topicId: string | null }> = {}
   const detailedQuestions = await db.userQuestion.findMany({
     where: { userId },
@@ -221,7 +221,7 @@ export default async function AnalyticsPage() {
       {criticalTopics.length > 0 && (
         <div className="space-y-3">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-            Tópicos críticos — acerto abaixo de 40%
+            Tópicos críticos: acerto abaixo de 40%
           </h2>
           <div className="space-y-2">
             {criticalTopics.map((item) => {

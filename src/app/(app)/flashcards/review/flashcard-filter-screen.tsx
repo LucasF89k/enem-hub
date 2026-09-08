@@ -47,7 +47,7 @@ export function FlashcardFilterScreen({
         <p className="text-sm text-muted-foreground">Escolha um filtro para começar a sessão.</p>
         {emptyNote && (
           <p className="text-sm text-orange-500">
-            Não há cards nesse filtro agora — escolha outro abaixo.
+            Não há cards nesse filtro agora. Escolha outro abaixo.
           </p>
         )}
       </div>
@@ -99,16 +99,16 @@ export function FlashcardFilterScreen({
         </div>
         <ul className="space-y-1.5 text-xs text-muted-foreground">
           <li>
-            <span className="font-semibold text-red-500">Errei</span> — não lembrei da resposta (volta a aparecer logo).
+            <span className="font-semibold text-red-500">Errei</span>: não lembrei da resposta (volta a aparecer logo).
           </li>
           <li>
-            <span className="font-semibold text-orange-500">Difícil</span> — acertei, mas com muito esforço.
+            <span className="font-semibold text-orange-500">Difícil</span>: acertei, mas com muito esforço.
           </li>
           <li>
-            <span className="font-semibold text-blue-500">Bom</span> — acertei, <b>mas ainda acho útil revisar de novo</b>. Use quando acertar e quiser rever em breve mesmo assim.
+            <span className="font-semibold text-blue-500">Bom</span>: acertei, <b>mas ainda acho útil revisar de novo</b>. Use quando acertar e quiser rever em breve mesmo assim.
           </li>
           <li>
-            <span className="font-semibold text-green-500">Fácil</span> — acertei sem dificuldade, já domino (espaça bastante).
+            <span className="font-semibold text-green-500">Fácil</span>: acertei sem dificuldade, já domino (espaça bastante).
           </li>
         </ul>
       </div>

@@ -127,9 +127,9 @@ function RankList({ entries, myId }: { entries: RankEntry[]; myId: string }) {
   )
 }
 
-/* ────────────────────────── LIGA ────────────────────────── */
+/* LIGA */
 
-/** Faixa de escudos das 5 ligas — a atual destacada, futuras trancadas. */
+/** Faixa de escudos das 5 ligas: a atual destacada, futuras trancadas. */
 function LeagueStrip({ tier }: { tier: LeagueTier }) {
   const currentIdx = LEAGUE_ORDER.indexOf(tier)
   return (
@@ -168,7 +168,7 @@ function LeagueStrip({ tier }: { tier: LeagueTier }) {
   )
 }
 
-/** Pódio dos 3 primeiros — 2º · 1º · 3º, estilo Transit. */
+/** Pódio dos 3 primeiros: 2º · 1º · 3º, estilo Transit. */
 function Podium({ top, myId }: { top: LeagueEntry[]; myId: string }) {
   const [second, first, third] = [top[1], top[0], top[2]]
   const slot = (e: LeagueEntry | undefined, place: 1 | 2 | 3) => {
@@ -299,7 +299,7 @@ function LeagueTab({ league, myId }: { league: LeagueData | null; myId: string }
                 <div className="flex items-center gap-2 bg-emerald-500/10 px-4 py-1">
                   <ChevronUp className="h-3 w-3 text-emerald-500" />
                   <span className="text-[10px] font-bold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">
-                    Zona de subida — top {PROMOTE_TOP}
+                    Zona de subida: top {PROMOTE_TOP}
                   </span>
                 </div>
               )}
@@ -384,12 +384,12 @@ export function RankingClient({
           <TabsTrigger value="grupos">Amigos</TabsTrigger>
         </TabsList>
 
-        {/* ── Liga ── */}
+        {/* Liga */}
         <TabsContent value="liga" className="mt-4">
           <LeagueTab league={league} myId={myId} />
         </TabsContent>
 
-        {/* ── Grupos ── */}
+        {/* Grupos */}
         <TabsContent value="grupos" className="mt-4 space-y-4">
           <div className="flex gap-2">
             <Dialog open={createOpen} onOpenChange={setCreateOpen}>

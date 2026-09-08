@@ -107,7 +107,7 @@ export default async function ReviewPage({
 
   // Seleciona 20 cards ALEATÓRIOS do filtro, sem repetir os já respondidos.
   // "revisar": prioriza os não respondidos (embaralhados); só completa com
-  // vencidos se faltarem novos — assim você nunca cai nos mesmos de novo.
+  // vencidos se faltarem novos, assim você nunca cai nos mesmos de novo.
   const unanswered = cards.filter((c) => !latest.get(c.id))
   const pickByRating = (rating: number) => cards.filter((c) => latest.get(c.id)?.rating === rating)
 

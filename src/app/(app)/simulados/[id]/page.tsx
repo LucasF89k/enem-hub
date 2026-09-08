@@ -18,7 +18,7 @@ export async function generateMetadata({
 }) {
   const { id } = await params
   const s = await db.simulado.findUnique({ where: { id }, select: { title: true } })
-  return { title: s ? `${s.title} — Vion` : "Simulado" }
+  return { title: s ? `${s.title} · Vion` : "Simulado" }
 }
 
 export default async function SimuladoDetailPage({
@@ -135,7 +135,7 @@ export default async function SimuladoDetailPage({
         </div>
       )}
 
-      {/* CTA — ENEM: 2 dias oficiais; vestibular: simulado único */}
+      {/* CTA (ENEM: 2 dias oficiais; vestibular: simulado único) */}
       <SimuladoStart
         simuladoId={simuladoId}
         isEnem={isEnem}

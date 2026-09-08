@@ -5,14 +5,14 @@ import { motion } from "framer-motion"
 /**
  * Logo do Vion "se montando".
  *
- * A logo NÃO é redesenhada em SVG — recriá-la de olho sempre saía diferente
+ * A logo NÃO é redesenhada em SVG: recriá-la de olho sempre saía diferente
  * do arquivo real (foi o que deixou a seta com cara de "bandeirinha"). O que
  * aparece na tela é sempre o próprio `logo-app.png`; o que anima é a
  * revelação de cada peça, então o resultado é pixel-perfect por construção.
  *
  * Cada peça é uma <image> do MESMO png recortada por uma máscara ESTÁTICA, e
  * o que anima é o <g> que a envolve (opacity/translate). Isso é proposital:
- * dentro de um <mask> o Framer Motion só consegue animar `pathLength` —
+ * dentro de um <mask> o Framer Motion só consegue animar `pathLength`,
  * `r`, `rx`, `ry`, `x`, `y` e `scale` não animam ali (viram transform CSS ou
  * são ignorados), e a máscara fica travada no valor inicial. O anel é a única
  * peça cuja máscara anima, justamente porque usa `pathLength`.
@@ -37,7 +37,7 @@ export function LogoBuild() {
       aria-label="Vion"
     >
       <defs>
-        {/* Anel — única máscara animada (pathLength funciona dentro de mask).
+        {/* Anel: única máscara animada (pathLength funciona dentro de mask).
             O furo preto tira o ponto roxo daqui, pra ele entrar depois sozinho. */}
         <mask id="lg-ring" maskUnits="userSpaceOnUse" x="0" y="0" width="279" height="263">
           <motion.circle

@@ -1,7 +1,7 @@
 import { Zap } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-/** Badge padrão de recompensa em XP — usado em toda a app. */
+/** Badge padrão de recompensa em XP, usado em toda a app. */
 export function XpBadge({
   xp,
   label,

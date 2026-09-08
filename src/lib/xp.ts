@@ -30,7 +30,7 @@ export async function awardXP(userId: string, amount: number): Promise<number> {
         data: { monthlyXP: { increment: amount } },
       })
     } catch {
-      // Liga é secundária — nunca quebra o fluxo de XP se algo falhar aqui.
+      // Liga é secundária: nunca quebra o fluxo de XP se algo falhar aqui.
     }
   }
 
@@ -39,13 +39,13 @@ export async function awardXP(userId: string, amount: number): Promise<number> {
 
 /**
  * Tipos de atividade que contam pro streak. Ler teoria (CONTENT) e revisão
- * genérica (REVISION) NÃO contam — só prática de verdade.
+ * genérica (REVISION) NÃO contam, só prática de verdade.
  */
 const STREAK_TYPES = new Set(["QUESTIONS", "SIMULADO", "FLASHCARDS", "REDACAO"])
 
 /**
  * Streak "efetivo": o valor gravado só vale se a pessoa estudou hoje ou ontem.
- * Passou um dia inteiro (00:00–23:59 BR) sem atividade que conta → 0, sem
+ * Passou um dia inteiro (00:00-23:59 BR) sem atividade que conta → 0, sem
  * precisar de job noturno: qualquer leitura do streak passa por aqui.
  */
 export function effectiveStreak(
@@ -104,7 +104,7 @@ export async function recordStudyActivity(
   })
   if (!profile) return { streakIncreased: false, newStreak: 0 }
 
-  // Ler teoria não conta pro streak — só prática.
+  // Ler teoria não conta pro streak, só prática.
   if (!STREAK_TYPES.has(type)) {
     return {
       streakIncreased: false,

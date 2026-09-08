@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
           }).catch(() => null)
         : null,
 
-      // Flashcards que já existem neste tópico — para o Mentor NÃO repetir.
+      // Flashcards que já existem neste tópico, para o Mentor NÃO repetir.
       topicId
         ? db.flashcard.findMany({
             where: { topicId },
@@ -76,16 +76,16 @@ export async function POST(req: NextRequest) {
     ])
 
     const trailMessages: Record<string, string> = {
-      EXTENSIVA: 'Trilha Extensiva — construa base sólida.',
-      SEMI_EXTENSIVA: 'Trilha Semi-extensiva — equilibre teoria e prática.',
-      INTENSIVA: 'Trilha Intensiva — seja direto, priorize tópicos mais cobrados.',
-      SPRINT: 'Trilha Sprint — foque APENAS em questões e revisão. Zero teoria nova.',
+      EXTENSIVA: 'Trilha Extensiva: construa base sólida.',
+      SEMI_EXTENSIVA: 'Trilha Semi-extensiva: equilibre teoria e prática.',
+      INTENSIVA: 'Trilha Intensiva: seja direto, priorize tópicos mais cobrados.',
+      SPRINT: 'Trilha Sprint: foque APENAS em questões e revisão. Zero teoria nova.',
     }
 
     const curso = findCurso(profile?.targetCourse) ?? findCurso('medicina')!
     const uni = findUniversidade(profile?.targetInstitution)
     const metaFaculdade = uni
-      ? `${uni.sigla} (${uni.cidade}/${uni.uf}) — nota de corte estimada ~${estimateCutoff(curso, uni)}`
+      ? `${uni.sigla} (${uni.cidade}/${uni.uf}), nota de corte estimada ~${estimateCutoff(curso, uni)}`
       : `ainda não definida (corte típico de ${curso.nome} ~${cursoMedia(curso)})`
 
     const hoje = new Date().toLocaleDateString('pt-BR', {
@@ -109,9 +109,9 @@ Sempre que você CRIAR flashcards para o aluno, além de mostrá-los no texto, e
 [{"front":"pergunta do card","back":"resposta do card"}]
 \`\`\`
 Emita esse bloco só quando realmente criar flashcards, uma única vez, e não escreva nada depois dele.
-REGRAS DOS FLASHCARDS: INVENTE cards NOVOS e ORIGINAIS a partir do seu conhecimento — variados (definição, aplicação, exemplo, pegadinha, comparação), não só decoreba óbvia. NUNCA repita nem parafraseie os flashcards que já existem (listados abaixo, se houver). Cada card deve trazer algo diferente do que o aluno já tem.${
+REGRAS DOS FLASHCARDS: INVENTE cards NOVOS e ORIGINAIS a partir do seu conhecimento, variados (definição, aplicação, exemplo, pegadinha, comparação), não só decoreba óbvia. NUNCA repita nem parafraseie os flashcards que já existem (listados abaixo, se houver). Cada card deve trazer algo diferente do que o aluno já tem.${
       Array.isArray(existingCards) && existingCards.length > 0
-        ? `\n\nFLASHCARDS QUE JÁ EXISTEM NESTE TÓPICO (NÃO os repita — crie diferentes):\n${existingCards
+        ? `\n\nFLASHCARDS QUE JÁ EXISTEM NESTE TÓPICO (NÃO os repita, crie diferentes):\n${existingCards
             .slice(0, 40)
             .map((c: { front: string }) => `- ${c.front}`)
             .join('\n')}`
@@ -126,7 +126,7 @@ ${profile ? `PERFIL DO ALUNO:
 - Streak: ${profile.streak} dias | XP: ${profile.totalXP}
 ${profile.examDate ? `- ENEM: ${new Date(profile.examDate).toLocaleDateString('pt-BR')}` : ''}` : ''}
 
-${currentTopic ? `TÓPICO ATUAL: ${currentTopic.name} (${currentTopic.discipline.name} — ${currentTopic.discipline.area.name})` : ''}
+${currentTopic ? `TÓPICO ATUAL: ${currentTopic.name} (${currentTopic.discipline.name}, ${currentTopic.discipline.area.name})` : ''}
 
 ${wrongQuestions.length > 0 ? `ÚLTIMAS QUESTÕES ERRADAS:
 ${wrongQuestions.map(q => `- ${q.question?.topic?.discipline?.name ?? '?'} / ${q.question?.topic?.name ?? '?'}`).join('\n')}` : ''}
@@ -137,13 +137,13 @@ ${todayPlan.map(p => `- ${p.title} (${p.duration}min)`).join('\n')}` : ''}`
     // Regra SEMPRE ativa: montar/criar/refazer plano começa por um questionário.
     const planBuildingInstructions = `
 
-MONTAR PLANO DE ESTUDOS — SEMPRE FAÇA UM QUESTIONÁRIO ANTES
-Sempre que o aluno pedir para MONTAR, CRIAR, REFAZER ou AJUSTAR um plano/rotina/cronograma de estudos, você DEVE primeiro ENTREVISTAR o aluno. NUNCA proponha ou emita um plano sem antes fazer essas perguntas — a única exceção é quando o aluno envia uma FOTO de um plano pronto (ver regra abaixo).
+MONTAR PLANO DE ESTUDOS: SEMPRE FAÇA UM QUESTIONÁRIO ANTES
+Sempre que o aluno pedir para MONTAR, CRIAR, REFAZER ou AJUSTAR um plano/rotina/cronograma de estudos, você DEVE primeiro ENTREVISTAR o aluno. NUNCA proponha ou emita um plano sem antes fazer essas perguntas, a única exceção é quando o aluno envia uma FOTO de um plano pronto (ver regra abaixo).
 
 Regras da entrevista:
 - Faça UMA pergunta por vez, curta e objetiva. NUNCA despeje várias perguntas juntas. Espere a resposta antes da próxima.
 - Faça no máximo 5 perguntas. Seja acolhedor e rápido.
-- Você JÁ SABE (confirme rapidamente, não pergunte do zero): curso desejado (${curso.nome}), universidade-alvo (${metaFaculdade}), meta de nota (${profile?.targetScore ?? '—'}), meta diária atual (${profile?.dailyStudyGoal ?? 120} min)${profile?.examDate ? `, data do ENEM (${new Date(profile.examDate).toLocaleDateString('pt-BR')})` : ''}.
+- Você JÁ SABE (confirme rapidamente, não pergunte do zero): curso desejado (${curso.nome}), universidade-alvo (${metaFaculdade}), meta de nota (${profile?.targetScore ?? 'não definida'}), meta diária atual (${profile?.dailyStudyGoal ?? 120} min)${profile?.examDate ? `, data do ENEM (${new Date(profile.examDate).toLocaleDateString('pt-BR')})` : ''}.
 - Cubra: (1) quantos dias por semana e quanto tempo por dia; (2) matérias/disciplinas em que tem mais dificuldade (priorizar); (3) ponto de partida (começando do zero, revisando, ou reta final); (4) preferência entre mais teoria, equilibrado ou mais questões; (5) alguma restrição de horário/compromisso.
 
 Ao terminar de coletar as respostas:
@@ -163,17 +163,17 @@ Regras do JSON:
     // Foto de um plano já pronto: transcrever fielmente (sem questionário).
     const folhaInstructions = `
 
-PLANO EM FOLHA (FOTO) — TRANSCREVER, SEM QUESTIONÁRIO
+PLANO EM FOLHA (FOTO): TRANSCREVER, SEM QUESTIONÁRIO
 Se o aluno enviar uma FOTO/imagem de um plano/cronograma/planner de estudos já pronto, NÃO faça o questionário: apenas transcreva fielmente o que está na folha, dia a dia, mantendo as mesmas matérias e atividades.
-Considerando que hoje é ${hoje}, agende cada dia na semana correspondente (segunda a domingo) a partir da semana atual — a menos que a folha traga datas específicas.
+Considerando que hoje é ${hoje}, agende cada dia na semana correspondente (segunda a domingo) a partir da semana atual, a menos que a folha traga datas específicas.
 Depois de mostrar o plano em texto, emita ao FINAL EXATAMENTE UM bloco de código com a tag vion-plano-folha e um JSON válido:
 \`\`\`vion-plano-folha
-{"title":"Plano da folha","days":[{"date":"YYYY-MM-DD","items":[{"title":"Funções — teoria","type":"CONTENT","duration":60}]}]}
+{"title":"Plano da folha","days":[{"date":"YYYY-MM-DD","items":[{"title":"Funções: teoria","type":"CONTENT","duration":60}]}]}
 \`\`\`
 Regras do JSON:
 - date: data ISO (YYYY-MM-DD) de cada dia do plano.
 - type de cada item ∈ CONTENT (teoria), QUESTIONS (questões), FLASHCARDS, SIMULADO, REDACAO, REVISION (revisão). Escolha o mais adequado ao que está escrito.
-- title: o texto do item como está na folha (ex.: "Redação — treino", "Matemática — funções").
+- title: o texto do item como está na folha (ex.: "Redação: treino", "Matemática: funções").
 - duration: minutos estimados (use 45 se não houver indicação).
 - Emita o bloco vion-plano-folha UMA ÚNICA VEZ, só quando transcrever a folha, e não escreva nada depois dele.`
 
@@ -221,7 +221,7 @@ Regras do JSON:
       return arr
     }
 
-    // Conteúdo no formato Gemini (fallback) — aceita imagem e PDF.
+    // Conteúdo no formato Gemini (fallback): aceita imagem e PDF.
     type Part = { text: string } | { inlineData: { mimeType: string; data: string } }
     const buildGeminiContents = () => {
       const contents = (messages as { role: string; content: string }[]).map((m) => ({
@@ -309,7 +309,7 @@ Regras do JSON:
         }
 
         // Nenhum provedor produziu texto. Sem isto o cliente recebia 200 com
-        // corpo vazio e a bolha ficava muda — foi o que acontecia ao mandar só
+        // corpo vazio e a bolha ficava muda. Foi o que acontecia ao mandar só
         // uma imagem e o provedor recusar o anexo.
         if (!sent) {
           const msg = lastErr instanceof Error ? lastErr.message : String(lastErr ?? '')

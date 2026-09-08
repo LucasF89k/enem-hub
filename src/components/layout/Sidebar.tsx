@@ -110,7 +110,7 @@ export function Sidebar({ user }: SidebarProps) {
 
       {/* Footer */}
       <div className="shrink-0 border-t border-border p-2 space-y-1">
-        {/* Toggle — visível apenas no tablet (md a lg) */}
+        {/* Toggle, visível apenas no tablet (md a lg) */}
         <button
           onClick={() => setExpanded((v) => !v)}
           className={cn(

@@ -201,7 +201,7 @@ export function OnboardingSteps({ defaultName }: OnboardingStepsProps) {
         <p className="text-sm text-primary font-medium">
           "A medicina é uma ciência da incerteza e uma arte da probabilidade."
         </p>
-        <p className="text-xs text-muted-foreground mt-1">— William Osler</p>
+        <p className="text-xs text-muted-foreground mt-1">William Osler</p>
       </div>
     </div>
   )
@@ -321,7 +321,7 @@ export function OnboardingSteps({ defaultName }: OnboardingStepsProps) {
         {selectedUni && (
           <p className="text-xs text-muted-foreground">
             Nota de corte estimada para {curso.nome}:{" "}
-            <b className="text-primary">{estimateCutoff(curso, selectedUni)}</b> — usamos como sua
+            <b className="text-primary">{estimateCutoff(curso, selectedUni)}</b>, usamos como sua
             nota alvo.
           </p>
         )}
@@ -500,7 +500,7 @@ export function OnboardingSteps({ defaultName }: OnboardingStepsProps) {
           <SummaryRow
             icon={<Stethoscope className="w-4 h-4 text-primary" />}
             label="Universidade"
-            value={`${selectedUni.sigla} — ${selectedUni.cidade}/${selectedUni.uf}`}
+            value={`${selectedUni.sigla}, ${selectedUni.cidade}/${selectedUni.uf}`}
           />
         )}
         <SummaryRow
@@ -509,7 +509,7 @@ export function OnboardingSteps({ defaultName }: OnboardingStepsProps) {
           value={
             form.examDate
               ? format(form.examDate, "dd/MM/yyyy")
-              : "—"
+              : "Não definida"
           }
         />
         <SummaryRow

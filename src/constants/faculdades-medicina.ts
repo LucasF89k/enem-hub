@@ -1,18 +1,18 @@
 // Base nacional de faculdades de Medicina (referência SISU/ENEM 2024, ampla concorrência).
-// Cobertura: todas as UFs — federais, estaduais/municipais e particulares.
+// Cobertura: todas as UFs, federais, estaduais/municipais e particulares.
 // As notas são de REFERÊNCIA (variam por ano, campus e modalidade de cota).
 
 export type TipoIES = "federal" | "estadual" | "municipal" | "particular"
 
 export interface FaculdadeMed {
-  /** id estável (slug) — usado para persistir a escolha */
+  /** id estável (slug), usado para persistir a escolha */
   id: string
   nome: string
   sigla: string
   cidade: string
   estado: string // UF
   tipo: TipoIES
-  /** nota de corte de referência (escala ENEM 0–1000, ampla concorrência) */
+  /** nota de corte de referência (escala ENEM 0-1000, ampla concorrência) */
   notaCorte: number
 }
 
@@ -35,11 +35,11 @@ function f(
 
 export const FACULDADES_MEDICINA: FaculdadeMed[] = [
   // ---------- SP ----------
-  f("USP-SP", "USP — Faculdade de Medicina (FMUSP)", "São Paulo", "SP", "estadual", 848.9),
-  f("USP-RP", "USP — Ribeirão Preto", "Ribeirão Preto", "SP", "estadual", 846.1),
+  f("USP-SP", "USP - Faculdade de Medicina (FMUSP)", "São Paulo", "SP", "estadual", 848.9),
+  f("USP-RP", "USP - Ribeirão Preto", "Ribeirão Preto", "SP", "estadual", 846.1),
   f("UNICAMP", "Universidade Estadual de Campinas", "Campinas", "SP", "estadual", 841.6),
   f("UNIFESP", "Universidade Federal de São Paulo (EPM)", "São Paulo", "SP", "federal", 826.3),
-  f("UNESP-BOT", "UNESP — Botucatu", "Botucatu", "SP", "estadual", 824.4),
+  f("UNESP-BOT", "UNESP - Botucatu", "Botucatu", "SP", "estadual", 824.4),
   f("FAMEMA", "Faculdade de Medicina de Marília", "Marília", "SP", "estadual", 812.0),
   f("FAMERP", "Fac. de Medicina de São José do Rio Preto", "São José do Rio Preto", "SP", "estadual", 810.2),
   f("UFSCar", "Universidade Federal de São Carlos", "São Carlos", "SP", "federal", 806.5),
@@ -53,7 +53,7 @@ export const FACULDADES_MEDICINA: FaculdadeMed[] = [
   f("UFF", "Universidade Federal Fluminense", "Niterói", "RJ", "federal", 812.5),
   f("UNIRIO", "Universidade Federal do Estado do RJ", "Rio de Janeiro", "RJ", "federal", 809.0),
   f("UFRRJ", "Universidade Federal Rural do RJ", "Seropédica", "RJ", "federal", 795.0),
-  f("UFF-MACAE", "UFF — Macaé", "Macaé", "RJ", "federal", 792.0),
+  f("UFF-MACAE", "UFF - Macaé", "Macaé", "RJ", "federal", 792.0),
 
   // ---------- MG ----------
   f("UFMG", "Universidade Federal de Minas Gerais", "Belo Horizonte", "MG", "federal", 829.5),
@@ -112,7 +112,7 @@ export const FACULDADES_MEDICINA: FaculdadeMed[] = [
 
   // ---------- Nordeste: CE ----------
   f("UFC", "Universidade Federal do Ceará", "Fortaleza", "CE", "federal", 818.2),
-  f("UFC-SOBRAL", "UFC — Sobral", "Sobral", "CE", "federal", 800.0),
+  f("UFC-SOBRAL", "UFC - Sobral", "Sobral", "CE", "federal", 800.0),
   f("UECE", "Universidade Estadual do Ceará", "Fortaleza", "CE", "estadual", 795.0),
 
   // ---------- Nordeste: PB ----------
@@ -164,7 +164,7 @@ export const FACULDADES_MEDICINA_RANK = [...FACULDADES_MEDICINA].sort(
 
 /** Rótulo exibido no seletor e persistido no perfil. */
 export function faculdadeLabel(f: FaculdadeMed): string {
-  return `${f.sigla} — ${f.nome} (${f.cidade}/${f.estado})`
+  return `${f.sigla} - ${f.nome} (${f.cidade}/${f.estado})`
 }
 
 /** Busca por id, sigla ou rótulo salvo (tolerante a formatos antigos). */

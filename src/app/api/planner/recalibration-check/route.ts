@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { NextResponse } from "next/server"
-// Provedor de IA — trocar para o MiMo depois é só mudar esta importação/função.
+// Provedor de IA: trocar para o MiMo depois é só mudar esta importação/função.
 import { generateJSON } from "@/lib/gemini"
 
 interface Verdict {
@@ -34,7 +34,7 @@ export async function POST() {
 
   const todayStart = new Date(new Date().setUTCHours(0, 0, 0, 0))
 
-  // Sinais baratos (contagens) — formam a "assinatura" do desempenho atual.
+  // Sinais baratos (contagens) que formam a "assinatura" do desempenho atual.
   const [answeredSinceCount, overdue, completedCount] = await Promise.all([
     db.userQuestion.count({ where: { userId, answeredAt: { gt: plan.createdAt } } }),
     db.studyPlanItem.count({
@@ -146,7 +146,7 @@ Responda SOMENTE JSON: {"recommend": boolean, "reason": "frase curta em portugu�
       recommend,
       reason: recommend
         ? "Seu desempenho recente sugere reorganizar as prioridades."
-        : "Você está no caminho — siga o plano.",
+        : "Você está no caminho, siga o plano.",
     }
   }
 

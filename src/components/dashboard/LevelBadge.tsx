@@ -13,7 +13,7 @@ export function LevelBadge({ level, totalXP }: { level: number; totalXP: number 
           {level}
         </span>
       </div>
-      {/* Texto só no desktop — no mobile mostra apenas o anel */}
+      {/* Texto só no desktop, no mobile mostra apenas o anel */}
       <div className="hidden leading-tight sm:block">
         <p className="text-[9.5px] tracking-wide text-muted-foreground">nível</p>
         <p className="text-[12.5px] text-foreground">{totalXP.toLocaleString("pt-BR")} XP</p>

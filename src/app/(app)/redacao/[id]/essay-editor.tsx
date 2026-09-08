@@ -127,7 +127,7 @@ export function EssayEditor({
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
-  // Cronômetro de prova — 2h, contando a partir da primeira vez que abriu esta redação.
+  // Cronômetro de prova: 2h, contando a partir da primeira vez que abriu esta redação.
   const [remaining, setRemaining] = useState<number>(ESSAY_DURATION_MS)
   useEffect(() => {
     const key = `vion-essay-deadline-${essayId}`
@@ -375,7 +375,7 @@ export function EssayEditor({
             {[scores.comp1, scores.comp2, scores.comp3, scores.comp4, scores.comp5].map((s, i) => (
               <div key={i} className="space-y-1">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground text-xs">C{i + 1} — {COMP_LABELS[i]}</span>
+                  <span className="text-muted-foreground text-xs">C{i + 1}: {COMP_LABELS[i]}</span>
                   <span className="font-medium text-xs">{s ?? 0}/200</span>
                 </div>
                 <Progress value={((s ?? 0) / 200) * 100} className="h-2" />

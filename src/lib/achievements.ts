@@ -277,7 +277,7 @@ export const ACHIEVEMENT_DEFS: AchievementDef[] = [
 ]
 
 /**
- * Métrica e alvo de cada conquista baseada em limiar — usado para mostrar o
+ * Métrica e alvo de cada conquista baseada em limiar, usado para mostrar o
  * progresso (barra/anel que vai "enchendo") na tela de Conquistas.
  * Conquistas sem entrada aqui (ex.: precisão, todas as áreas) não têm barra.
  */

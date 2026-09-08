@@ -21,7 +21,7 @@ export function OfflineBanner() {
       <WifiOff className="h-3.5 w-3.5 shrink-0" />
       <span>
         Você está offline
-        {pendingOfflineCount > 0 && ` — ${pendingOfflineCount} ação${pendingOfflineCount > 1 ? "ões" : ""} pendente${pendingOfflineCount > 1 ? "s" : ""}`}
+        {pendingOfflineCount > 0 && ` (${pendingOfflineCount} ação${pendingOfflineCount > 1 ? "ões" : ""} pendente${pendingOfflineCount > 1 ? "s" : ""})`}
       </span>
     </div>
   )

@@ -46,7 +46,7 @@ export async function RevisoesPendentesCard({ userId }: { userId: string }) {
 
         {!hasReviews && (
           <p className="text-xs text-muted-foreground">
-            Nenhuma revisão pendente — tudo em dia!
+            Nenhuma revisão pendente, tudo em dia!
           </p>
         )}
 

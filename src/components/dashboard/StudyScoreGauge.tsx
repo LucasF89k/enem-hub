@@ -13,7 +13,7 @@ const START_DEG = 135 // início do arco: embaixo à esquerda
  * Hero da Home: a opala ao centro com o anel de progresso em volta.
  * O anel é a meta de estudo do dia (minutos / meta), animando do 0 até o
  * valor junto com o count-up do número, e uma bolinha marca a ponta do
- * progresso. Não é um "score" abstrato — é o progresso da meta de hoje.
+ * progresso. Não é um "score" abstrato: é o progresso da meta de hoje.
  */
 export function StudyScoreGauge({
   minutes,
@@ -43,7 +43,7 @@ export function StudyScoreGauge({
     return () => cancelAnimationFrame(raf)
   }, [pct, minutes])
 
-  // Comprimento visível do arco preenchido — NÃO usar strokeDashoffset aqui:
+  // Comprimento visível do arco preenchido. NÃO usar strokeDashoffset aqui:
   // como o dash (270°) e o gap (90°) somam exatamente a circunferência, deslocar
   // o offset só GIRA o segmento já cheio ao redor do círculo, não o encolhe (era
   // o bug: em qualquer valor o arco aparecia quase inteiro). O comprimento do
@@ -59,7 +59,7 @@ export function StudyScoreGauge({
     <div className="relative flex h-[270px] w-[270px] items-center justify-center">
       <div className="opal-breathing-glow" aria-hidden />
 
-      {/* A opala ocupa o miolo do anel — os números ficam POR CIMA dela */}
+      {/* A opala ocupa o miolo do anel, os números ficam POR CIMA dela */}
       <div className="absolute inset-0 flex items-center justify-center">
         <OpalCrystal size={132} stage={3} slime />
       </div>
@@ -77,7 +77,7 @@ export function StudyScoreGauge({
 
       <svg viewBox="0 0 200 200" className="h-full w-full">
         <defs>
-          {/* userSpaceOnUse alinhado à diagonal do arco (135°→45°) — acompanha a curva
+          {/* userSpaceOnUse alinhado à diagonal do arco (135°→45°), acompanha a curva
               em vez do gradiente "borrado" que um linearGradient objectBoundingBox
               produz sobre um <circle> rotacionado. */}
           <linearGradient
@@ -104,7 +104,7 @@ export function StudyScoreGauge({
           strokeDasharray={`${ARC_LEN} ${CIRC - ARC_LEN}`}
           transform={`rotate(${START_DEG} 100 100)`}
         />
-        {/* progresso — dash = comprimento visível (cresce com a meta), gap gigante
+        {/* progresso: dash = comprimento visível (cresce com a meta), gap gigante
             pra nunca repetir o padrão dentro do círculo */}
         <circle
           cx="100"

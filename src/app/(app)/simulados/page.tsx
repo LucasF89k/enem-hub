@@ -59,7 +59,7 @@ export default async function SimuladosPage() {
       <div>
         <h1 className="text-2xl font-bold">Simulados</h1>
         <p className="text-sm text-muted-foreground">
-          Provas reais separadas por ano — cronômetro e gabarito no estilo ENEM
+          Provas reais separadas por ano. Cronômetro e gabarito no estilo ENEM.
         </p>
       </div>
 
@@ -148,7 +148,7 @@ export default async function SimuladosPage() {
 
                 {inProgress && (
                   <div className="mt-3 rounded-lg border border-yellow-500/30 bg-yellow-500/10 px-3 py-2 text-xs text-yellow-700 dark:text-yellow-400">
-                    Tentativa em andamento — clique em Continuar para retomar
+                    Tentativa em andamento, clique em Continuar para retomar
                   </div>
                 )}
               </CardContent>

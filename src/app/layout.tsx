@@ -56,7 +56,7 @@ export default async function RootLayout({
   children: React.ReactNode
 }>) {
   // Decide aqui (server, antes de qualquer paint) se a splash mostra a pedra:
-  // quem não tem sessão ainda não "ganhou" a pedra — só vê a logo montando
+  // quem não tem sessão ainda não "ganhou" a pedra, só vê a logo montando
   // e segue pro login/cadastro. Quem já tem conta vê as duas fases.
   const session = await auth()
   const isLoggedIn = !!session

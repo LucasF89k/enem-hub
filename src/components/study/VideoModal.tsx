@@ -89,7 +89,7 @@ export function VideoModal({ video, onClose, onWatched }: VideoModalProps) {
           {showXP && (
             <div className="flex items-center gap-2 rounded-lg border border-yellow-500/30 bg-yellow-500/10 px-3 py-2 text-sm text-yellow-700 dark:text-yellow-400">
               <span>⚡</span>
-              <span className="font-medium">+15 XP — Vídeo concluído!</span>
+              <span className="font-medium">+15 XP: vídeo concluído!</span>
             </div>
           )}
 

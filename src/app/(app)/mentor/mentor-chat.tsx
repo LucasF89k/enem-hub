@@ -29,7 +29,7 @@ const QUICK_ACTIONS = [
   { label: "Estratégia de prova", text: "Como devo gerir meu tempo durante o ENEM? Me dê uma estratégia prática." },
 ]
 
-/** Mascote — usado no cabeçalho ("Mentor ENEM"). */
+/** Mascote, usado no cabeçalho ("Mentor ENEM"). */
 function MentorMascot({ size = 30 }: { size?: number }) {
   return (
     <span
@@ -94,7 +94,7 @@ function extractVionPlan(content: string): { plan: VionPlan | null; cleaned: str
     }
     return { plan, cleaned: content.replace(closed, "").trim() }
   }
-  // Bloco ainda em streaming (sem fechamento) — oculta a cauda crua
+  // Bloco ainda em streaming (sem fechamento): oculta a cauda crua
   const open = content.search(/```vion-plan/i)
   if (open >= 0) return { plan: null, cleaned: content.slice(0, open).trim() }
   return { plan: null, cleaned: content }
@@ -264,7 +264,7 @@ function ApplyPlanCard({ plan }: { plan: VionPlan }) {
 
       <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
         <span className="text-muted-foreground">Dias</span>
-        <span className="text-right font-medium">{days || "—"}</span>
+        <span className="text-right font-medium">{days || "-"}</span>
         <span className="text-muted-foreground">Tempo/dia</span>
         <span className="text-right font-medium">{plan.dailyGoalMinutes} min</span>
         <span className="text-muted-foreground">Duração</span>
@@ -367,7 +367,7 @@ export function MentorChat() {
       setInput("")
       setImageData(null)
 
-      // Início limpo (ex.: entrevista do planner) — descarta histórico anterior
+      // Início limpo (ex.: entrevista do planner): descarta histórico anterior
       if (opts?.fresh) clear()
 
       // Texto enviado ao modelo (Gemini exige um texto mesmo quando só há imagem)
@@ -458,7 +458,7 @@ export function MentorChat() {
     }
   }, [planner, sendMessage])
 
-  // Envio pendente vindo de outra tela (ex.: foto da redação → corrigir)
+  // Envio pendente vindo de outra tela (ex.: foto da redação para corrigir)
   useEffect(() => {
     if (pending && !startedRef.current) {
       startedRef.current = true
@@ -482,7 +482,7 @@ export function MentorChat() {
 
   function handleStop() {
     abortRef.current?.abort()
-    // Se nada chegou a ser escrito, remove a bolha — do contrário sobra uma
+    // Se nada chegou a ser escrito, remove a bolha, do contrário sobra uma
     // bolha vazia do assistente no histórico depois do stop.
     if (streamingIdRef.current) dropIfEmpty(streamingIdRef.current)
     setLoading(false)

@@ -20,7 +20,7 @@ export async function generateMetadata({
     where: { slug: topicSlug },
     select: { name: true },
   })
-  return { title: topic ? `${topic.name} — Vion` : "Tópico" }
+  return { title: topic ? `${topic.name} · Vion` : "Tópico" }
 }
 
 const VALID_TABS = ["teoria", "resumo", "flashcards", "questoes", "videos"]

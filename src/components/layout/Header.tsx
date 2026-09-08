@@ -35,7 +35,7 @@ function getPageTitle(pathname: string): string {
   return "Vion"
 }
 
-// Rotas cuja própria página já mostra um <h1> (com subtítulo, na maioria) —
+// Rotas cuja própria página já mostra um <h1> (com subtítulo, na maioria):
 // nelas o título do Header ficaria duplicado no mobile, empilhado em cima
 // do título real da página. Só ficam de fora as que não têm título próprio
 // (ex: /flashcards).
@@ -77,15 +77,15 @@ export function Header({ actions, className, user }: HeaderProps) {
         className
       )}
     >
-      {/* Logo Vion — desktop */}
+      {/* Logo Vion (desktop) */}
       <Link href="/dashboard" className="hidden md:flex items-center gap-2 shrink-0">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/logo-app.png" alt="Vion" className="h-7 w-7 object-contain" />
         <span className="text-lg font-bold tracking-tight">Vion</span>
       </Link>
 
-      {/* Page title — mobile only. Na Home vira "Olá, Nome" + streak.
-          Rotas com título próprio (hasOwnTitle) não repetem aqui — a página
+      {/* Page title, mobile only. Na Home vira "Olá, Nome" + streak.
+          Rotas com título próprio (hasOwnTitle) não repetem aqui: a página
           já mostra o <h1> dela logo abaixo. */}
       {onHome ? (
         <div className="flex items-center gap-2.5 md:hidden">
@@ -111,7 +111,7 @@ export function Header({ actions, className, user }: HeaderProps) {
       {/* Right actions */}
       {actions && <div className="flex items-center gap-1">{actions}</div>}
 
-      {/* Conquistas — acesso rápido fixo em qualquer tela, ao lado do nível */}
+      {/* Conquistas: acesso rápido fixo em qualquer tela, ao lado do nível */}
       {pathname !== "/conquistas" && !pathname.startsWith("/conquistas/") && (
         <Link
           href="/conquistas"
@@ -125,7 +125,7 @@ export function Header({ actions, className, user }: HeaderProps) {
       {/* Nível/XP */}
       {user && <LevelBadge level={user.level ?? 1} totalXP={user.totalXP ?? 0} />}
 
-      {/* Avatar — canto direito */}
+      {/* Avatar no canto direito */}
       {user && (
         <Link href="/profile" className="shrink-0">
           <Avatar className="h-8 w-8">

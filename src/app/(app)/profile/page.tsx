@@ -74,7 +74,7 @@ export default async function ProfilePage() {
   const xpToNext = profile ? 500 - (profile.totalXP % 500) : 500
   const levelProgress = profile ? ((profile.totalXP % 500) / 500) * 100 : 0
 
-  // ── Horas de foco (total acumulado) ──
+  // Horas de foco (total acumulado)
   const focusMinutes = focusAgg._sum.duration ?? 0
   const focusHours = focusMinutes / 60
   const focusLabel =
@@ -84,7 +84,7 @@ export default async function ProfilePage() {
         ? `${Math.round(focusHours)}h`
         : `${(Math.round(focusHours * 10) / 10).toString().replace(".", ",")}h`
 
-  // ── Posição no ranking global (Top X%) ──
+  // Posição no ranking global (Top X%)
   const myXP = myXPRow?.totalXP ?? 0
   const [totalPlayers, ahead] = await Promise.all([
     db.userProfile.count(),
@@ -93,13 +93,13 @@ export default async function ProfilePage() {
   const rankPercent =
     totalPlayers > 0 ? Math.max(1, Math.round(((ahead + 1) / totalPlayers) * 100)) : null
 
-  // ── Conquistas ──
+  // Conquistas
   const earnedKeys = new Set(
     earnedRows.map((e) => JSON.parse(e.achievement.condition).key as string)
   )
   const visibleDefs = ACHIEVEMENT_DEFS.filter((d) => !d.isHidden)
   const earnedCount = visibleDefs.filter((d) => earnedKeys.has(d.key)).length
-  // Próximas a desbloquear (não ganhas), ordenadas por xpReward — as "mais fáceis" primeiro.
+  // Próximas a desbloquear (não ganhas), ordenadas por xpReward: as "mais fáceis" primeiro.
   const lockedNext = visibleDefs
     .filter((d) => !earnedKeys.has(d.key))
     .sort((a, b) => a.xpReward - b.xpReward)
@@ -108,7 +108,7 @@ export default async function ProfilePage() {
 
   return (
     <div className="mx-auto max-w-2xl pb-6">
-      {/* ── Hero com nebulosa (só no topo, atrás do avatar) ── */}
+      {/* Hero com nebulosa (só no topo, atrás do avatar) */}
       <div className="relative -mt-12 overflow-hidden px-4 pt-16 pb-6">
         <div
           aria-hidden
@@ -143,7 +143,7 @@ export default async function ProfilePage() {
         </div>
       </div>
 
-      {/* ── XP bar ── */}
+      {/* XP bar */}
       {profile && (
         <div className="px-4">
           <div className="opal-glass-card rounded-2xl p-4">
@@ -158,7 +158,7 @@ export default async function ProfilePage() {
         </div>
       )}
 
-      {/* ── Conquistas (carrossel horizontal) ── */}
+      {/* Conquistas (carrossel horizontal) */}
       <div className="mt-8">
         <div className="flex items-center justify-between px-4">
           <h2 className="text-base font-semibold">Conquistas</h2>
@@ -195,7 +195,7 @@ export default async function ProfilePage() {
         </div>
       </div>
 
-      {/* ── Metas ── */}
+      {/* Metas */}
       {profile && (
         <div className="mt-6 px-4">
           <div className="opal-glass-card space-y-3 rounded-2xl p-4">
@@ -237,7 +237,7 @@ export default async function ProfilePage() {
         </div>
       )}
 
-      {/* ── Links ── */}
+      {/* Links */}
       <div className="mt-6 flex flex-col gap-2 px-4">
         <LinkRow href="/analytics" label="Ver analytics" />
         <LinkRow href="/ranking" label="Ranking semanal" />

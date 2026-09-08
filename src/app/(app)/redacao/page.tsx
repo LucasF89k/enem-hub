@@ -64,7 +64,7 @@ export default async function RedacaoPage() {
             <Button asChild>
               <Link href="/redacao/new">Escrever minha primeira redação</Link>
             </Button>
-            <PaperEssayButton label="Já escrevi no papel — corrigir foto" />
+            <PaperEssayButton label="Já escrevi no papel, corrigir foto" />
           </div>
         </div>
       ) : (

@@ -38,7 +38,7 @@ export function ServiceWorkerRegistrar() {
     // Initial state
     setOffline(!navigator.onLine)
 
-    // beforeinstallprompt — capture and store in Zustand
+    // beforeinstallprompt: capture and store in Zustand
     const handleInstallPrompt = (e: Event) => {
       e.preventDefault()
       setDeferredPrompt(e as BeforeInstallPromptEvent)

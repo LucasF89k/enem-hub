@@ -75,7 +75,7 @@ interface Verdict {
   reason: string
 }
 
-/** Destino da atividade — abre direto a aba/matéria correspondente. */
+/** Destino da atividade: abre direto a aba/matéria correspondente. */
 function itemHref(item: PlanItem): string {
   const t = item.topic
   const base = t ? `/study/${t.discipline.area.slug}/${t.discipline.slug}/${t.slug}` : null
@@ -124,14 +124,14 @@ export function PlannerClient({ weekStart, items, hasPlan, dailyGoal }: PlannerC
     [weekStartDate],
   )
 
-  // Dia selecionado — inicia em hoje (se estiver na semana), senão no 1º dia
+  // Dia selecionado: inicia em hoje (se estiver na semana), senão no 1º dia
   const [selectedStr, setSelectedStr] = useState<string>(() => {
     const inWeek = weekDates.find((d) => d.toISOString().slice(0, 10) === todayStr)
     return (inWeek ?? weekDates[0]).toISOString().slice(0, 10)
   })
   const selectedDate = parseISO(selectedStr)
 
-  // Resumo por dia (para o strip) — recalcula com localItems (reflete conclusões)
+  // Resumo por dia (para o strip): recalcula com localItems (reflete conclusões)
   const days: DaySummary[] = weekDates.map((date) => {
     const ds = date.toISOString().slice(0, 10)
     const dayItems = localItems.filter((i) => i.scheduledAt.startsWith(ds))
@@ -534,7 +534,7 @@ export function PlannerClient({ weekStart, items, hasPlan, dailyGoal }: PlannerC
           {/* Cards do dia */}
           {groups.length === 0 ? (
             <p className="py-10 text-center text-sm text-muted-foreground">
-              Dia livre — descanse, revise, ou adicione uma atividade abaixo. 🌿
+              Dia livre. Descanse, revise ou adicione uma atividade abaixo. 🌿
             </p>
           ) : (
             <div className="space-y-3">
@@ -593,7 +593,7 @@ export function PlannerClient({ weekStart, items, hasPlan, dailyGoal }: PlannerC
               <Input
                 id="item-title"
                 name="title"
-                placeholder="Ex.: Matemática — funções"
+                placeholder="Ex.: Matemática: funções"
                 defaultValue={itemDialog?.mode === "edit" ? itemDialog.title : ""}
                 autoFocus
               />

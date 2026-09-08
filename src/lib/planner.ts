@@ -8,7 +8,7 @@ export interface GeneratePlanParams {
   daysCount: number
   dailyGoalMinutes: number
   weekDays: number[]
-  /** Disciplinas (nomes) a priorizar — coletadas na entrevista do Mentor. */
+  /** Disciplinas (nomes) a priorizar, coletadas na entrevista do Mentor. */
   focusDisciplines?: string[]
   /** Ênfase do plano: mais teoria, equilibrado ou mais questões. */
   balance?: "teoria" | "equilibrado" | "questoes"
@@ -60,7 +60,7 @@ export async function generateStudyPlan(params: GeneratePlanParams): Promise<str
   const plan = await db.studyPlan.create({
     data: {
       userId,
-      title: `Plano ENEM — ${trailConfig.label}`,
+      title: `Plano ENEM: ${trailConfig.label}`,
       startDate,
       endDate,
       dailyGoal: dailyGoalMinutes,
@@ -158,7 +158,7 @@ export async function generateStudyPlan(params: GeneratePlanParams): Promise<str
       itemsToCreate.push({
         planId: plan.id,
         topicId: null,
-        title: "Simulado completo — dia de prova",
+        title: "Simulado completo: dia de prova",
         description: "Prova cronometrada no estilo ENEM (~5h30). Simule as condições reais.",
         type: "SIMULADO",
         scheduledAt: day,

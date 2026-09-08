@@ -134,7 +134,7 @@ Retorne SOMENTE JSON válido (sem markdown) no formato exato:
     "<sugestão competência 5>"
   ],
   "errors": [
-    "<erro específico cometido, citando o trecho ou o problema — ex.: 'Desvio gramatical: ...', 'Fuga parcial ao tema em ...', 'Falta de conectivo entre parágrafos', 'Proposta de intervenção sem agente/meio'>"
+    "<erro específico cometido, citando o trecho ou o problema, ex.: 'Desvio gramatical: ...', 'Fuga parcial ao tema em ...', 'Falta de conectivo entre parágrafos', 'Proposta de intervenção sem agente/meio'>"
   ]
 }
 

@@ -20,7 +20,7 @@ const mentorCardsSchema = z
   .min(1)
   .max(30)
 
-/** Salva os flashcards gerados pelo Mentor no deck "Mentor" — vinculados ao tópico atual. */
+/** Salva os flashcards gerados pelo Mentor no deck "Mentor", vinculados ao tópico atual. */
 export async function saveMentorFlashcards(
   cards: { front: string; back: string }[],
   topicId?: string | null,
@@ -31,7 +31,7 @@ export async function saveMentorFlashcards(
   const parsed = mentorCardsSchema.safeParse(cards)
   if (!parsed.success) return { success: false, error: "Flashcards inválidos" }
 
-  // Valida o tópico (se veio) — vincula os cards a ele para ficarem organizados por matéria.
+  // Valida o tópico (se veio) e vincula os cards a ele para ficarem organizados por matéria.
   let validTopicId: string | null = null
   if (topicId) {
     const t = await db.topic.findUnique({ where: { id: topicId }, select: { id: true } })

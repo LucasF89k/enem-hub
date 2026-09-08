@@ -207,7 +207,7 @@ export function SimuladoResolver({
       </header>
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar nav — desktop */}
+        {/* Sidebar nav (desktop) */}
         <aside className="hidden md:flex flex-col w-52 shrink-0 border-r overflow-y-auto p-3 gap-1">
           <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground px-1 mb-1">
             Questões

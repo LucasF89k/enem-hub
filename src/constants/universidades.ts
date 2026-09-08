@@ -1,6 +1,6 @@
-// Base de universidades brasileiras com índice de seletividade (prestigio 0–100).
+// Base de universidades brasileiras com índice de seletividade (prestigio 0-100).
 // A nota de corte por curso é ESTIMADA combinando este índice com a faixa do curso
-// (ver cursos.ts) — modelo transparente, sem inventar número por célula.
+// (ver cursos.ts), modelo transparente, sem inventar número por célula.
 
 export type TipoIES = "federal" | "estadual" | "municipal" | "particular"
 
@@ -11,11 +11,11 @@ export interface Universidade {
   cidade: string
   uf: string
   tipo: TipoIES
-  /** seletividade geral (0–100) */
+  /** seletividade geral (0-100) */
   prestigio: number
-  /** se presente, a IES só oferece estes cursos (slug) — ex.: escolas de Medicina */
+  /** se presente, a IES só oferece estes cursos (slug), ex.: escolas de Medicina */
   cursos?: string[]
-  /** se presente, restringe às áreas (ver cursos.ts) — ex.: ITA/IME (engenharias) */
+  /** se presente, restringe às áreas (ver cursos.ts), ex.: ITA/IME (engenharias) */
   areas?: string[]
 }
 

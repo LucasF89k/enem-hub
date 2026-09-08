@@ -16,7 +16,7 @@ const EXAM_ROUTE = /^\/simulados\/[^/]+\/[^/]+$/
 export function AppShell({ children, user }: AppShellProps) {
   const pathname = usePathname()
   const isExam = EXAM_ROUTE.test(pathname)
-  // O Mentor tem cabeçalho próprio — esconde a barra de topo para não empilhar logos.
+  // O Mentor tem cabeçalho próprio, esconde a barra de topo para não empilhar logos.
   const isMentor = pathname === "/mentor" || pathname.startsWith("/mentor/")
   const hideHeader = isMentor
   // A Home ganha um fundo de galáxia; o resto do app mantém a vinheta padrão.
@@ -39,9 +39,9 @@ export function AppShell({ children, user }: AppShellProps) {
 
   return (
     <>
-      {/* Área de conteúdo principal — barra de navegação embaixo em todos os tamanhos */}
+      {/* Área de conteúdo principal, barra de navegação embaixo em todos os tamanhos */}
       <div className={`relative ${isHome ? "" : "opal-hero-bg"} flex min-h-screen flex-col`}>
-        {/* Nebulosa da Home — só um halo atrás do cristal, no topo da tela.
+        {/* Nebulosa da Home: só um halo atrás do cristal, no topo da tela.
             Rola junto com a página (não é fixed) e some nas bordas via máscara radial. */}
         {isHome && (
           <div
@@ -74,7 +74,7 @@ export function AppShell({ children, user }: AppShellProps) {
         </AnimatePresence>
       </div>
 
-      {/* BottomNav — fixo, em todos os tamanhos */}
+      {/* BottomNav fixo, em todos os tamanhos */}
       <BottomNav />
     </>
   )

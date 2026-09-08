@@ -73,7 +73,7 @@ export function NotasCorteBoard({
           <GraduationCap className="h-4 w-4 text-primary" />
         </div>
         <div className="flex-1">
-          <p className="text-sm font-semibold">Notas de corte — {curso.nome}</p>
+          <p className="text-sm font-semibold">Notas de corte: {curso.nome}</p>
           <p className="text-[11px] text-muted-foreground">
             Corte típico ~{cursoMedia(curso)} · toque para definir sua meta
           </p>

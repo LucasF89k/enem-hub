@@ -41,7 +41,7 @@ export const TRAIL_CONFIGS: Record<TrailType, TrailConfig> = {
   SEMI_EXTENSIVA: {
     type: "SEMI_EXTENSIVA",
     label: "Semi-extensiva",
-    description: "6–9 meses para o ENEM",
+    description: "6-9 meses para o ENEM",
     minDays: 180,
     maxDays: 269,
     color: "bg-blue-500/10 text-blue-700 dark:text-blue-400",
@@ -53,7 +53,7 @@ export const TRAIL_CONFIGS: Record<TrailType, TrailConfig> = {
   INTENSIVA: {
     type: "INTENSIVA",
     label: "Intensiva",
-    description: "3–6 meses para o ENEM",
+    description: "3-6 meses para o ENEM",
     minDays: 90,
     maxDays: 179,
     color: "bg-orange-500/10 text-orange-700 dark:text-orange-400",

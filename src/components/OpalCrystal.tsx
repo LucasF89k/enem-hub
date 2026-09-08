@@ -5,10 +5,10 @@ import { motion } from "framer-motion"
 /**
  * A pedra de opala, nas 4 fases da animação de abertura:
  *
- *   stage 0 — rocha bruta opaca
- *   stage 1 — os primeiros veios de fogo acendem nas fendas
- *   stage 2 — os cacos se abrem e o núcleo aparece
- *   stage 3 — a gema pura, exposta
+ *   stage 0: rocha bruta opaca
+ *   stage 1: os primeiros veios de fogo acendem nas fendas
+ *   stage 2: os cacos se abrem e o núcleo aparece
+ *   stage 3: a gema pura, exposta
  *
  * As artes são imagens reais (geradas para o projeto e recortadas por
  * `scripts/prepare-opal.js`, que remove o fundo preto por flood fill).
@@ -27,15 +27,15 @@ export function OpalCrystal({
 }: {
   size?: number
   stage?: 0 | 1 | 2 | 3
-  /** ondulação contínua e suave — "gelatina viva" */
+  /** ondulação contínua e suave, tipo "gelatina viva" */
   slime?: boolean
   /** modo ícone: sem halo (em avatar pequeno o blur vira borrão). */
   icon?: boolean
-  /** @deprecated não usado — mantido pra não quebrar chamadas antigas */
+  /** @deprecated não usado, mantido pra não quebrar chamadas antigas */
   slimeScale?: number
 }) {
   // Movimento do wrapper. Tudo em transform (composto na GPU), curvas longas e
-  // senoidais — nada de recalcular filtro por frame, então não trava.
+  // senoidais: nada de recalcular filtro por frame, então não trava.
   //   - modo normal (hero): flutua e gira devagar
   //   - modo ícone + slime (bolha do chat): respiração + leve deriva orgânica,
   //     bem lenta e fluida
@@ -66,7 +66,7 @@ export function OpalCrystal({
       style={{ width: size, height: size, willChange: "transform" }}
       className="relative"
     >
-      {/* Halo — a luz que escapa da pedra */}
+      {/* Halo: a luz que escapa da pedra */}
       {!icon && (
         <motion.div
           aria-hidden
@@ -83,7 +83,7 @@ export function OpalCrystal({
         />
       )}
 
-      {/* As 4 fases empilhadas — só a opacidade muda entre elas */}
+      {/* As 4 fases empilhadas: só a opacidade muda entre elas */}
       {STAGES.map((s) => (
         <motion.img
           key={s}
@@ -99,7 +99,7 @@ export function OpalCrystal({
         />
       ))}
 
-      {/* Filtro estático — deformação fixa, calculada uma vez, sem <animate>.
+      {/* Filtro estático: deformação fixa, calculada uma vez, sem <animate>.
           A "vida" vem do transform do wrapper, que nunca trava. */}
       {useJelly && (
         <svg width="0" height="0" className="pointer-events-none absolute" aria-hidden>

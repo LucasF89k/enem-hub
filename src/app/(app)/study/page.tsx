@@ -25,7 +25,7 @@ const AREA_ICON: Record<string, LucideIcon> = {
   matematica: Calculator,
 }
 
-/** Cor de acento por área — borda, ícone e barra de progresso. */
+/** Cor de acento por área: borda, ícone e barra de progresso. */
 const AREA_ACCENT: Record<string, { border: string; iconBg: string; icon: string; bar: string }> = {
   "ciencias-natureza": {
     border: "border-sky-500/20",

@@ -98,7 +98,7 @@ export default async function SimuladoResultPage({
   const mins = timeSpent ? Math.floor(timeSpent / 60) : null
   const secs = timeSpent ? timeSpent % 60 : null
 
-  // 1º dia do ENEM inclui a redação — sugere o tema do ano do simulado
+  // 1º dia do ENEM inclui a redação, sugere o tema do ano do simulado
   const yearMatch = attempt.simulado.title.match(/(19|20)\d{2}/)
   const simYear = yearMatch ? parseInt(yearMatch[0]) : null
   const redacaoTema = TEMAS_HISTORICOS.find((t) => t.ano === simYear)?.tema ?? ""
@@ -174,7 +174,7 @@ export default async function SimuladoResultPage({
         </CardContent>
       </Card>
 
-      {/* Redação — completa o 1º dia */}
+      {/* Redação: completa o 1º dia */}
       {showRedacaoCta && (
         <Link
           href={`/redacao/new${redacaoTema ? `?tema=${encodeURIComponent(redacaoTema)}` : ""}`}
@@ -282,11 +282,11 @@ export default async function SimuladoResultPage({
                       ) : (
                         <>
                           <span className={isCorrect ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}>
-                            Sua: <strong>{selectedOpt?.letter ?? "–"}</strong>
+                            Sua: <strong>{selectedOpt?.letter ?? "-"}</strong>
                           </span>
                           {!isCorrect && (
                             <span className="text-green-600 dark:text-green-400">
-                              Correta: <strong>{correctOpt?.letter ?? "–"}</strong>
+                              Correta: <strong>{correctOpt?.letter ?? "-"}</strong>
                             </span>
                           )}
                         </>

@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache"
 
 /**
  * Salva a foto de perfil como data URL (JPEG pequeno, já redimensionado no cliente)
- * direto no banco — sem depender de serviço externo (Cloudinary não é necessário).
+ * direto no banco, sem depender de serviço externo (Cloudinary não é necessário).
  */
 export async function updateProfileImage(
   base64: string,
@@ -31,7 +31,7 @@ export async function updateProfileImage(
     return { success: false, error: "Não foi possível salvar a foto." }
   }
 
-  // Revalida o layout do grupo (app) inteiro — é onde Header/Sidebar leem
+  // Revalida o layout do grupo (app) inteiro: é onde Header/Sidebar leem
   // a imagem do usuário, então precisa invalidar mais que só /profile.
   revalidatePath("/", "layout")
   return { success: true }

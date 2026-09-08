@@ -64,7 +64,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-[460px] flex-col px-6 pb-16 pt-1 sm:px-8">
-      {/* Hero — saudação/streak agora ficam no header (economia de espaço no topo) */}
+      {/* Hero: saudação/streak agora ficam no header (economia de espaço no topo) */}
       <div className="flex flex-col items-center">
         <div className="opal-enter mt-2 mb-5" style={{ animationDelay: "0ms" }}>
           <StudyScoreGauge minutes={minutesToday} goalMinutes={dailyGoal} label="Meta de estudo hoje" />
@@ -112,8 +112,8 @@ export default async function DashboardPage() {
 
         <div className="my-8 h-px w-full bg-border" />
 
-        {/* Contador regressivo do ENEM — com a trilha embutida.
-            Antes tinha max-w-[360px] enquanto os cards vizinhos são w-full —
+        {/* Contador regressivo do ENEM, com a trilha embutida.
+            Antes tinha max-w-[360px] enquanto os cards vizinhos são w-full,
             isso fazia as bordas não baterem ao rolar (o "torto" real). */}
         <div className="opal-enter w-full" style={{ animationDelay: "280ms" }}>
           <ExamCountdown
@@ -140,7 +140,7 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* Notas de corte — visível no fluxo principal, adaptado ao curso */}
+      {/* Notas de corte: visível no fluxo principal, adaptado ao curso */}
       <section className="opal-enter mt-10" style={{ animationDelay: "490ms" }}>
         <NotasCorteBoard
           cursoSlug={curso.slug}

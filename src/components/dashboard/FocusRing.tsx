@@ -6,7 +6,7 @@ const R = 100
 const STROKE = 10
 const CIRC = 2 * Math.PI * R // ~628
 
-/** Anel de foco — progresso do tempo de estudo do dia. Anima na montagem. */
+/** Anel de foco: progresso do tempo de estudo do dia. Anima na montagem. */
 export function FocusRing({
   minutesToday,
   dailyGoalMinutes,

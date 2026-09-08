@@ -220,7 +220,7 @@ export function CursoUniSelectors({
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="targetScore">Nota alvo (400–1000)</Label>
+        <Label htmlFor="targetScore">Nota alvo (400 a 1000)</Label>
         <Input
           id="targetScore"
           name="targetScore"
@@ -233,7 +233,7 @@ export function CursoUniSelectors({
         />
         {selectedUni && (
           <p className="text-xs text-muted-foreground">
-            Sugerimos <b className="text-primary">{estimateCutoff(curso, selectedUni)}</b> — nota de
+            Sugerimos <b className="text-primary">{estimateCutoff(curso, selectedUni)}</b>, nota de
             corte estimada de {curso.nome} na {selectedUni.sigla}.
           </p>
         )}

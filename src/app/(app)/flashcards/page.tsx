@@ -18,7 +18,7 @@ export default async function FlashcardsPage() {
   const now = new Date()
 
   // Só decks do próprio usuário (inclui os criados por ele e pelo Mentor).
-  // Os decks públicos importados não aparecem aqui — seus cards vivem nas matérias.
+  // Os decks públicos importados não aparecem aqui: seus cards vivem nas matérias.
   const decks = await db.flashcardDeck.findMany({
     where: { userId },
     include: { _count: { select: { flashcards: true } } },
@@ -40,7 +40,7 @@ export default async function FlashcardsPage() {
     })
   )
 
-  // ── Árvore Matéria (disciplina) → Conteúdo (tópico) a partir dos cards com topicId ──
+  // Árvore Matéria (disciplina) → Conteúdo (tópico) a partir dos cards com topicId
   const topicCounts = await db.flashcard.groupBy({
     by: ["topicId"],
     where: { topicId: { not: null } },
@@ -102,7 +102,7 @@ export default async function FlashcardsPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-6 space-y-8">
-      {/* Hero — mesmo padrão da Dashboard: número grande com glow + CTA único */}
+      {/* Hero: mesmo padrão da Dashboard, número grande com glow + CTA único */}
       <div className="opal-enter flex flex-col items-center px-4 py-8 text-center">
         <div className="relative flex h-24 w-24 items-center justify-center">
           <div className="opal-breathing-glow" aria-hidden />
@@ -112,7 +112,7 @@ export default async function FlashcardsPage() {
           {totalDue}
         </p>
         <p className="mt-1.5 text-sm font-medium text-muted-foreground">
-          {totalDue === 0 ? "Nenhuma revisão pendente — tudo em dia!" : `card${totalDue === 1 ? "" : "s"} esperando revisão`}
+          {totalDue === 0 ? "Nenhuma revisão pendente, tudo em dia!" : `card${totalDue === 1 ? "" : "s"} esperando revisão`}
         </p>
         {totalDue > 0 && (
           <Link
@@ -133,10 +133,10 @@ export default async function FlashcardsPage() {
         <CreateFlashcardDialog topics={pickTopics} size="sm" />
       </div>
 
-      {/* ── Navegação por matéria e conteúdo ── */}
+      {/* Navegação por matéria e conteúdo */}
       {disciplines.length > 0 && <SubjectBrowser disciplines={disciplines} />}
 
-      {/* ── Seus decks (criados por você ou pelo Mentor) ── */}
+      {/* Seus decks (criados por você ou pelo Mentor) */}
       {deckStats.some((d) => d._count.flashcards > 0) && (
         <div className="space-y-3">
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">

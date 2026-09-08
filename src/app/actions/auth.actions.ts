@@ -104,7 +104,7 @@ export async function requestPasswordReset(
     select: { name: true },
   })
 
-  // Só envia se existir — mas responde sempre sucesso (privacidade).
+  // Só envia se existir, mas responde sempre sucesso (privacidade).
   if (user) {
     const token = randomBytes(32).toString("hex")
     const expires = new Date(Date.now() + 60 * 60 * 1000) // 1h
@@ -115,7 +115,7 @@ export async function requestPasswordReset(
     try {
       await sendEmail({
         to: normalized,
-        subject: "Redefinir sua senha — Vion",
+        subject: "Redefinir sua senha · Vion",
         html: passwordResetEmail(user.name ?? "", link),
       })
     } catch (e) {

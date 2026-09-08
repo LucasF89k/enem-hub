@@ -10,7 +10,7 @@ import {
 } from "@/lib/league"
 
 /**
- * Virada de temporada — modo "lazy": chamada na 1ª visita ao ranking depois
+ * Virada de temporada, modo "lazy": chamada na 1ª visita ao ranking depois
  * da troca de mês. Processa a season ANTERIOR à atual (uma vez só):
  *   - top 10 de cada sala com >= MIN_ROOM_FOR_MOVEMENT: sobem de liga
  *   - bottom 5: descem de liga
@@ -39,7 +39,7 @@ export async function runDueLeagueRollover(): Promise<void> {
     },
   })
 
-  // Nada da season anterior — marca como processada e sai.
+  // Nada da season anterior: marca como processada e sai.
   if (rooms.length === 0) {
     await db.leagueSeason.upsert({
       where: { season: target },

@@ -15,7 +15,7 @@ interface Props {
 }
 
 /**
- * Overlay comemorativo ao acertar uma questão — a chama "acende" (escala +
+ * Overlay comemorativo ao acertar uma questão: a chama "acende" (escala +
  * tremor), solta brasas, e some sozinho em ~2s (ou ao toque). Inspirado no
  * feedback de streak do Duolingo/Opal.
  */
@@ -80,7 +80,7 @@ export function StreakFlameOverlay({ open, onClose, streakIncreased, streak, xp 
               )
             })}
 
-            {/* a chama — Lottie */}
+            {/* a chama (Lottie) */}
             <motion.div
               initial={{ scale: 0.3, y: 24, opacity: 0 }}
               animate={{ scale: 1, y: 0, opacity: 1 }}

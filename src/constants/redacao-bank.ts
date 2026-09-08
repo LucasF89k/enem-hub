@@ -99,13 +99,13 @@ export const ESTRUTURAS_PROPOSTA = [
 ]
 
 export const REPERTORIOS = [
-  { fonte: "Constituição Federal de 1988", trecho: "Art. 5º — Todos são iguais perante a lei, sem distinção de qualquer natureza, garantindo-se aos brasileiros e aos estrangeiros residentes no País a inviolabilidade do direito à vida, à liberdade, à igualdade, à segurança e à propriedade." },
+  { fonte: "Constituição Federal de 1988", trecho: "Art. 5º. Todos são iguais perante a lei, sem distinção de qualquer natureza, garantindo-se aos brasileiros e aos estrangeiros residentes no País a inviolabilidade do direito à vida, à liberdade, à igualdade, à segurança e à propriedade." },
   { fonte: "Aristóteles (Política)", trecho: "O homem é um animal político. Aquele que não pode viver em sociedade, ou não precisa de nada porque se basta a si mesmo, deve ser uma besta ou um deus." },
   { fonte: "Hannah Arendt (A Condição Humana)", trecho: "A violência é muda. A capacidade para a violência é comum ao homem e ao animal; a violência entra em ação quando o poder está ameaçado." },
   { fonte: "Zygmunt Bauman (Modernidade Líquida)", trecho: "Na sociedade líquido-moderna, as conquistas individuais não podem solidificar-se em posses permanentes porque, em pouco tempo, os ativos se transformam em passivos e as capacidades em incapacidades." },
   { fonte: "Yuval Harari (Sapiens)", trecho: "A capacidade de criar ficções coletivas é o que permite a cooperação em larga escala entre humanos, sendo a base de religiões, nações e sistemas econômicos." },
   { fonte: "Paulo Freire (Pedagogia do Oprimido)", trecho: "Ninguém educa ninguém, ninguém educa a si mesmo; os homens se educam entre si, mediatizados pelo mundo." },
-  { fonte: "ONU — Declaração Universal dos Direitos Humanos", trecho: "Todo ser humano tem capacidade para gozar os direitos e as liberdades estabelecidos nesta Declaração, sem distinção de qualquer espécie." },
+  { fonte: "ONU - Declaração Universal dos Direitos Humanos", trecho: "Todo ser humano tem capacidade para gozar os direitos e as liberdades estabelecidos nesta Declaração, sem distinção de qualquer espécie." },
   { fonte: "Boaventura de Sousa Santos", trecho: "Não há justiça social global sem justiça cognitiva global, ou seja, sem o reconhecimento da diversidade de saberes do mundo." },
 ]
 

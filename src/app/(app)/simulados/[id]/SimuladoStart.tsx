@@ -87,7 +87,7 @@ export function SimuladoStart({
         <div>
           <p className="text-sm font-medium">Tenho tempo adicional (+1h)</p>
           <p className="text-xs text-muted-foreground">
-            Como no atendimento especializado do ENEM — acrescenta 1 hora ao cronômetro.
+            Como no atendimento especializado do ENEM: acrescenta 1 hora ao cronômetro.
           </p>
         </div>
       </label>

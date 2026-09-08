@@ -8,7 +8,7 @@ interface AreaRadarChartProps {
  * Acerto por área, em barras.
  *
  * Era um radar, mas o radar só fecha uma forma legível com 3+ eixos e aqui ele
- * recebia apenas as áreas em que o usuário já tinha respondido algo — com uma
+ * recebia apenas as áreas em que o usuário já tinha respondido algo: com uma
  * única área virava uma linha com um ponto na ponta, sem leitura possível.
  * Barras funcionam com qualquer quantidade, e ainda deixam comparar as áreas
  * lado a lado, que é a pergunta real ("onde estou pior?").

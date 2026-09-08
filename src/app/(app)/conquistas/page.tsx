@@ -112,7 +112,7 @@ export default async function ConquistasPage() {
                       isEarned ? "bg-card border-primary/20" : "bg-muted/20 border-transparent"
                     )}
                   >
-                    {/* Anel de progresso — vai "enchendo" e colorindo conforme avança */}
+                    {/* Anel de progresso: vai "enchendo" e colorindo conforme avança */}
                     <div className="relative h-12 w-12 shrink-0">
                       <div
                         className="absolute inset-0 rounded-full"

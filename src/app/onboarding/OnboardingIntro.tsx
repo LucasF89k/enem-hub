@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "framer-motion"
 import { OpalCrystal } from "@/components/OpalCrystal"
 
 /**
- * Intro cinematográfica antes do formulário de onboarding — mesma progressão
+ * Intro cinematográfica antes do formulário de onboarding, mesma progressão
  * do vídeo de referência, em 4 fases, cada uma com sua legenda:
  *
  *   0. rocha bruta opaca ....... "Uma opala só revela seu brilho..."
@@ -13,7 +13,7 @@ import { OpalCrystal } from "@/components/OpalCrystal"
  *   2. cacos se afastando ...... "Mais perto..."
  *   3. opala pura .............. "Seu foco também é assim."
  *
- * Recriado do zero em SVG/Framer Motion — identidade própria, não o asset
+ * Recriado do zero em SVG/Framer Motion, identidade própria, não o asset
  * 3D do Opal (que é protegido).
  */
 
@@ -60,7 +60,7 @@ export function OnboardingIntro({ onContinue }: { onContinue: () => void }) {
         }}
       />
 
-      {/* Legenda da fase — fica ACIMA da pedra, como no vídeo */}
+      {/* Legenda da fase: fica ACIMA da pedra, como no vídeo */}
       <div className="relative z-10 mb-10 flex h-16 max-w-[300px] items-end">
         <AnimatePresence mode="wait">
           <motion.p

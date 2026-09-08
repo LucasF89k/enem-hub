@@ -18,7 +18,7 @@ function getColor(minutes: number): string {
 const DAY_LABELS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"]
 
 export function CalendarHeatmap({ data }: CalendarHeatmapProps) {
-  // Ano-calendário (jan→dez), não uma janela rolante de 365 dias — era isso
+  // Ano-calendário (jan→dez), não uma janela rolante de 365 dias. Era isso
   // que fazia a faixa começar em "ago" e voltar pra "ago" no ano seguinte,
   // uma ordem de mês que não bate com o que qualquer pessoa espera de um
   // calendário. Os dias depois de hoje (dez ainda não vivido) continuam
@@ -45,7 +45,7 @@ export function CalendarHeatmap({ data }: CalendarHeatmapProps) {
 
   // Um rótulo por mudança de mês. Antes o rótulo só saía na semana que contivesse
   // o dia 1º, então o primeiro mês do intervalo (que quase nunca começa no dia 1)
-  // ficava sem identificação — a faixa abria num mês anônimo.
+  // ficava sem identificação: a faixa abria num mês anônimo.
   const monthLabels: { x: number; label: string }[] = []
   let lastMonth = -1
   const targetYear = today.getFullYear()
@@ -54,7 +54,7 @@ export function CalendarHeatmap({ data }: CalendarHeatmapProps) {
     // A primeira semana do ano quase sempre começa num domingo de dezembro do
     // ano anterior (é só o preenchimento pra fechar a semana, não faz parte do
     // ano exibido). Rotular essa semana criava um "dez" colado no "jan" logo
-    // ao lado — os dois rótulos quase se sobrepunham. As células continuam
+    // ao lado, e os dois rótulos quase se sobrepunham. As células continuam
     // aparecendo normalmente (se houver estudo registrado nesses dias, ele
     // mostra); só o rótulo de mês de fora do ano-alvo é que não entra.
     if (first.getFullYear() !== targetYear) return

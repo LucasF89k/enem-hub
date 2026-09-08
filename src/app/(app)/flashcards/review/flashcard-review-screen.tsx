@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils"
 import Link from "next/link"
 import confetti from "canvas-confetti"
 
-/** Legenda dos 4 botões — explica principalmente a diferença entre Bom e Fácil. */
+/** Legenda dos 4 botões: explica principalmente a diferença entre Bom e Fácil. */
 function RatingLegend() {
   return (
     <Popover>
@@ -35,10 +35,10 @@ function RatingLegend() {
       <PopoverContent align="center" className="w-72 text-xs">
         <p className="mb-2 font-semibold">Como avaliar</p>
         <ul className="space-y-1.5 text-muted-foreground">
-          <li><span className="font-semibold text-red-500">Errei</span> — não lembrei (volta logo).</li>
-          <li><span className="font-semibold text-orange-500">Difícil</span> — acertei com muito esforço.</li>
-          <li><span className="font-semibold text-blue-500">Bom</span> — acertei, mas <b className="text-foreground">ainda vale revisar de novo</b> em breve.</li>
-          <li><span className="font-semibold text-green-500">Fácil</span> — acertei tranquilo, já domino (espaça bastante).</li>
+          <li><span className="font-semibold text-red-500">Errei</span>: não lembrei (volta logo).</li>
+          <li><span className="font-semibold text-orange-500">Difícil</span>: acertei com muito esforço.</li>
+          <li><span className="font-semibold text-blue-500">Bom</span>: acertei, mas <b className="text-foreground">ainda vale revisar de novo</b> em breve.</li>
+          <li><span className="font-semibold text-green-500">Fácil</span>: acertei tranquilo, já domino (espaça bastante).</li>
         </ul>
       </PopoverContent>
     </Popover>
@@ -143,7 +143,7 @@ export function FlashcardReviewScreen({
     }
   }
 
-  /* ── Completion screen ── */
+  /* Completion screen */
   if (isComplete) {
     const elapsed = Math.round((Date.now() - startTime) / 1000)
     const mins = Math.floor(elapsed / 60)
@@ -207,7 +207,7 @@ export function FlashcardReviewScreen({
     )
   }
 
-  /* ── Review screen ── */
+  /* Review screen */
   return (
     <div className="flex flex-col h-[calc(100dvh-8rem)] max-w-lg mx-auto px-4 py-4 gap-4">
       {/* Progress bar + stats */}
@@ -344,7 +344,7 @@ export function FlashcardReviewScreen({
         <RatingLegend />
       </div>
 
-      {/* Rating buttons — visible only after flip */}
+      {/* Rating buttons, visible only after flip */}
       <div
         className={cn(
           "grid grid-cols-4 gap-2 pb-2 shrink-0 transition-all duration-200",

@@ -12,7 +12,7 @@ import { TEMAS_HISTORICOS } from "@/constants/redacao-bank"
 
 export function NewEssayForm({ initialTheme = "" }: { initialTheme?: string }) {
   const [theme, setTheme] = useState(initialTheme)
-  const [title, setTitle] = useState(initialTheme ? "Redação — dia de prova" : "")
+  const [title, setTitle] = useState(initialTheme ? "Redação do dia de prova" : "")
   const [generating, startGenerate] = useTransition()
 
   function gerarTema() {
@@ -20,7 +20,7 @@ export function NewEssayForm({ initialTheme = "" }: { initialTheme?: string }) {
       const res = await generateEssayTheme()
       if (res.theme) {
         setTheme(res.theme)
-        if (!title.trim()) setTitle("Redação — tema do Mentor")
+        if (!title.trim()) setTitle("Redação: tema do Mentor")
         toast.success("Tema gerado pelo Mentor!")
       } else {
         toast.error(res.error ?? "Falha ao gerar o tema")
@@ -30,7 +30,7 @@ export function NewEssayForm({ initialTheme = "" }: { initialTheme?: string }) {
 
   function escolherHistorico(ano: number, tema: string) {
     setTheme(tema)
-    if (!title.trim()) setTitle(`Redação — ENEM ${ano}`)
+    if (!title.trim()) setTitle(`Redação ENEM ${ano}`)
   }
 
   return (
@@ -80,7 +80,7 @@ export function NewEssayForm({ initialTheme = "" }: { initialTheme?: string }) {
             name="title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Ex: Minha redação — Tema 2024"
+            placeholder="Ex: Minha redação: Tema 2024"
             required
             minLength={3}
           />

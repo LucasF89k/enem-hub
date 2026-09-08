@@ -73,7 +73,7 @@
   --warning: hsl(38 92% 50%);
   --warning-foreground: hsl(0 0% 5%);
 
-  /* Tokens do gauge/glow "Opal" — fallback sóbrio no light mode */
+  /* Tokens do gauge/glow "Opal": fallback sóbrio no light mode */
   --gauge-track: hsl(220 13% 91%);
   --gauge-from: hsl(262 83% 58%);
   --gauge-to: hsl(142 71% 45%);
@@ -81,7 +81,7 @@
   --glow-purple: hsl(262 83% 58%);
 }
 
-/* ── Dark theme — paleta inspirada no Opal (dark/mint/glow) ── */
+/* ── Dark theme: paleta inspirada no Opal (dark/mint/glow) ── */
 .dark {
   --background: hsl(220 26% 4%);       /* #06070A-ish, leve tom azulado */
   --foreground: hsl(210 20% 97%);      /* #F5F6F7 */
@@ -92,19 +92,19 @@
   --popover: hsl(213 15% 7%);
   --popover-foreground: hsl(210 20% 97%);
 
-  /* Antes era roxo (o "violeta de SaaS de IA" clássico) — trocado pelo
+  /* Antes era roxo (o "violeta de SaaS de IA" clássico), trocado pelo
      mint que já é a identidade do app (gauge/accent), pra não parecer
      tema padrão de IA. Botões/estados ativos usam essa cor agora. */
   --primary: hsl(163 60% 58%);
   --primary-foreground: hsl(220 26% 6%);
 
-  --secondary: hsl(210 12% 12%);       /* #171B1F — bg-elevated-2 */
+  --secondary: hsl(210 12% 12%);       /* #171B1F: bg-elevated-2 */
   --secondary-foreground: hsl(210 20% 97%);
 
   --muted: hsl(210 12% 12%);
   --muted-foreground: hsl(220 6% 60%); /* #9AA0A6 */
 
-  --accent: hsl(157 78% 74%);          /* #7CF2C8 — mint, glow principal */
+  --accent: hsl(157 78% 74%);          /* #7CF2C8: mint, glow principal */
   --accent-foreground: hsl(220 26% 6%);
 
   --destructive: hsl(0 79% 71%);       /* #F26D6D */
@@ -114,10 +114,10 @@
   --input: hsl(0 0% 100% / 0.08);
   --ring: hsl(157 78% 74%);
 
-  --warning: hsl(36 91% 57%);          /* #F5A623 — chama de streak */
+  --warning: hsl(36 91% 57%);          /* #F5A623: chama de streak */
   --warning-foreground: hsl(220 26% 6%);
 
-  /* Tokens extras do gauge/glow "Opal" — usados por ScoreGauge/hero */
+  /* Tokens extras do gauge/glow "Opal": usados por ScoreGauge/hero */
   --gauge-track: hsl(0 0% 100% / 0.08);
   --gauge-from: hsl(206 70% 63%);      /* #5AA9E6 */
   --gauge-to: hsl(157 78% 74%);        /* #7CF2C8 */
@@ -142,7 +142,7 @@
   }
 }
 
-/* ── "Opal look" — profundidade, glass e glow (dark mode) ──── */
+/* ── "Opal look": profundidade, glass e glow (dark mode) ──── */
 
 /* Fundo com vinheta + brilho suave atrás do hero, em vez de cor lisa.
    No light mode vira um degradê neutro quase imperceptível. */
@@ -208,7 +208,7 @@
   }
 }
 
-/* Entrada em cascata dos cards/seções (Opal §6.5) — puramente CSS,
+/* Entrada em cascata dos cards/seções (Opal §6.5), puramente CSS,
    funciona em Server Components sem precisar de "use client".
    Use com style={{ animationDelay: `${i * 70}ms` }}. */
 @keyframes opal-enter {
@@ -224,7 +224,7 @@
   }
 }
 
-/* Nebulosa da Home — só um halo no topo, atrás do cristal. Some pras bordas
+/* Nebulosa da Home: só um halo no topo, atrás do cristal. Some pras bordas
    e principalmente pra base, emendando com o fundo escuro sem linha dura. */
 .opal-nebula {
   -webkit-mask-image:

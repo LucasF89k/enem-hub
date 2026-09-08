@@ -24,7 +24,7 @@ export async function MetaCard({ userId }: { userId: string }) {
         <div className="flex items-end justify-between">
           <div>
             <p className="text-2xl font-bold">
-              {estimatedScore > 0 ? estimatedScore.toFixed(0) : "—"}
+              {estimatedScore > 0 ? estimatedScore.toFixed(0) : "-"}
             </p>
             <p className="text-xs text-muted-foreground">nota estimada</p>
           </div>

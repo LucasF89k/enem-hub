@@ -1,4 +1,4 @@
-// Helpers de anexo (client-side) para o Mentor — imagem (redimensionada) ou PDF.
+// Helpers de anexo (client-side) para o Mentor: imagem (redimensionada) ou PDF.
 
 export const ATTACH_ACCEPT = "image/*,application/pdf"
 
@@ -59,11 +59,11 @@ export const REDACAO_CORRECTION_PROMPT = `Corrija esta redação do ENEM (está 
 
 1. Primeiro, transcreva o texto manuscrito exatamente como está.
 2. Depois avalie as 5 competências do ENEM, dando uma nota de 0 a 200 em cada uma:
-   - C1 — Domínio da norma culta da língua escrita (gramática, ortografia, pontuação).
-   - C2 — Compreensão do tema e aplicação da estrutura dissertativo-argumentativa (não fugir do tema, não copiar os textos motivadores).
-   - C3 — Seleção, relação e organização de argumentos e informações (repertório sociocultural produtivo).
-   - C4 — Conhecimento dos mecanismos linguísticos de coesão (conectivos, coesão referencial).
-   - C5 — Proposta de intervenção que respeite os direitos humanos (com agente, ação, meio, finalidade e detalhamento).
+   - C1: Domínio da norma culta da língua escrita (gramática, ortografia, pontuação).
+   - C2: Compreensão do tema e aplicação da estrutura dissertativo-argumentativa (não fugir do tema, não copiar os textos motivadores).
+   - C3: Seleção, relação e organização de argumentos e informações (repertório sociocultural produtivo).
+   - C4: Conhecimento dos mecanismos linguísticos de coesão (conectivos, coesão referencial).
+   - C5: Proposta de intervenção que respeite os direitos humanos (com agente, ação, meio, finalidade e detalhamento).
 3. Some as competências e dê a NOTA FINAL (0 a 1000).
 4. Liste os erros específicos encontrados (com trechos) e como corrigir cada um.
 5. Termine com 2-3 dicas objetivas para subir a nota.
@@ -71,4 +71,4 @@ export const REDACAO_CORRECTION_PROMPT = `Corrija esta redação do ENEM (está 
 Seja rigoroso e use os critérios reais do ENEM.`
 
 /** Prompt para o Mentor transcrever uma foto de um plano de estudos em papel. */
-export const PLANO_FOLHA_PROMPT = `Tenho um plano/cronograma de estudos pronto nesta foto. Transcreva ele fielmente, dia a dia, mantendo as mesmas matérias e atividades, e depois gere o plano estruturado (bloco vion-plano-folha) para eu aplicar no meu Planner. Não precisa me fazer perguntas — é só copiar o que está na folha.`
+export const PLANO_FOLHA_PROMPT = `Tenho um plano/cronograma de estudos pronto nesta foto. Transcreva ele fielmente, dia a dia, mantendo as mesmas matérias e atividades, e depois gere o plano estruturado (bloco vion-plano-folha) para eu aplicar no meu Planner. Não precisa me fazer perguntas, é só copiar o que está na folha.`

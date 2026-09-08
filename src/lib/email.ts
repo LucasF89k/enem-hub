@@ -1,4 +1,4 @@
-/** Envio de e-mail transacional via Resend (REST API — sem dependência extra). */
+/** Envio de e-mail transacional via Resend (REST API, sem dependência extra). */
 const RESEND_ENDPOINT = "https://api.resend.com/emails"
 
 export async function sendEmail({
@@ -32,7 +32,7 @@ export async function sendEmail({
 export function passwordResetEmail(name: string, link: string): string {
   return `
   <div style="font-family:sans-serif;max-width:480px;margin:0 auto;color:#1a1a1a">
-    <h2 style="color:#8B5CF6">Vion — Redefinir senha</h2>
+    <h2 style="color:#8B5CF6">Vion: redefinir senha</h2>
     <p>Olá${name ? `, ${name}` : ""}!</p>
     <p>Você pediu para redefinir sua senha. Clique no botão abaixo (o link vale por 1 hora):</p>
     <p style="margin:24px 0">

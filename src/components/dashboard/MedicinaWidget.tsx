@@ -45,7 +45,7 @@ export async function MedicinaWidget({ userId }: { userId: string }) {
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-red-500/10">
             <Stethoscope className="h-3.5 w-3.5 text-red-500" />
           </div>
-          <CardTitle className="text-sm font-semibold">Medicina — Notas de Corte</CardTitle>
+          <CardTitle className="text-sm font-semibold">Medicina: Notas de Corte</CardTitle>
           <Badge variant="secondary" className="ml-auto text-[10px]">2024</Badge>
         </div>
       </CardHeader>
@@ -104,7 +104,7 @@ export async function MedicinaWidget({ userId }: { userId: string }) {
             ) : (
               <>
                 <AlertCircle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
-                <span className="text-muted-foreground">Nenhuma faculdade alcançável ainda — continue estudando!</span>
+                <span className="text-muted-foreground">Nenhuma faculdade alcançável ainda, continue estudando!</span>
               </>
             )}
           </div>
@@ -113,7 +113,7 @@ export async function MedicinaWidget({ userId }: { userId: string }) {
         {/* Top 5 cutoff table */}
         <div className="space-y-1.5">
           <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
-            Top 5 — nota de corte
+            Top 5 · nota de corte
           </p>
           {top5.map((f) => {
             const isReachable = currentScore ? currentScore >= f.notaCorte2024 - 10 : false
