@@ -18,12 +18,12 @@ import { AnimatePresence, motion } from "framer-motion"
  * volta a cobrir a tela — só reaparece se a aba/navegador for fechado de
  * verdade e reaberto.
  *
- *   logo se monta (vídeo) → a pedra racha, se abre e revela a gema (vídeo)
- *   → a câmera recua até a posição do hero → entra o app
+ *   logo se monta (vídeo) → a pedra flutua e a orb de luz surge ao redor
+ *   dela (vídeo) → a câmera recua até a posição do hero → entra o app
  *
  * A fase da pedra é uma recompensa de quem já tem conta: só quem chega aqui
  * com sessão ativa (isLoggedIn) vê logo+pedra. Sem sessão, a splash mostra
- * só a logo montando e já segue pro login/cadastro — a pedra nunca "racha"
+ * só a logo montando e já segue pro login/cadastro — a pedra nunca aparece
  * pra quem ainda não tem cadastro.
  *
  * Automática por padrão (autoplay silencioso), mas alguns navegadores
@@ -41,10 +41,10 @@ import { AnimatePresence, motion } from "framer-motion"
  * continua rodando sempre.
  *
  * As duas fases são VÍDEO, não sequências de imagem: tanto a montagem da
- * logo (anel fechando, seta se formando) quanto a fratura da pedra (cacos
- * se soltando, partículas) são movimento de verdade — crossfade entre
- * quadros estáticos sempre dava aparência de slideshow. As imagens estáticas
- * seguem no projeto como poster/fallback de cada vídeo.
+ * logo (anel fechando, seta se formando) quanto a pedra flutuando com a orb
+ * surgindo ao redor são movimento de verdade — crossfade entre quadros
+ * estáticos sempre dava aparência de slideshow. As imagens estáticas seguem
+ * no projeto como poster/fallback de cada vídeo.
  *
  * Fica por cima do conteúdo real (que já está montando/buscando dados por
  * baixo em paralelo) e desaparece sozinha — não bloqueia nada, só cobre.
@@ -316,17 +316,14 @@ export function AppSplash({ isLoggedIn }: { isLoggedIn: boolean }) {
                 preload="auto"
                 onError={() => setStoneFailed(true)}
                 className="h-full w-full object-contain"
-                // O fundo do vídeo NUNCA chega a preto puro: o pipeline YUV do
-                // H.264 devolve ~RGB(20,25,25) por mais que se force o clamp
-                // (testado com colorlevels, lutrgb, lutyuv e vinheta por multiply
-                // — todos param nessa faixa). Como não dá para igualar a cor de
-                // forma confiável entre dispositivos, o alpha resolve: a máscara
-                // zera BEM antes da borda do elemento, então não existe aresta
-                // possível, independente da cor que o vídeo renderize.
-                style={{
-                  maskImage: "radial-gradient(circle, #000 52%, transparent 80%)",
-                  WebkitMaskImage: "radial-gradient(circle, #000 52%, transparent 80%)",
-                }}
+                // mix-blend-mode: screen soma a luz do vídeo com o preto do fundo
+                // da splash (bg-black) — preto vira transparente na prática (screen
+                // com preto = identidade), sobra só o brilho da pedra/orb. Diferente
+                // da máscara radial anterior, isso não depende de "acertar" um raio
+                // de corte contra o conteúdo do vídeo: qualquer região preta do
+                // vídeo simplesmente some, sem aresta nenhuma. Exige fundo do vídeo
+                // preto/bem escuro (é o caso) — sobre fundo colorido isso não some.
+                style={{ mixBlendMode: "screen" }}
               />
               {/* Fallback SÓ em caso de falha real (codec indisponível, autoplay
                   bloqueado) — antes ele entrava enquanto o vídeo carregava, e como
