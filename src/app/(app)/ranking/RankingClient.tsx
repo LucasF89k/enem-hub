@@ -330,16 +330,10 @@ function CopyCode({ code }: { code: string }) {
 
 export function RankingClient({
   myId,
-  global,
-  myRank,
-  myXP,
   groups,
   league,
 }: {
   myId: string
-  global: RankEntry[]
-  myRank: number
-  myXP: number
   groups: GroupData[]
   league: LeagueData | null
 }) {
@@ -385,32 +379,14 @@ export function RankingClient({
       </div>
 
       <Tabs defaultValue="liga">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="liga">Liga</TabsTrigger>
-          <TabsTrigger value="geral">Geral</TabsTrigger>
           <TabsTrigger value="grupos">Amigos</TabsTrigger>
         </TabsList>
 
         {/* ── Liga ── */}
         <TabsContent value="liga" className="mt-4">
           <LeagueTab league={league} myId={myId} />
-        </TabsContent>
-
-        {/* ── Geral ── */}
-        <TabsContent value="geral" className="mt-4 space-y-4">
-          <div className="flex items-center gap-3 rounded-2xl border border-primary/30 bg-primary/5 px-4 py-3">
-            <span className="w-8 text-center text-lg font-bold text-primary tabular-nums">
-              {myRank}º
-            </span>
-            <div className="flex-1">
-              <p className="text-sm font-semibold">Você</p>
-              <p className="text-[11px] text-muted-foreground">
-                {myXP.toLocaleString("pt-BR")} XP no total
-              </p>
-            </div>
-            <Medal className="h-5 w-5 text-primary" />
-          </div>
-          <RankList entries={global} myId={myId} />
         </TabsContent>
 
         {/* ── Grupos ── */}

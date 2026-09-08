@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { db } from "@/lib/db"
-import { RankingClient, type RankEntry, type GroupData, type LeagueData } from "./RankingClient"
+import { RankingClient, type GroupData, type LeagueData } from "./RankingClient"
 import { ensureLeagueMembership, seasonKey, daysUntilRollover } from "@/lib/league"
 import { runDueLeagueRollover } from "@/lib/league-rollover"
 
@@ -18,17 +18,7 @@ export default async function RankingPage() {
   // Garante que estou numa sala da season atual.
   const myMembership = await ensureLeagueMembership(myId).catch(() => null)
 
-  const [top, me, memberships, myProfile] = await Promise.all([
-    db.userProfile.findMany({
-      orderBy: { totalXP: "desc" },
-      take: 50,
-      select: {
-        totalXP: true,
-        currentLevel: true,
-        user: { select: { id: true, name: true, image: true } },
-      },
-    }),
-    db.userProfile.findUnique({ where: { userId: myId }, select: { totalXP: true } }),
+  const [memberships, myProfile] = await Promise.all([
     db.rankingGroupMember.findMany({
       where: { userId: myId },
       orderBy: { joinedAt: "asc" },
@@ -57,21 +47,6 @@ export default async function RankingPage() {
     }),
     db.userProfile.findUnique({ where: { userId: myId }, select: { currentTier: true } }),
   ])
-
-  const global: RankEntry[] = top.map((p) => ({
-    userId: p.user.id,
-    name: p.user.name,
-    image: p.user.image,
-    level: p.currentLevel,
-    totalXP: p.totalXP,
-  }))
-
-  const myXP = me?.totalXP ?? 0
-  const myIndex = global.findIndex((e) => e.userId === myId)
-  const myRank =
-    myIndex >= 0
-      ? myIndex + 1
-      : (await db.userProfile.count({ where: { totalXP: { gt: myXP } } })) + 1
 
   const groups: GroupData[] = memberships.map(({ group }) => ({
     id: group.id,
@@ -114,14 +89,5 @@ export default async function RankingPage() {
     }
   }
 
-  return (
-    <RankingClient
-      myId={myId}
-      global={global}
-      myRank={myRank}
-      myXP={myXP}
-      groups={groups}
-      league={league}
-    />
-  )
+  return <RankingClient myId={myId} groups={groups} league={league} />
 }
