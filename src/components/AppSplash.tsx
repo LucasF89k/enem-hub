@@ -302,7 +302,9 @@ export function AppSplash({ isLoggedIn }: { isLoggedIn: boolean }) {
                   : { opacity: showingStone ? 1 : 0, scale: 1, y: 0 }
               }
               transition={{ duration: pulling ? 1 : 0.5, ease: [0.16, 1, 0.3, 1] }}
-              className="relative z-10 aspect-square w-[min(96vw,460px)]"
+              // Vídeo em formato celular (9:16, igual ao da logo) — container
+              // vertical em vez de quadrado, pra não sobrar letterbox lateral.
+              className="relative z-10 aspect-[9/16] w-[min(80vw,320px)]"
             >
               <video
                 ref={stoneVideoRef}
