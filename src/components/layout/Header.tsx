@@ -35,6 +35,25 @@ function getPageTitle(pathname: string): string {
   return "Vion"
 }
 
+// Rotas cuja própria página já mostra um <h1> (com subtítulo, na maioria) —
+// nelas o título do Header ficaria duplicado no mobile, empilhado em cima
+// do título real da página. Só ficam de fora as que não têm título próprio
+// (ex: /flashcards).
+const PAGES_WITH_OWN_TITLE = [
+  "/study",
+  "/simulados",
+  "/redacao",
+  "/planner",
+  "/analytics",
+  "/profile",
+  "/conquistas",
+  "/ranking",
+]
+
+function hasOwnTitle(pathname: string): boolean {
+  return PAGES_WITH_OWN_TITLE.some((p) => pathname === p || pathname.startsWith(p + "/"))
+}
+
 interface HeaderProps {
   actions?: React.ReactNode
   className?: string
@@ -65,7 +84,9 @@ export function Header({ actions, className, user }: HeaderProps) {
         <span className="text-lg font-bold tracking-tight">Vion</span>
       </Link>
 
-      {/* Page title — mobile only. Na Home vira "Olá, Nome" + streak. */}
+      {/* Page title — mobile only. Na Home vira "Olá, Nome" + streak.
+          Rotas com título próprio (hasOwnTitle) não repetem aqui — a página
+          já mostra o <h1> dela logo abaixo. */}
       {onHome ? (
         <div className="flex items-center gap-2.5 md:hidden">
           <h1 className="text-base font-semibold text-foreground truncate">
@@ -77,9 +98,11 @@ export function Header({ actions, className, user }: HeaderProps) {
           </span>
         </div>
       ) : (
-        <h1 className="text-base font-semibold text-foreground truncate md:hidden">
-          {getPageTitle(pathname)}
-        </h1>
+        !hasOwnTitle(pathname) && (
+          <h1 className="text-base font-semibold text-foreground truncate md:hidden">
+            {getPageTitle(pathname)}
+          </h1>
+        )
       )}
 
       {/* Empurra nível/avatar para a direita */}
