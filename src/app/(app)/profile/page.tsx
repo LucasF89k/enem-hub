@@ -171,7 +171,10 @@ export default async function ProfilePage() {
         <div className="mt-3 flex gap-3 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {earnedList.map((def) => (
             <div key={def.key} className="flex w-24 shrink-0 flex-col items-center gap-2">
-              <div className="flex h-24 w-24 items-center justify-center rounded-2xl border border-primary/25 bg-primary/8 text-4xl shadow-[0_0_24px_-6px_var(--glow-mint)]">
+              <div
+                className="flex h-24 w-24 items-center justify-center rounded-2xl border border-primary/25 bg-primary/8 text-4xl"
+                style={{ boxShadow: "0 0 24px -6px color-mix(in srgb, var(--glow-mint) 55%, transparent)" }}
+              >
                 {def.icon}
               </div>
               <p className="line-clamp-2 text-center text-xs font-medium leading-tight">{def.name}</p>

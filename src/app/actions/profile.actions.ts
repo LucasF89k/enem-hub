@@ -31,7 +31,8 @@ export async function updateProfileImage(
     return { success: false, error: "Não foi possível salvar a foto." }
   }
 
-  revalidatePath("/profile")
-  revalidatePath("/")
+  // Revalida o layout do grupo (app) inteiro — é onde Header/Sidebar leem
+  // a imagem do usuário, então precisa invalidar mais que só /profile.
+  revalidatePath("/", "layout")
   return { success: true }
 }
