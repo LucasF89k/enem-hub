@@ -15,22 +15,41 @@ const useOpenRouter = !!process.env.OPENROUTER_API_KEY
 
 export const MIMO_PROVIDER: 'openrouter' | 'xiaomi' = useOpenRouter ? 'openrouter' : 'xiaomi'
 
-export const mimo = new OpenAI(
-  useOpenRouter
-    ? {
-        apiKey: process.env.OPENROUTER_API_KEY!,
-        baseURL: 'https://openrouter.ai/api/v1',
-        // Headers opcionais do OpenRouter (ranking/analytics), não afetam o custo.
-        defaultHeaders: {
-          'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL ?? 'https://enem-hub.vercel.app',
-          'X-Title': 'Vion',
-        },
-      }
-    : {
-        apiKey: process.env.MIMO_API_KEY!,
-        baseURL: 'https://api.xiaomimimo.com/v1',
-      }
-)
+function buildMimoClient(): OpenAI {
+  return new OpenAI(
+    useOpenRouter
+      ? {
+          apiKey: process.env.OPENROUTER_API_KEY!,
+          baseURL: 'https://openrouter.ai/api/v1',
+          // Headers opcionais do OpenRouter (ranking/analytics), não afetam o custo.
+          defaultHeaders: {
+            'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL ?? 'https://enem-hub.vercel.app',
+            'X-Title': 'Vion',
+          },
+        }
+      : {
+          apiKey: process.env.MIMO_API_KEY!,
+          baseURL: 'https://api.xiaomimimo.com/v1',
+        }
+  )
+}
+
+let mimoInstance: OpenAI | null = null
+
+/**
+ * Client lazy: só instancia na primeira chamada real, não no import do
+ * módulo. O SDK da OpenAI valida a apiKey de imediato no construtor, e criar
+ * o client aqui em cima (no import) faz esse import falhar sempre que a env
+ * var não estiver disponível no momento certo, por exemplo na fase de build
+ * da Vercel ("Collecting page data"), que roda o módulo sem ter as env vars
+ * de runtime, mesmo sem nenhuma chamada de verdade ao Mentor acontecer.
+ */
+export const mimo: OpenAI = new Proxy({} as OpenAI, {
+  get(_target, prop, receiver) {
+    if (!mimoInstance) mimoInstance = buildMimoClient()
+    return Reflect.get(mimoInstance, prop, receiver)
+  },
+})
 
 // No OpenRouter o model id é prefixado com "xiaomi/"; no endpoint direto da Xiaomi não.
 export const MIMO_MODEL = useOpenRouter ? 'xiaomi/mimo-v2.5' : 'mimo-v2.5'
