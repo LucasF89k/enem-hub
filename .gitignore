@@ -49,3 +49,11 @@ next-env.d.ts
 backup-cjk-antes.json
 backup-antes-travessao.json
 design-reference/
+
+# Trabalho de correcao de gabaritos (nao versionar)
+backup-gabaritos-antes-ia.json
+_ppl-baixa-confianca.json
+_outros-baixa-confianca.json
+questoes-com-imagem.json
+questoes-suspeitas-sem-imagem.json
+cache-enem-oficial/

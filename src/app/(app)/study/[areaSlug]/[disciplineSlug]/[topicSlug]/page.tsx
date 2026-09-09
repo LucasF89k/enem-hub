@@ -112,7 +112,15 @@ export default async function TopicPage({
     tags: f.tags,
   }))
 
-  const questions = topic.questions.map((q) => ({
+  // Questões sem gabarito cadastrado (`correctId` nulo, tipicamente as que
+  // dependem de uma imagem/gráfico do PDF original ainda não extraída) ficam
+  // FORA da lista interativa: sem gabarito não dá pra corrigir a resposta do
+  // aluno, e um "sempre errado" silencioso é pior que não aparecer. O total
+  // some pra `pendingCount`, que vira um aviso de manutenção na tela.
+  const questoesComGabarito = topic.questions.filter((q) => q.correctId !== null)
+  const pendingCount = topic.questions.length - questoesComGabarito.length
+
+  const questions = questoesComGabarito.map((q) => ({
     id: q.id,
     statement: q.statement,
     difficulty: q.difficulty as string,
@@ -195,6 +203,7 @@ export default async function TopicPage({
         } : null}
         flashcards={flashcards}
         questions={questions}
+        pendingQuestionsCount={pendingCount}
         wrongIds={wrongIds}
         pendingReviews={pendingReviews}
         videos={videos}

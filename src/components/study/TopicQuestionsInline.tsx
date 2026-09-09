@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { CheckCircle2, XCircle, ChevronDown, Zap, RotateCcw, HelpCircle, Shuffle } from "lucide-react"
+import { CheckCircle2, XCircle, ChevronDown, Zap, RotateCcw, HelpCircle, Shuffle, Wrench } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -48,12 +48,33 @@ function shuffleArr<T>(arr: T[]): T[] {
   return a
 }
 
+/** Aviso discreto: questões deste tópico que existem mas ficaram de fora da
+ *  lista (sem gabarito cadastrado — tipicamente aguardando a imagem/gráfico
+ *  do PDF original) não aparecem no quiz pra não deixar o aluno responder
+ *  algo que nunca vai corrigir certo. */
+function ManutencaoNotice({ count }: { count: number }) {
+  if (count <= 0) return null
+  return (
+    <div className="flex items-center gap-2.5 rounded-xl border border-dashed border-border bg-muted/30 px-3.5 py-2.5 text-xs text-muted-foreground">
+      <Wrench className="h-4 w-4 shrink-0" />
+      <span>
+        {count === 1
+          ? "1 questão deste tópico está em manutenção (aguardando material) e não aparece aqui."
+          : `${count} questões deste tópico estão em manutenção (aguardando material) e não aparecem aqui.`}
+      </span>
+    </div>
+  )
+}
+
 export function TopicQuestionsInline({
   questions,
   wrongIds = [],
+  pendingQuestionsCount = 0,
 }: {
   questions: InlineQuestion[]
   wrongIds?: string[]
+  /** questões do tópico que existem mas foram filtradas por falta de gabarito */
+  pendingQuestionsCount?: number
 }) {
   const [filter, setFilter] = useState<Filter>("all")
   const [shuffleSeed, setShuffleSeed] = useState(0)
@@ -137,9 +158,14 @@ export function TopicQuestionsInline({
 
   if (questions.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-3 py-8 text-center">
-        <HelpCircle className="h-10 w-10 text-muted-foreground/40" />
-        <p className="text-sm text-muted-foreground">Nenhuma questão neste tópico ainda</p>
+      <div className="space-y-4">
+        <ManutencaoNotice count={pendingQuestionsCount} />
+        <div className="flex flex-col items-center gap-3 py-8 text-center">
+          <HelpCircle className="h-10 w-10 text-muted-foreground/40" />
+          <p className="text-sm text-muted-foreground">
+            {pendingQuestionsCount > 0 ? "Nenhuma questão disponível no momento" : "Nenhuma questão neste tópico ainda"}
+          </p>
+        </div>
       </div>
     )
   }
@@ -181,6 +207,7 @@ export function TopicQuestionsInline({
   if (active.length === 0) {
     return (
       <div className="space-y-4">
+        <ManutencaoNotice count={pendingQuestionsCount} />
         <FilterBar />
         <div className="flex flex-col items-center gap-2 py-10 text-center">
           <HelpCircle className="h-9 w-9 text-muted-foreground/40" />
@@ -198,6 +225,7 @@ export function TopicQuestionsInline({
     const pct = answeredCount ? Math.round((correctCount / answeredCount) * 100) : 0
     return (
       <div className="space-y-4">
+        <ManutencaoNotice count={pendingQuestionsCount} />
         <FilterBar />
         <div className="flex flex-col items-center gap-4 py-10 text-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
@@ -252,6 +280,7 @@ export function TopicQuestionsInline({
         streak={flame?.streak ?? 0}
       />
 
+      <ManutencaoNotice count={pendingQuestionsCount} />
       <FilterBar />
 
       {/* Progresso */}
