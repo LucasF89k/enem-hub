@@ -56,10 +56,12 @@ export function ExamCountdown({
   ]
 
   return (
-    <div className="w-full rounded-2xl border bg-gradient-to-b from-primary/10 to-transparent px-4 py-4">
+    // Sem tinta colorida no fundo nem no ícone: o destaque aqui são os
+    // números, e eles já se destacam pelo tamanho.
+    <div className="w-full rounded-2xl border bg-gradient-to-b from-foreground/[0.04] to-transparent px-4 py-4">
       <div className="mb-3 flex items-center justify-center gap-2 text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
-        <CalendarClock className="h-3.5 w-3.5 text-primary" />
-        {t!.done ? "É hoje! Boa prova 🚀" : "Contagem para o ENEM"}
+        <CalendarClock className="h-3.5 w-3.5" />
+        {t!.done ? "É hoje. Boa prova!" : "Contagem para o ENEM"}
       </div>
       <div className="grid grid-cols-4 gap-2">
         {cells.map((c) => (
@@ -75,9 +77,9 @@ export function ExamCountdown({
       </div>
 
       {trailLabel && (
-        <div className="mt-3 flex items-center justify-center gap-2 rounded-xl bg-primary/10 py-2">
-          <Route className="h-4 w-4 text-primary" />
-          <span className="text-[13px] font-semibold text-primary">Trilha {trailLabel}</span>
+        <div className="mt-3 flex items-center justify-center gap-2 rounded-xl bg-foreground/[0.04] py-2">
+          <Route className="h-4 w-4 text-muted-foreground" />
+          <span className="text-[13px] font-medium text-foreground">Trilha {trailLabel}</span>
           {trailPeriod && (
             <span className="text-[11px] text-muted-foreground">· {trailPeriod}</span>
           )}

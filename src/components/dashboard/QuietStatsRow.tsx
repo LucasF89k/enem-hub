@@ -21,8 +21,10 @@ export function QuietStatsRow({
         <p className="mt-0.5 text-[11px] text-muted-foreground">sequência</p>
       </div>
 
+      {/* Os três números são pares entre si: colorir dois deles com cores
+          diferentes só criava ruído, sem dizer nada a mais. */}
       <div className="min-w-0 text-center">
-        <p className="text-xl font-normal text-accent">
+        <p className="text-xl font-normal text-foreground">
           {estimatedScore > 0 ? Math.round(estimatedScore) : "-"}
         </p>
         <p className="mt-0.5 text-[11px] text-muted-foreground">nota estimada</p>
@@ -31,13 +33,16 @@ export function QuietStatsRow({
       <div className="min-w-0 text-center">
         {daysUntilExam !== null ? (
           <>
-            <p className="text-xl font-normal text-primary">{daysUntilExam}</p>
+            <p className="text-xl font-normal text-foreground">{daysUntilExam}</p>
             <p className="mt-0.5 text-[11px] text-muted-foreground">dias p/ ENEM</p>
           </>
         ) : (
           <>
             <p className="text-xl font-normal text-muted-foreground">-</p>
-            <Link href="/profile/settings" className="mt-0.5 block text-[11px] text-primary underline">
+            <Link
+              href="/profile/settings"
+              className="mt-0.5 block text-[11px] text-muted-foreground underline underline-offset-2 transition-colors hover:text-foreground"
+            >
               definir data
             </Link>
           </>

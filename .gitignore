@@ -46,3 +46,6 @@ next-env.d.ts
 
 # Design work (mockups, artboards) — não versionar
 .design-work/
+backup-cjk-antes.json
+backup-antes-travessao.json
+design-reference/
