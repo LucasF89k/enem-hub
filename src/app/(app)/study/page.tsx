@@ -102,11 +102,6 @@ export default async function StudyPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-5 px-4 py-5">
-      <div>
-        <h1 className="text-xl font-bold">Estudar</h1>
-        <p className="text-xs text-muted-foreground">Escolha uma área para começar</p>
-      </div>
-
       {/* Áreas */}
       <div className="grid grid-cols-2 gap-3">
         {areas.map((area, i) => {
