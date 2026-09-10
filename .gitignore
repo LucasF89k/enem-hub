@@ -57,3 +57,9 @@ _outros-baixa-confianca.json
 questoes-com-imagem.json
 questoes-suspeitas-sem-imagem.json
 cache-enem-oficial/
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
