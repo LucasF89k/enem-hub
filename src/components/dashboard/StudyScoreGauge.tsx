@@ -61,7 +61,7 @@ export function StudyScoreGauge({
 
       {/* A opala ocupa o miolo do anel, os números ficam POR CIMA dela */}
       <div className="absolute inset-0 flex items-center justify-center">
-        <OpalCrystal size={132} stage={3} slime />
+        <OpalCrystal size={132} stage={3} slime bubble />
       </div>
 
       {/* Véu escuro só atrás dos números: sem ele o texto branco some no meio

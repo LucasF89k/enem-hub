@@ -40,14 +40,11 @@ function getPageTitle(pathname: string): string {
 // do título real da página. Só ficam de fora as que não têm título próprio
 // (ex: /flashcards).
 const PAGES_WITH_OWN_TITLE = [
-  "/study",
   "/simulados",
   "/redacao",
-  "/planner",
   "/analytics",
   "/profile",
   "/conquistas",
-  "/ranking",
 ]
 
 function hasOwnTitle(pathname: string): boolean {

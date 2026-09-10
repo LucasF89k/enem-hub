@@ -396,9 +396,8 @@ export function PlannerClient({ weekStart, items, hasPlan, dailyGoal }: PlannerC
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-6 space-y-5">
-      {/* Cabeçalho */}
+      {/* Cabeçalho: o nome "Planejador" já está no Header, aqui fica só a semana. */}
       <div>
-        <h1 className="text-2xl font-bold">Planejador</h1>
         <p className="text-sm text-muted-foreground">
           Semana de {format(weekStartDate, "dd 'de' MMM", { locale: ptBR })} a{" "}
           {format(addDays(weekStartDate, 6), "dd 'de' MMM", { locale: ptBR })}

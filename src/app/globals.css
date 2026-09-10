@@ -251,3 +251,31 @@
     animation: none;
   }
 }
+
+/* ── Peso visual do conteúdo de estudo ─────────────────────
+   A teoria vem com MUITO negrito (média de 81 trechos por tópico, ~10% das
+   palavras). Apagar isso do texto jogaria fora o destaque que o autor quis
+   dar; então o negrito continua lá, só que discreto: mesma cor do corpo e
+   peso um pouco maior, em vez de branco forte. A página respira, e a cor
+   fica reservada para o que precisa mesmo saltar (links, ações, estados). */
+.prose :where(strong, b):not(:where([class~="not-prose"] *)) {
+  color: inherit;
+  font-weight: 600;
+}
+
+/* Títulos dentro do texto: hierarquia pelo tamanho, não pelo brilho. */
+.prose :where(h1, h2, h3, h4):not(:where([class~="not-prose"] *)) {
+  color: var(--foreground);
+  letter-spacing: -0.01em;
+}
+
+/* Tabelas e citações em cinza, sem moldura pesada. */
+.prose :where(blockquote):not(:where([class~="not-prose"] *)) {
+  color: var(--muted-foreground);
+  font-style: normal;
+  border-inline-start-color: var(--border);
+}
+.prose :where(th):not(:where([class~="not-prose"] *)) {
+  color: var(--muted-foreground);
+  font-weight: 600;
+}

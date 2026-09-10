@@ -25,31 +25,39 @@ const AREA_ICON: Record<string, LucideIcon> = {
   matematica: Calculator,
 }
 
-/** Cor de acento por área: borda, ícone e barra de progresso. */
+/**
+ * Cor de acento por área.
+ *
+ * A cor fica SÓ no ícone. Antes ela também pintava a borda, o fundo do ícone
+ * e a barra de progresso: com quatro áreas na tela, eram quatro cores
+ * disputando atenção ao mesmo tempo, e nada disso acrescentava informação que
+ * o ícone sozinho já não desse. Borda e barra agora são neutras, então a
+ * página fica calma e a cor continua servindo de referência rápida da área.
+ */
 const AREA_ACCENT: Record<string, { border: string; iconBg: string; icon: string; bar: string }> = {
   "ciencias-natureza": {
-    border: "border-sky-500/20",
-    iconBg: "bg-sky-500/12",
+    border: "border-border",
+    iconBg: "bg-foreground/[0.06]",
     icon: "text-sky-400",
-    bar: "[&>div]:bg-sky-400",
+    bar: "",
   },
   "ciencias-humanas": {
-    border: "border-primary/25",
-    iconBg: "bg-primary/12",
+    border: "border-border",
+    iconBg: "bg-foreground/[0.06]",
     icon: "text-primary",
-    bar: "[&>div]:bg-primary",
+    bar: "",
   },
   linguagens: {
-    border: "border-violet-500/25",
-    iconBg: "bg-violet-500/14",
+    border: "border-border",
+    iconBg: "bg-foreground/[0.06]",
     icon: "text-violet-400",
-    bar: "[&>div]:bg-violet-400",
+    bar: "",
   },
   matematica: {
-    border: "border-amber-500/22",
-    iconBg: "bg-amber-500/12",
+    border: "border-border",
+    iconBg: "bg-foreground/[0.06]",
     icon: "text-amber-400",
-    bar: "[&>div]:bg-amber-400",
+    bar: "",
   },
 }
 
@@ -94,11 +102,6 @@ export default async function StudyPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-5 px-4 py-5">
-      <div>
-        <h1 className="text-xl font-bold">Estudar</h1>
-        <p className="text-xs text-muted-foreground">Escolha uma área para começar</p>
-      </div>
-
       {/* Áreas */}
       <div className="grid grid-cols-2 gap-3">
         {areas.map((area, i) => {
@@ -145,8 +148,9 @@ export default async function StudyPage() {
               style={{ animationDelay: `${(areas.length + i) * 60}ms` }}
               className="opal-enter flex items-center gap-3 rounded-2xl border border-border bg-card p-3 transition-colors hover:bg-muted/40 active:scale-[0.99]"
             >
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                <Icon className="h-4 w-4 text-primary" strokeWidth={1.75} />
+              {/* Atalho é navegação secundária: ícone em cinza, sem tinta. */}
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-foreground/[0.06]">
+                <Icon className="h-4 w-4 text-muted-foreground" strokeWidth={1.75} />
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-[13px] font-semibold leading-tight">{title}</p>

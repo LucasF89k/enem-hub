@@ -120,6 +120,7 @@ export default async function DashboardPage() {
             examDate={examDateISO}
             trailLabel={trailConfig.label}
             trailPeriod={trailConfig.description}
+            trailColor={trailConfig.color}
           />
         </div>
 
