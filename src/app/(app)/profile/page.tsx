@@ -107,9 +107,11 @@ export default async function ProfilePage() {
   const earnedList = visibleDefs.filter((d) => earnedKeys.has(d.key))
 
   return (
-    <div className="mx-auto max-w-2xl pb-6">
-      {/* Hero com nebulosa (só no topo, atrás do avatar) */}
-      <div className="relative -mt-12 overflow-hidden px-4 pt-16 pb-6">
+    <div className="relative pb-6">
+      {/* Hero com nebulosa (só no topo, atrás do avatar). A imagem fica FORA
+          da coluna limitada (max-w-2xl) de propósito, pra esticar até a
+          borda da tela em telas largas, igual à nebulosa da Home. */}
+      <div className="relative -mt-12 overflow-hidden pt-16 pb-6">
         <div
           aria-hidden
           className="opal-nebula pointer-events-none absolute inset-x-0 top-0 z-0 h-[340px] overflow-hidden"
@@ -122,7 +124,7 @@ export default async function ProfilePage() {
           />
         </div>
 
-        <div className="relative z-10 flex flex-col items-center">
+        <div className="relative z-10 mx-auto flex max-w-2xl flex-col items-center px-4">
           <AvatarUpload currentImage={user.image ?? null} initials={initials} />
           <h1 className="mt-3 text-2xl font-bold tracking-tight">{user.name ?? "Usuário"}</h1>
           <p className="text-sm text-muted-foreground">
@@ -143,107 +145,110 @@ export default async function ProfilePage() {
         </div>
       </div>
 
-      {/* XP bar */}
-      {profile && (
-        <div className="px-4">
-          <div className="opal-glass-card rounded-2xl p-4">
-            <div className="mb-2 flex items-center justify-between text-xs">
-              <span className="font-semibold text-foreground">Nível {profile.currentLevel}</span>
-              <span className="text-muted-foreground">{xpToNext} XP para o nível {profile.currentLevel + 1}</span>
-            </div>
-            <div className="h-1.5 overflow-hidden rounded-full bg-muted">
-              <div className="h-full rounded-full bg-primary" style={{ width: `${levelProgress}%` }} />
+      {/* Do XP bar em diante, a coluna volta a ser limitada (max-w-2xl),
+          igual ao resto do app: só o hero acima tem a imagem esticada. */}
+      <div className="mx-auto max-w-2xl">
+        {/* XP bar */}
+        {profile && (
+          <div className="px-4">
+            <div className="opal-glass-card rounded-2xl p-4">
+              <div className="mb-2 flex items-center justify-between text-xs">
+                <span className="font-semibold text-foreground">Nível {profile.currentLevel}</span>
+                <span className="text-muted-foreground">{xpToNext} XP para o nível {profile.currentLevel + 1}</span>
+              </div>
+              <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+                <div className="h-full rounded-full bg-primary" style={{ width: `${levelProgress}%` }} />
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Conquistas (carrossel horizontal) */}
-      <div className="mt-8">
-        <div className="flex items-center justify-between px-4">
-          <h2 className="text-base font-semibold">Conquistas</h2>
-          <Link href="/conquistas" className="flex items-center gap-0.5 text-xs text-muted-foreground hover:text-foreground">
-            {earnedCount}/{visibleDefs.length}
-            <ChevronRight className="h-3.5 w-3.5" />
-          </Link>
-        </div>
+        {/* Conquistas (carrossel horizontal) */}
+        <div className="mt-8">
+          <div className="flex items-center justify-between px-4">
+            <h2 className="text-base font-semibold">Conquistas</h2>
+            <Link href="/conquistas" className="flex items-center gap-0.5 text-xs text-muted-foreground hover:text-foreground">
+              {earnedCount}/{visibleDefs.length}
+              <ChevronRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
 
-        <div className="mt-3 flex gap-3 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {earnedList.map((def) => (
-            <div key={def.key} className="flex w-24 shrink-0 flex-col items-center gap-2">
-              <div
-                className="flex h-24 w-24 items-center justify-center rounded-2xl border border-primary/25 bg-primary/8 text-4xl"
-                style={{ boxShadow: "0 0 24px -6px color-mix(in srgb, var(--glow-mint) 55%, transparent)" }}
-              >
-                {def.icon}
+          <div className="mt-3 flex gap-3 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {earnedList.map((def) => (
+              <div key={def.key} className="flex w-24 shrink-0 flex-col items-center gap-2">
+                <div
+                  className="flex h-24 w-24 items-center justify-center rounded-2xl border border-primary/25 bg-primary/8 text-4xl"
+                  style={{ boxShadow: "0 0 24px -6px color-mix(in srgb, var(--glow-mint) 55%, transparent)" }}
+                >
+                  {def.icon}
+                </div>
+                <p className="line-clamp-2 text-center text-xs font-medium leading-tight">{def.name}</p>
               </div>
-              <p className="line-clamp-2 text-center text-xs font-medium leading-tight">{def.name}</p>
-            </div>
-          ))}
-          {lockedNext.map((def) => (
-            <div key={def.key} className="flex w-24 shrink-0 flex-col items-center gap-2">
-              <div className="relative flex h-24 w-24 items-center justify-center rounded-2xl border border-border bg-muted/40 text-4xl grayscale">
-                <span className="opacity-30">{def.icon}</span>
-                <Lock className="absolute h-4 w-4 text-muted-foreground" />
+            ))}
+            {lockedNext.map((def) => (
+              <div key={def.key} className="flex w-24 shrink-0 flex-col items-center gap-2">
+                <div className="relative flex h-24 w-24 items-center justify-center rounded-2xl border border-border bg-muted/40 text-4xl grayscale">
+                  <span className="opacity-30">{def.icon}</span>
+                  <Lock className="absolute h-4 w-4 text-muted-foreground" />
+                </div>
+                <p className="line-clamp-2 text-center text-xs text-muted-foreground leading-tight">{def.name}</p>
               </div>
-              <p className="line-clamp-2 text-center text-xs text-muted-foreground leading-tight">{def.name}</p>
-            </div>
-          ))}
-          {earnedList.length === 0 && lockedNext.length === 0 && (
-            <p className="py-6 text-sm text-muted-foreground">Nenhuma conquista ainda.</p>
-          )}
+            ))}
+            {earnedList.length === 0 && lockedNext.length === 0 && (
+              <p className="py-6 text-sm text-muted-foreground">Nenhuma conquista ainda.</p>
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* Metas */}
-      {profile && (
-        <div className="mt-6 px-4">
-          <div className="opal-glass-card space-y-3 rounded-2xl p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Metas</p>
-            <Row icon={<Target className="h-4 w-4" />} label="Nota alvo" value={`${profile.targetScore} pts`} />
-            <Row
-              icon={<Trophy className="h-4 w-4" />}
-              label="Curso"
-              value={findCurso(profile.targetCourse)?.nome ?? profile.targetCourse}
-            />
-            {(() => {
-              const uni = findUniversidade(profile.targetInstitution)
-              if (!uni) return null
-              return (
-                <Row
-                  icon={<GraduationCap className="h-4 w-4" />}
-                  label="Universidade"
-                  value={`${uni.sigla} · ${uni.cidade}/${uni.uf}`}
-                />
-              )
-            })()}
-            {daysLeft !== null && (
+        {/* Metas */}
+        {profile && (
+          <div className="mt-6 px-4">
+            <div className="opal-glass-card space-y-3 rounded-2xl p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Metas</p>
+              <Row icon={<Target className="h-4 w-4" />} label="Nota alvo" value={`${profile.targetScore} pts`} />
               <Row
-                icon={<Calendar className="h-4 w-4" />}
-                label="ENEM"
-                value={daysLeft > 0 ? `${daysLeft} dias` : "Encerrado"}
+                icon={<Trophy className="h-4 w-4" />}
+                label="Curso"
+                value={findCurso(profile.targetCourse)?.nome ?? profile.targetCourse}
               />
-            )}
-            <Row icon={<Clock className="h-4 w-4" />} label="Meta diária" value={`${profile.dailyStudyGoal} min`} />
-            {trailConfig && (
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Trilha</span>
-                <Badge variant="outline" className={trailConfig.badgeColor}>
-                  {trailConfig.label}
-                </Badge>
-              </div>
-            )}
+              {(() => {
+                const uni = findUniversidade(profile.targetInstitution)
+                if (!uni) return null
+                return (
+                  <Row
+                    icon={<GraduationCap className="h-4 w-4" />}
+                    label="Universidade"
+                    value={`${uni.sigla} · ${uni.cidade}/${uni.uf}`}
+                  />
+                )
+              })()}
+              {daysLeft !== null && (
+                <Row
+                  icon={<Calendar className="h-4 w-4" />}
+                  label="ENEM"
+                  value={daysLeft > 0 ? `${daysLeft} dias` : "Encerrado"}
+                />
+              )}
+              <Row icon={<Clock className="h-4 w-4" />} label="Meta diária" value={`${profile.dailyStudyGoal} min`} />
+              {trailConfig && (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Trilha</span>
+                  <Badge variant="outline" className={trailConfig.badgeColor}>
+                    {trailConfig.label}
+                  </Badge>
+                </div>
+              )}
+            </div>
           </div>
+        )}
+
+        {/* Links */}
+        <div className="mt-6 flex flex-col gap-2 px-4">
+          <LinkRow href="/analytics" label="Ver analytics" />
+          <LinkRow href="/ranking" label="Ranking semanal" />
+          <LinkRow href="/profile/settings" label="Configurações" />
         </div>
-      )}
-
-      {/* Links */}
-      <div className="mt-6 flex flex-col gap-2 px-4">
-        <LinkRow href="/analytics" label="Ver analytics" />
-        <LinkRow href="/ranking" label="Ranking semanal" />
-        <LinkRow href="/profile/settings" label="Configurações" />
       </div>
-
     </div>
   )
 }

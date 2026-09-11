@@ -74,7 +74,7 @@ export default async function RootLayout({
           }}
         />
       </head>
-      <body className="opal-desktop-ambience min-h-screen bg-background text-foreground font-sans antialiased">
+      <body className="min-h-screen bg-background text-foreground font-sans antialiased">
         <ServiceWorkerRegistrar />
         <OfflineBanner />
         <AppSplash isLoggedIn={isLoggedIn} />
