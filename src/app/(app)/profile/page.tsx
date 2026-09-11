@@ -177,8 +177,8 @@ export default async function ProfilePage() {
             {earnedList.map((def) => (
               <div key={def.key} className="flex w-24 shrink-0 flex-col items-center gap-2">
                 <div
-                  className="flex h-24 w-24 items-center justify-center rounded-2xl border border-primary/25 bg-primary/8 text-4xl"
-                  style={{ boxShadow: "0 0 24px -6px color-mix(in srgb, var(--glow-mint) 55%, transparent)" }}
+                  className="flex h-24 w-24 items-center justify-center rounded-2xl border border-primary/10 bg-primary/8 text-4xl"
+                  style={{ boxShadow: "0 0 16px -8px color-mix(in srgb, var(--glow-mint) 25%, transparent)" }}
                 >
                   {def.icon}
                 </div>
