@@ -60,16 +60,12 @@ export function BottomNav() {
   }
 
   return (
-    // No mobile o fundo/borda vão de ponta a ponta (comportamento original).
-    // A partir de md a barra vira um "dock" flutuante: largura limitada e
-    // centralizada, do mesmo tamanho que o conteúdo das páginas (max-w-2xl),
-    // em vez de uma faixa cinza esticada com os ícones perdidos no meio.
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/90 backdrop-blur-md md:inset-x-0 md:bottom-3 md:mx-auto md:w-[calc(42rem+2rem)] md:max-w-[calc(100%-2rem)] md:rounded-2xl md:border"
+      className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/90 backdrop-blur-md"
       style={{ paddingBottom: "max(env(safe-area-inset-bottom), 0.5rem)" }}
       aria-label="Navegação principal"
     >
-      <div className="mx-auto flex h-14 max-w-2xl items-stretch px-4 md:px-0">
+      <div className="mx-auto flex h-14 max-w-2xl items-stretch">
         {ITEMS.map((item) => {
           const Icon = item.icon
           const active = isActive(item)

@@ -255,18 +255,26 @@
 /* ── Ambientação do fundo em telas largas ──────────────────
    As páginas do app têm uma coluna central limitada (max-w-2xl), pensada
    pra celular. Em telas largas isso deixa muito espaço vazio e sólido nas
-   laterais, o que faz até um card corretamente centralizado parecer "fora
-   de lugar". Esse gradiente radial bem sutil, atrás de tudo, dá um chão
-   pro conteúdo sem competir com ele nem exigir mudar cada página. */
+   laterais, na altura inteira da tela, o que faz até um card corretamente
+   centralizado parecer "boiando" sozinho no meio do nada. Duas manchas de
+   glow (roxo à esquerda, menta à direita, mesmas cores da nebulosa do Hero)
+   ocupam essa lateral por toda a altura da viewport, fixas ao scroll: dão
+   um chão pro conteúdo sem competir com ele nem exigir mudar cada página. */
 @media (min-width: 768px) {
   .opal-desktop-ambience {
-    background-image: radial-gradient(
-      ellipse 90% 60% at 50% 0%,
-      color-mix(in srgb, var(--glow-purple) 8%, transparent),
-      transparent 65%
-    );
-    background-repeat: no-repeat;
-    background-attachment: fixed;
+    background-image:
+      radial-gradient(
+        ellipse 42% 55% at 6% 30%,
+        color-mix(in srgb, var(--glow-purple) 20%, transparent),
+        transparent 70%
+      ),
+      radial-gradient(
+        ellipse 42% 55% at 94% 70%,
+        color-mix(in srgb, var(--glow-mint) 16%, transparent),
+        transparent 70%
+      );
+    background-repeat: no-repeat, no-repeat;
+    background-attachment: fixed, fixed;
   }
 }
 
