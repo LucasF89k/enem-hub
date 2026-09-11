@@ -48,8 +48,10 @@
   --popover: hsl(0 0% 100%);
   --popover-foreground: hsl(224 71.4% 4.1%);
 
-  /* Roxo principal */
-  --primary: hsl(262 83% 58%);
+  /* Mint principal: mesma identidade do dark mode (ver comentário lá),
+     só mais escuro (163 75% 26% em vez de 163 60% 58%) pro contraste com
+     texto branco em cima ficar bom em fundo claro (~5.7:1, acima do AA). */
+  --primary: hsl(163 75% 26%);
   --primary-foreground: hsl(0 0% 100%);
 
   --secondary: hsl(220 14.3% 95.9%);
@@ -67,18 +69,18 @@
 
   --border: hsl(220 13% 91%);
   --input: hsl(220 13% 91%);
-  --ring: hsl(262 83% 58%);
+  --ring: hsl(163 75% 26%);
 
   /* Amarelo atenção */
   --warning: hsl(38 92% 50%);
   --warning-foreground: hsl(0 0% 5%);
 
-  /* Tokens do gauge/glow "Opal": fallback sóbrio no light mode */
+  /* Tokens do gauge/glow "Opal": mesma paleta mint/purple do dark mode */
   --gauge-track: hsl(220 13% 91%);
-  --gauge-from: hsl(262 83% 58%);
+  --gauge-from: hsl(163 75% 26%);
   --gauge-to: hsl(142 71% 45%);
-  --glow-mint: hsl(142 71% 45%);
-  --glow-purple: hsl(262 83% 58%);
+  --glow-mint: hsl(163 75% 26%);
+  --glow-purple: hsl(252 47% 55%);
 }
 
 /* ── Dark theme: paleta inspirada no Opal (dark/mint/glow) ── */
