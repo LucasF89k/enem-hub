@@ -256,25 +256,35 @@
    As páginas do app têm uma coluna central limitada (max-w-2xl), pensada
    pra celular. Em telas largas isso deixa muito espaço vazio e sólido nas
    laterais, na altura inteira da tela, o que faz até um card corretamente
-   centralizado parecer "boiando" sozinho no meio do nada. Duas manchas de
-   glow (roxo à esquerda, menta à direita, mesmas cores da nebulosa do Hero)
-   ocupam essa lateral por toda a altura da viewport, fixas ao scroll: dão
-   um chão pro conteúdo sem competir com ele nem exigir mudar cada página. */
+   centralizado parecer "boiando" sozinho no meio do nada. Quatro manchas de
+   glow (roxo à esquerda, menta à direita, mesmas cores da nebulosa do Hero),
+   duas por lado pra cobrir topo e rodapé, fixas ao scroll: dão um chão bem
+   presente pro conteúdo sem competir com ele nem exigir mudar cada página. */
 @media (min-width: 768px) {
   .opal-desktop-ambience {
     background-image:
       radial-gradient(
-        ellipse 42% 55% at 6% 30%,
-        color-mix(in srgb, var(--glow-purple) 20%, transparent),
-        transparent 70%
+        ellipse 48% 60% at 4% 12%,
+        color-mix(in srgb, var(--glow-purple) 40%, transparent),
+        transparent 72%
       ),
       radial-gradient(
-        ellipse 42% 55% at 94% 70%,
-        color-mix(in srgb, var(--glow-mint) 16%, transparent),
-        transparent 70%
+        ellipse 48% 60% at 4% 88%,
+        color-mix(in srgb, var(--glow-purple) 34%, transparent),
+        transparent 72%
+      ),
+      radial-gradient(
+        ellipse 48% 60% at 96% 20%,
+        color-mix(in srgb, var(--glow-mint) 34%, transparent),
+        transparent 72%
+      ),
+      radial-gradient(
+        ellipse 48% 60% at 96% 92%,
+        color-mix(in srgb, var(--glow-mint) 30%, transparent),
+        transparent 72%
       );
-    background-repeat: no-repeat, no-repeat;
-    background-attachment: fixed, fixed;
+    background-repeat: no-repeat, no-repeat, no-repeat, no-repeat;
+    background-attachment: fixed, fixed, fixed, fixed;
   }
 }
 
