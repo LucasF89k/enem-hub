@@ -39,13 +39,16 @@
 :root {
   --radius: 0.5rem;
 
-  --background: hsl(0 0% 100%);
+  /* Não branco puro: um cinza-azulado bem sutil (mesmo matiz 224 do
+     foreground e do fundo escuro), pra combinar com a imagem de fundo
+     espacial (caverna/nebulosa) em vez de destoar dela. */
+  --background: hsl(224 30% 96%);
   --foreground: hsl(224 71.4% 4.1%);
 
-  --card: hsl(0 0% 98%);
+  --card: hsl(224 25% 98.5%);
   --card-foreground: hsl(224 71.4% 4.1%);
 
-  --popover: hsl(0 0% 100%);
+  --popover: hsl(224 25% 98.5%);
   --popover-foreground: hsl(224 71.4% 4.1%);
 
   /* Mint principal: mesma identidade do dark mode (ver comentário lá),
@@ -54,11 +57,14 @@
   --primary: hsl(163 75% 26%);
   --primary-foreground: hsl(0 0% 100%);
 
-  --secondary: hsl(220 14.3% 95.9%);
+  /* Escurecidos junto com o background (que deixou de ser 100%): mantém a
+     mesma diferença perceptível de antes entre fundo da página e fundo de
+     card/badge secundário, senão os dois ficam indistinguíveis. */
+  --secondary: hsl(220 18% 92%);
   --secondary-foreground: hsl(220.9 39.3% 11%);
 
-  --muted: hsl(220 14.3% 95.9%);
-  --muted-foreground: hsl(220 8.9% 46.1%);
+  --muted: hsl(220 18% 92%);
+  --muted-foreground: hsl(220 8.9% 40%);
 
   /* Verde conquista */
   --accent: hsl(142 71% 45%);
@@ -67,8 +73,8 @@
   --destructive: hsl(0 84.2% 60.2%);
   --destructive-foreground: hsl(0 0% 98%);
 
-  --border: hsl(220 13% 91%);
-  --input: hsl(220 13% 91%);
+  --border: hsl(220 18% 88%);
+  --input: hsl(220 18% 88%);
   --ring: hsl(163 75% 26%);
 
   /* Amarelo atenção */
@@ -76,7 +82,7 @@
   --warning-foreground: hsl(0 0% 5%);
 
   /* Tokens do gauge/glow "Opal": mesma paleta mint/purple do dark mode */
-  --gauge-track: hsl(220 13% 91%);
+  --gauge-track: hsl(220 18% 88%);
   --gauge-from: hsl(163 75% 26%);
   --gauge-to: hsl(142 71% 45%);
   --glow-mint: hsl(163 75% 26%);
