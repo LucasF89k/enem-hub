@@ -252,6 +252,24 @@
   }
 }
 
+/* ── Ambientação do fundo em telas largas ──────────────────
+   As páginas do app têm uma coluna central limitada (max-w-2xl), pensada
+   pra celular. Em telas largas isso deixa muito espaço vazio e sólido nas
+   laterais, o que faz até um card corretamente centralizado parecer "fora
+   de lugar". Esse gradiente radial bem sutil, atrás de tudo, dá um chão
+   pro conteúdo sem competir com ele nem exigir mudar cada página. */
+@media (min-width: 768px) {
+  .opal-desktop-ambience {
+    background-image: radial-gradient(
+      ellipse 90% 60% at 50% 0%,
+      color-mix(in srgb, var(--glow-purple) 8%, transparent),
+      transparent 65%
+    );
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+  }
+}
+
 /* ── Peso visual do conteúdo de estudo ─────────────────────
    A teoria vem com MUITO negrito (média de 81 trechos por tópico, ~10% das
    palavras). Apagar isso do texto jogaria fora o destaque que o autor quis
