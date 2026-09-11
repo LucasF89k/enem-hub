@@ -232,17 +232,22 @@ export function AppSplash({ isLoggedIn }: { isLoggedIn: boolean }) {
           className="fixed inset-0 z-[999] flex items-center justify-center bg-black"
         >
           {/* Logo se montando: vídeo, não mais o mask-reveal geométrico do
-              LogoBuild.tsx. object-cover: o app é 100% mobile e o vídeo já
-              nasceu em 9:16, mas nenhum aparelho bate essa proporção exata
-              (iPhone é mais alongado, ~19.5:9), então object-contain deixaria
-              tarjas. cover evita tarja recortando só a margem preta de cima/
-              baixo, que já sobra generosa em volta da logo. */}
+              LogoBuild.tsx. No mobile o vídeo já nasceu em 9:16 e ocupa a
+              tela toda (object-cover, nenhum aparelho bate essa proporção
+              exata, tipo iPhone que é mais alongado, ~19.5:9), então cover
+              evita tarja recortando só a margem preta de cima/baixo, que já
+              sobra generosa em volta da logo. Em telas largas (desktop)
+              esticar até a altura da tela inteira deixava a logo gigante,
+              porque o próprio vídeo já tem bastante margem preta ao redor
+              do "V"/"vion" dentro do frame. A partir de md, o container vira
+              um bloco compacto (mesma lógica do vídeo da pedra abaixo),
+              centralizado e do tamanho que aparece num celular normal. */}
           <AnimatePresence>
             {step === "logo" && (
               <motion.div
                 key="logo"
                 exit={{ opacity: 0, transition: { duration: 0.35 } }}
-                className="absolute inset-0 z-10"
+                className="absolute inset-0 z-10 md:flex md:items-center md:justify-center"
               >
                 <video
                   ref={logoVideoRef}
@@ -254,7 +259,7 @@ export function AppSplash({ isLoggedIn }: { isLoggedIn: boolean }) {
                   preload="auto"
                   onPlay={handleLogoPlaying}
                   onError={() => setLogoFailed(true)}
-                  className="h-full w-full object-cover"
+                  className="h-full w-full object-cover md:aspect-[9/16] md:h-auto md:w-[min(80vw,320px)] md:object-contain"
                 />
                 {logoFailed && (
                   // eslint-disable-next-line @next/next/no-img-element
