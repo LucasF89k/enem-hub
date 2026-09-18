@@ -29,7 +29,6 @@ import {
 } from "@/components/ui/command"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
@@ -199,7 +198,7 @@ export function OnboardingSteps({ defaultName }: OnboardingStepsProps) {
 
       <div className="rounded-xl bg-primary/10 border border-primary/20 p-4">
         <p className="text-sm text-primary font-medium">
-          "A medicina é uma ciência da incerteza e uma arte da probabilidade."
+          &ldquo;A medicina é uma ciência da incerteza e uma arte da probabilidade.&rdquo;
         </p>
         <p className="text-xs text-muted-foreground mt-1">William Osler</p>
       </div>

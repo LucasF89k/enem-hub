@@ -111,10 +111,13 @@ export default async function SimuladoResultPage({
     { slug: "matematica", score: attempt.scoreMT },
   ].filter((a) => a.score !== null) as { slug: string; score: number }[]
 
-  // Achievements earned in the last 5 minutes (from finalizeSimulado call)
+  // Achievements earned in the last 5 minutes (from finalizeSimulado call).
+  // Server Component: roda uma vez por requisição, então ler a hora atual
+  // aqui é seguro, diferente de um client component re-renderizado.
   const recentAchievements = await db.userAchievement.findMany({
     where: {
       userId,
+      // eslint-disable-next-line react-hooks/purity
       earnedAt: { gte: new Date(Date.now() - 5 * 60 * 1000) },
     },
     select: {

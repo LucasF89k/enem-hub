@@ -88,9 +88,11 @@ export default async function SimuladoExamPage({
     attempt.examDay === 1 ? 330 : attempt.examDay === 2 ? 300 : simulado.duration
   const durationMin = baseMin + (attempt.extraTime ? 60 : 0)
 
-  const elapsedSeconds = Math.floor(
-    (Date.now() - attempt.startedAt.getTime()) / 1000
-  )
+  // Server Component: roda uma vez por requisição, não é re-renderizado
+  // como um client component, então ler a hora atual aqui é seguro (e
+  // necessário, é assim que se calcula quanto tempo resta na prova).
+  // eslint-disable-next-line react-hooks/purity
+  const elapsedSeconds = Math.floor((Date.now() - attempt.startedAt.getTime()) / 1000)
   const totalSeconds = durationMin * 60
   const initialTimeLeft = Math.max(0, totalSeconds - elapsedSeconds)
 

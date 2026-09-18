@@ -32,10 +32,18 @@ export function ExamCountdown({
 }) {
   const target = examDate ? new Date(examDate).getTime() : null
   const [t, setT] = useState(() => (target ? diff(target) : null))
+  // Guarda o target usado pra calcular "t" pela última vez: se ele mudou
+  // desde o último render (ex.: o aluno trocou a data do ENEM), recalcula
+  // direto aqui, durante o render, em vez de disparar um setState síncrono
+  // dentro do efeito abaixo (que existe só pra manter o contador rodando).
+  const [lastTarget, setLastTarget] = useState(target)
+  if (target !== lastTarget) {
+    setLastTarget(target)
+    setT(target ? diff(target) : null)
+  }
 
   useEffect(() => {
     if (!target) return
-    setT(diff(target))
     const id = setInterval(() => setT(diff(target)), 1000)
     return () => clearInterval(id)
   }, [target])

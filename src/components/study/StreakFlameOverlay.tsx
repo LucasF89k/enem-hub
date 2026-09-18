@@ -21,6 +21,10 @@ interface Props {
  */
 export function StreakFlameOverlay({ open, onClose, streakIncreased, streak, xp = 10 }: Props) {
   const [mounted, setMounted] = useState(false)
+  // Guard clássico de "só renderiza no client": Lottie não deve rodar
+  // durante SSR/hydration. Não dá pra derivar isso de props, tem que ser
+  // um efeito que dispara depois do primeiro paint no browser.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setMounted(true), [])
 
   useEffect(() => {

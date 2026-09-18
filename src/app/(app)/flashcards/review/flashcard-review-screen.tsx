@@ -73,7 +73,11 @@ export function FlashcardReviewScreen({
   const [stats, setStats] = useState<Stats>({ again: 0, hard: 0, good: 0, easy: 0 })
   const [totalXP, setTotalXP] = useState(0)
   const [isComplete, setIsComplete] = useState(false)
-  const [startTime] = useState(Date.now())
+  const [elapsedSeconds, setElapsedSeconds] = useState(0)
+  // Inicializador lazy: sem a função, Date.now() seria avaliado em TODO
+  // render (mesmo já tendo um valor guardado), o que o React considera
+  // uma chamada impura durante o render.
+  const [startTime] = useState(() => Date.now())
   const [exitDir, setExitDir] = useState(0)
   const [isPending, startTransition] = useTransition()
 
@@ -123,6 +127,11 @@ export function FlashcardReviewScreen({
     })
 
     if (currentIndex + 1 >= cards.length) {
+      // Congela o tempo total aqui, no evento que termina a revisão. Ler
+      // Date.now() durante o render da tela de conclusão (embaixo) faria o
+      // cronômetro variar a cada re-render em vez de ficar fixo no valor
+      // de quando o usuário terminou.
+      setElapsedSeconds(Math.round((Date.now() - startTime) / 1000))
       setIsComplete(true)
     } else {
       x.set(0)
@@ -145,9 +154,8 @@ export function FlashcardReviewScreen({
 
   /* Completion screen */
   if (isComplete) {
-    const elapsed = Math.round((Date.now() - startTime) / 1000)
-    const mins = Math.floor(elapsed / 60)
-    const secs = elapsed % 60
+    const mins = Math.floor(elapsedSeconds / 60)
+    const secs = elapsedSeconds % 60
     const total = stats.again + stats.hard + stats.good + stats.easy
 
     return (

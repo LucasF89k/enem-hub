@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { Moon, Sun } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -8,11 +8,15 @@ type Theme = "dark" | "light"
 
 /** Alterna claro/escuro AO VIVO: aplica a classe no <html> e salva no localStorage. */
 export function ThemeSelect() {
-  const [theme, setThemeState] = useState<Theme>("dark")
-
-  useEffect(() => {
-    setThemeState(document.documentElement.classList.contains("dark") ? "dark" : "light")
-  }, [])
+  // Lazy init em vez de um useEffect só pra sincronizar com o DOM no
+  // mount: o inicializador roda uma única vez, então dá pra ler
+  // document.documentElement direto aqui sem virar um setState síncrono
+  // dentro de um efeito. document não existe durante SSR, daí o guard.
+  const [theme, setThemeState] = useState<Theme>(() =>
+    typeof document !== "undefined" && document.documentElement.classList.contains("dark")
+      ? "dark"
+      : "light",
+  )
 
   function apply(t: Theme) {
     setThemeState(t)

@@ -5,7 +5,6 @@ import { Search, Check, GraduationCap, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { setTargetInstitution } from "@/app/actions/settings.actions"
 import {
-  UNIVERSIDADES,
   universidadesDoCurso,
   TIPO_LABEL,
   type TipoIES,

@@ -113,7 +113,12 @@ export function EssayEditor({
   const router = useRouter()
   const [body, setBody] = useState(initialBody)
   const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "unsaved">("saved")
-  const [scores, setScores] = useState({
+  // Vem direto das props (não é useState): depois de handleEvaluate chamar
+  // router.refresh(), o Server Component pai busca as notas atualizadas no
+  // banco e manda como prop de novo. Se isso fosse estado local, o valor
+  // ficaria travado no que veio no primeiro render e nunca mostraria a
+  // correção nova sem um reload manual da página.
+  const scores = {
     comp1: comp1Score,
     comp2: comp2Score,
     comp3: comp3Score,
@@ -121,7 +126,7 @@ export function EssayEditor({
     comp5: comp5Score,
     total: totalScore,
     feedback,
-  })
+  }
   const [isEvaluating, startEvaluate] = useTransition()
   const [evalError, setEvalError] = useState<string | null>(null)
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -252,7 +257,7 @@ export function EssayEditor({
                   {REPERTORIOS.map((r, i) => (
                     <div key={i} className="rounded-lg border p-3 space-y-1">
                       <p className="text-xs font-semibold text-primary">{r.fonte}</p>
-                      <p className="text-xs text-muted-foreground leading-relaxed">"{r.trecho}"</p>
+                      <p className="text-xs text-muted-foreground leading-relaxed">&ldquo;{r.trecho}&rdquo;</p>
                     </div>
                   ))}
                 </TabsContent>

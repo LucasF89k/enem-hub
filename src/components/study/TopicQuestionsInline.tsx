@@ -66,6 +66,42 @@ function ManutencaoNotice({ count }: { count: number }) {
   )
 }
 
+/** Fica fora do componente principal, porque recriar um componente a cada
+ *  render do pai faz o React remontar esse subtree do zero, em vez de só
+ *  atualizar as props. Recebe tudo que precisa via parâmetros. */
+function FilterBar({
+  filter,
+  counts,
+  onChangeFilter,
+}: {
+  filter: Filter
+  counts: { easy: number; medium: number; hard: number; wrong: number }
+  onChangeFilter: (f: Filter) => void
+}) {
+  const chip = (f: Filter, label: string, extra?: string) => (
+    <button
+      key={f}
+      onClick={() => onChangeFilter(f)}
+      className={cn(
+        "shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs transition-colors",
+        filter === f ? "border-primary bg-primary/10 font-semibold text-primary" : "bg-background hover:bg-muted",
+      )}
+    >
+      {label}{extra}
+    </button>
+  )
+  return (
+    <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+      {chip("all", "Todas")}
+      {chip("shuffle", "Misturar")}
+      {counts.easy > 0 && chip("EASY", "Fáceis", ` ${counts.easy}`)}
+      {counts.medium > 0 && chip("MEDIUM", "Médias", ` ${counts.medium}`)}
+      {counts.hard > 0 && chip("HARD", "Difíceis", ` ${counts.hard}`)}
+      {counts.wrong > 0 && chip("wrong", "Revisar erradas", ` ${counts.wrong}`)}
+    </div>
+  )
+}
+
 export function TopicQuestionsInline({
   questions,
   wrongIds = [],
@@ -101,7 +137,10 @@ export function TopicQuestionsInline({
     return { easy, medium, hard, wrong: questions.filter((q) => wrongSet.has(q.id)).length }
   }, [questions, wrongSet])
 
-  // Lista ativa conforme o filtro escolhido
+  // Lista ativa conforme o filtro escolhido. shuffleSeed não é usado dentro
+  // do switch, mas entra nas deps de propósito: é o que força um novo
+  // embaralhamento a cada clique em "Misturar" (changeFilter incrementa o
+  // seed mesmo quando o filtro já é "shuffle").
   const active = useMemo(() => {
     switch (filter) {
       case "EASY": return questions.filter((q) => q.difficulty === "EASY")
@@ -110,8 +149,8 @@ export function TopicQuestionsInline({
       case "wrong": return questions.filter((q) => wrongSet.has(q.id))
       case "shuffle": return shuffleArr(questions)
       default: return questions
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [questions, filter, shuffleSeed, wrongSet])
 
   function resetProgress() {
@@ -129,31 +168,6 @@ export function TopicQuestionsInline({
     if (f === "shuffle") setShuffleSeed((s) => s + 1)
     setFilter(f)
     resetProgress()
-  }
-
-  const FilterBar = () => {
-    const chip = (f: Filter, label: string, extra?: string) => (
-      <button
-        key={f}
-        onClick={() => changeFilter(f)}
-        className={cn(
-          "shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs transition-colors",
-          filter === f ? "border-primary bg-primary/10 font-semibold text-primary" : "bg-background hover:bg-muted",
-        )}
-      >
-        {label}{extra}
-      </button>
-    )
-    return (
-      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-        {chip("all", "Todas")}
-        {chip("shuffle", "Misturar")}
-        {counts.easy > 0 && chip("EASY", "Fáceis", ` ${counts.easy}`)}
-        {counts.medium > 0 && chip("MEDIUM", "Médias", ` ${counts.medium}`)}
-        {counts.hard > 0 && chip("HARD", "Difíceis", ` ${counts.hard}`)}
-        {counts.wrong > 0 && chip("wrong", "Revisar erradas", ` ${counts.wrong}`)}
-      </div>
-    )
   }
 
   if (questions.length === 0) {
@@ -208,7 +222,7 @@ export function TopicQuestionsInline({
     return (
       <div className="space-y-4">
         <ManutencaoNotice count={pendingQuestionsCount} />
-        <FilterBar />
+        <FilterBar filter={filter} counts={counts} onChangeFilter={changeFilter} />
         <div className="flex flex-col items-center gap-2 py-10 text-center">
           <HelpCircle className="h-9 w-9 text-muted-foreground/40" />
           <p className="text-sm text-muted-foreground">
@@ -226,7 +240,7 @@ export function TopicQuestionsInline({
     return (
       <div className="space-y-4">
         <ManutencaoNotice count={pendingQuestionsCount} />
-        <FilterBar />
+        <FilterBar filter={filter} counts={counts} onChangeFilter={changeFilter} />
         <div className="flex flex-col items-center gap-4 py-10 text-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
             <CheckCircle2 className="h-8 w-8 text-primary" />
@@ -281,7 +295,7 @@ export function TopicQuestionsInline({
       />
 
       <ManutencaoNotice count={pendingQuestionsCount} />
-      <FilterBar />
+      <FilterBar filter={filter} counts={counts} onChangeFilter={changeFilter} />
 
       {/* Progresso */}
       <div className="flex items-center justify-between">

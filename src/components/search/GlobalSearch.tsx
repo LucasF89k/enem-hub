@@ -44,10 +44,7 @@ export function GlobalSearch({ iconOnly = false }: { iconOnly?: boolean }) {
   // Debounced search
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
-    if (query.length < 2) {
-      setResults([])
-      return
-    }
+    if (query.length < 2) return
     debounceRef.current = setTimeout(() => {
       startTransition(async () => {
         const res = await searchAll(query)
@@ -58,6 +55,11 @@ export function GlobalSearch({ iconOnly = false }: { iconOnly?: boolean }) {
       if (debounceRef.current) clearTimeout(debounceRef.current)
     }
   }, [query])
+
+  // results só é limpo quando a busca "esvazia" (query com menos de 2
+  // caracteres): calculado direto no render em vez de um setState síncrono
+  // no efeito acima, que só existe pra disparar a busca com debounce.
+  const visibleResults = query.length < 2 ? [] : results
 
   function handleSelect(href: string) {
     setOpen(false)
@@ -77,7 +79,7 @@ export function GlobalSearch({ iconOnly = false }: { iconOnly?: boolean }) {
   // Group results by type
   const grouped = (["content", "question", "flashcard", "note"] as const).map((type) => ({
     type,
-    items: results.filter((r) => r.type === type),
+    items: visibleResults.filter((r) => r.type === type),
   })).filter((g) => g.items.length > 0)
 
   return (
@@ -123,7 +125,7 @@ export function GlobalSearch({ iconOnly = false }: { iconOnly?: boolean }) {
             </div>
           )}
 
-          {!isPending && query.length >= 2 && results.length === 0 && (
+          {!isPending && query.length >= 2 && visibleResults.length === 0 && (
             <CommandEmpty>Nenhum resultado para &ldquo;{query}&rdquo;</CommandEmpty>
           )}
 

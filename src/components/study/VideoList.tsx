@@ -12,11 +12,10 @@ const YoutubeEmptyIcon = () => (
 )
 
 interface VideoListProps {
-  topicId: string
   initialVideos: VideoWithWatched[]
 }
 
-export function VideoList({ topicId: _topicId, initialVideos }: VideoListProps) {
+export function VideoList({ initialVideos }: VideoListProps) {
   const [videos, setVideos] = useState<VideoWithWatched[]>(initialVideos)
   const [selectedVideo, setSelectedVideo] = useState<VideoWithWatched | null>(null)
 

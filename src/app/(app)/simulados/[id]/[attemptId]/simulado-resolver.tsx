@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState, useTransition } from "react"
+import { useEffect, useRef, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import {
@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
 import { saveAnswer, toggleMarkForReview, finalizeSimulado } from "@/app/actions/simulado.actions"
-import { Flag, ChevronLeft, ChevronRight, CheckCircle2, AlertCircle, Loader2, Menu, X } from "lucide-react"
+import { Flag, ChevronLeft, ChevronRight, CheckCircle2, Loader2, Menu, X } from "lucide-react"
 
 interface Option {
   id: string
@@ -82,13 +82,30 @@ export function SimuladoResolver({
   const [isFinalizing, startFinalize] = useTransition()
   const [isSaving, startSave] = useTransition()
 
-  const startTimeRef = useRef(Date.now())
-  const questionStartRef = useRef(Date.now())
+  // Date.now() não pode ser chamado direto no corpo do componente (o React
+  // considera isso impuro, já que rodaria a cada render). useState com
+  // inicializador lazy é a forma garantida pelo React de ler a hora uma
+  // única vez; o valor então vive numa ref, só pra não disparar re-render.
+  const [initialNow] = useState(() => Date.now())
+  const startTimeRef = useRef(initialNow)
+  const questionStartRef = useRef(initialNow)
   const finalizedRef = useRef(false)
 
   const currentQuestion = questions[currentIdx]
   const totalAnswered = Object.values(answers).filter((a) => a.selectedId !== null).length
   const totalMarked = Object.values(answers).filter((a) => a.markedForReview).length
+
+  // handleAutoFinalize precisa existir antes do useEffect abaixo, que a
+  // referencia dentro do callback do setInterval.
+  function handleAutoFinalize() {
+    if (finalizedRef.current) return
+    finalizedRef.current = true
+    const totalTime = Math.floor((Date.now() - startTimeRef.current) / 1000)
+    startFinalize(async () => {
+      await finalizeSimulado(attemptId, totalTime)
+      router.push(`/simulados/${simuladoId}/${attemptId}/result`)
+    })
+  }
 
   // Countdown timer
   useEffect(() => {
@@ -107,20 +124,13 @@ export function SimuladoResolver({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  function handleAutoFinalize() {
-    if (finalizedRef.current) return
-    finalizedRef.current = true
-    const totalTime = Math.floor((Date.now() - startTimeRef.current) / 1000)
-    startFinalize(async () => {
-      await finalizeSimulado(attemptId, totalTime)
-      router.push(`/simulados/${simuladoId}/${attemptId}/result`)
-    })
-  }
-
   function handleSelectOption(optionId: string) {
     if (isFinalizing) return
     const questionId = currentQuestion.id
-    const prev = answers[questionId]
+    // Date.now() aqui é seguro: handleSelectOption só roda a partir de um
+    // onClick, nunca durante o render. O linter não distingue isso e marca
+    // qualquer Date.now() dentro do componente como impuro.
+    // eslint-disable-next-line react-hooks/purity
     const timeSpent = Math.floor((Date.now() - questionStartRef.current) / 1000)
 
     setAnswers((prev) => ({
@@ -146,6 +156,8 @@ export function SimuladoResolver({
   }
 
   function goToQuestion(idx: number) {
+    // Mesmo caso de handleSelectOption: só roda via evento de clique.
+    // eslint-disable-next-line react-hooks/purity
     questionStartRef.current = Date.now()
     setCurrentIdx(idx)
     setShowNav(false)

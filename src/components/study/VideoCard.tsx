@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { Play, CheckCircle2 } from "lucide-react"
-import { cn } from "@/lib/utils"
 import type { VideoWithWatched } from "@/app/actions/video.actions"
 
 interface VideoCardProps {

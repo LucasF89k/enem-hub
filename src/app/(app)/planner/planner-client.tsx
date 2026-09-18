@@ -75,6 +75,104 @@ interface Verdict {
   reason: string
 }
 
+/** Fica fora de PlannerClient: um componente declarado dentro do corpo do
+ *  pai é recriado a cada render, fazendo o React remontar o dialog do zero
+ *  em vez de só atualizar as props. Recebe tudo via parâmetros. */
+function GenerateDialog({
+  open,
+  onOpenChange,
+  dailyGoal,
+  isGenerating,
+  onGenerate,
+}: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  dailyGoal: number
+  isGenerating: boolean
+  onGenerate: (formData: FormData) => void
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogTrigger asChild>
+        <Button size="sm" className="flex-1 gap-1.5 sm:flex-none">
+          <Wand2 className="h-4 w-4" />
+          Gerar plano
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Gerar novo plano</DialogTitle>
+        </DialogHeader>
+
+        <Link
+          href="/mentor?planner=1"
+          className="flex items-center gap-3 rounded-2xl border border-primary/30 bg-primary/5 p-3.5 transition-colors hover:bg-primary/10"
+        >
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/15">
+            <Sparkles className="h-5 w-5 text-primary" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold">Montar com o Mentor</p>
+            <p className="text-xs text-muted-foreground">
+              Responda algumas perguntas e o Mentor cria a rotina ideal pra você
+            </p>
+          </div>
+          <ArrowRight className="h-4 w-4 shrink-0 text-primary" />
+        </Link>
+
+        <div className="flex items-center gap-3 py-1">
+          <div className="h-px flex-1 bg-border" />
+          <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
+            ou gere manualmente
+          </span>
+          <div className="h-px flex-1 bg-border" />
+        </div>
+
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            onGenerate(new FormData(e.currentTarget))
+          }}
+          className="space-y-5"
+        >
+          <div className="space-y-1.5">
+            <Label htmlFor="daysCount">Quantos dias?</Label>
+            <Input id="daysCount" name="daysCount" type="number" defaultValue={14} min={1} max={90} />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="dailyGoalMinutes">Meta diária (minutos)</Label>
+            <Input
+              id="dailyGoalMinutes"
+              name="dailyGoalMinutes"
+              type="number"
+              defaultValue={dailyGoal}
+              min={30}
+              max={720}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Dias disponíveis</Label>
+            <div className="flex flex-wrap gap-2">
+              {ALL_WEEK_DAYS.map((d) => (
+                <label key={d} className="flex items-center gap-1.5 text-sm">
+                  <Checkbox name="weekDays" value={String(d)} defaultChecked={d >= 1 && d <= 5} />
+                  {DAY_LABELS[d]}
+                </label>
+              ))}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="submit" disabled={isGenerating} className="gap-1.5">
+              {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+              {isGenerating ? "Gerando…" : "Gerar plano"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 /** Destino da atividade: abre direto a aba/matéria correspondente. */
 function itemHref(item: PlanItem): string {
   const t = item.topic
@@ -180,11 +278,14 @@ export function PlannerClient({ weekStart, items, hasPlan, dailyGoal }: PlannerC
 
   // Análise do Mentor (recalibrar?)
   const [verdict, setVerdict] = useState<Verdict | null>(null)
+  // analyzing começa true junto com o efeito abaixo (quando há plano) e vira
+  // false só quando o fetch termina; não precisa de um setAnalyzing(true)
+  // síncrono no início do efeito, porque o valor inicial do useState já
+  // cobre esse estado.
   const [analyzing, setAnalyzing] = useState(hasPlan)
   useEffect(() => {
     if (!hasPlan) return
     let alive = true
-    setAnalyzing(true)
     fetch("/api/planner/recalibration-check", { method: "POST" })
       .then((r) => (r.ok ? r.json() : null))
       .then((v: Verdict | null) => {
@@ -313,86 +414,6 @@ export function PlannerClient({ weekStart, items, hasPlan, dailyGoal }: PlannerC
     })
   }
 
-  const GenerateDialog = () => (
-    <Dialog open={showGenDialog} onOpenChange={setShowGenDialog}>
-      <DialogTrigger asChild>
-        <Button size="sm" className="flex-1 gap-1.5 sm:flex-none">
-          <Wand2 className="h-4 w-4" />
-          Gerar plano
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Gerar novo plano</DialogTitle>
-        </DialogHeader>
-
-        <Link
-          href="/mentor?planner=1"
-          className="flex items-center gap-3 rounded-2xl border border-primary/30 bg-primary/5 p-3.5 transition-colors hover:bg-primary/10"
-        >
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/15">
-            <Sparkles className="h-5 w-5 text-primary" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold">Montar com o Mentor</p>
-            <p className="text-xs text-muted-foreground">
-              Responda algumas perguntas e o Mentor cria a rotina ideal pra você
-            </p>
-          </div>
-          <ArrowRight className="h-4 w-4 shrink-0 text-primary" />
-        </Link>
-
-        <div className="flex items-center gap-3 py-1">
-          <div className="h-px flex-1 bg-border" />
-          <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
-            ou gere manualmente
-          </span>
-          <div className="h-px flex-1 bg-border" />
-        </div>
-
-        <form
-          onSubmit={(e) => {
-            e.preventDefault()
-            handleGenerate(new FormData(e.currentTarget))
-          }}
-          className="space-y-5"
-        >
-          <div className="space-y-1.5">
-            <Label htmlFor="daysCount">Quantos dias?</Label>
-            <Input id="daysCount" name="daysCount" type="number" defaultValue={14} min={1} max={90} />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="dailyGoalMinutes">Meta diária (minutos)</Label>
-            <Input
-              id="dailyGoalMinutes"
-              name="dailyGoalMinutes"
-              type="number"
-              defaultValue={dailyGoal}
-              min={30}
-              max={720}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Dias disponíveis</Label>
-            <div className="flex flex-wrap gap-2">
-              {ALL_WEEK_DAYS.map((d) => (
-                <label key={d} className="flex items-center gap-1.5 text-sm">
-                  <Checkbox name="weekDays" value={String(d)} defaultChecked={d >= 1 && d <= 5} />
-                  {DAY_LABELS[d]}
-                </label>
-              ))}
-            </div>
-          </div>
-          <DialogFooter>
-            <Button type="submit" disabled={isGenerating} className="gap-1.5">
-              {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
-              {isGenerating ? "Gerando…" : "Gerar plano"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-  )
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-6 space-y-5">
@@ -427,7 +448,13 @@ export function PlannerClient({ weekStart, items, hasPlan, dailyGoal }: PlannerC
               {analyzing ? "Analisando…" : "Recalibrar"}
             </Button>
           )}
-          <GenerateDialog />
+          <GenerateDialog
+            open={showGenDialog}
+            onOpenChange={setShowGenDialog}
+            dailyGoal={dailyGoal}
+            isGenerating={isGenerating}
+            onGenerate={handleGenerate}
+          />
         </div>
 
         {/* Ações secundárias: plano em folha (foto) e excluir */}

@@ -304,7 +304,7 @@ export function TopicTabs({ topicId, topicName, content, flashcards, questions, 
           <XpBadge xp={15} />
           <span className="text-[11px] text-muted-foreground">por vídeo assistido</span>
         </div>
-        <VideoList topicId={topicId} initialVideos={videos} />
+        <VideoList initialVideos={videos} />
       </TabsContent>
     </Tabs>
   )
