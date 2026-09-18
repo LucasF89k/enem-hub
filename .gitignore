@@ -36,6 +36,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# Claude Code (config/estado local da ferramenta de IA)
+/.claude/
+
 # material de estudo bruto importado (PDFs, .apkg, etc — não versionar)
 /fonte de conteudo/
 
@@ -63,3 +66,25 @@ cache-enem-oficial/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# Notas internas de desenvolvimento (handoff entre sessões de IA, prompts,
+# roadmap) — não fazem parte do projeto entregável.
+CLAUDE.md
+AGENTS.md
+HANDOFF*.md
+NEXT_SESSION_PROMPT.md
+PENDENCIAS.md
+PROJECT_STATE.md
+PROMPT-INICIAL.md
+ROADMAP.md
+
+# Arquivos grandes/soltos que nunca devem ir pro repositório.
+Fonte de conteudo.zip
+opalstudyappdesignspec*.md
+
+# Scripts de diagnostico pontual, imagens/screenshots de teste manual
+scan-cjk.ts
+shot*.mjs
+inspect*.mjs
+*-check.png
+screenshot-*.png
