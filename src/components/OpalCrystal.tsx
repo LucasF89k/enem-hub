@@ -228,23 +228,22 @@ export function OpalCrystal({
 
   // Movimento do wrapper: só uma deriva leve (flutuar/girar), bem devagar.
   // A deformação NÃO mora aqui (isso seria o objeto inteiro se mexendo, que lê
-  // como "pulando"), mora no calombo que passeia pela superfície.
+  // como "pulando"), mora no calombo que passeia pela superfície (`slime`,
+  // filtro SVG à parte, mais abaixo). O flutuar é independente do slime: é
+  // só transform via Framer Motion, custa muito pouco, então roda sempre
+  // (inclusive quando o slime está desligado, ex.: mobile, onde o filtro
+  // SVG pesado travava a animação inteira).
   //
-  // Mesma curva pra todo mundo (a "orgânica", com 5 keyframes assimétricos,
-  // que antes só o avatar do Mentor usava): o vaivém simples de 3 keyframes
-  // que a Home usava lia como quase parado, porque só vai e volta, sem
-  // mudar de direção no meio do ciclo. A amplitude escala com o tamanho (com
-  // um piso de 5px) pra ficar proporcionalmente parecida em qualquer
-  // instância, do avatar de 32px do Mentor ao gauge de 132px da Home.
+  // Curva orgânica com 5 keyframes assimétricos, que mudam de direção no
+  // meio do ciclo (o vaivém simples de 3 keyframes lia como quase parado).
+  // A amplitude escala com o tamanho (com um piso de 5px) pra ficar
+  // proporcionalmente parecida em qualquer instância, do avatar de 32px do
+  // Mentor ao gauge de 132px da Home.
   const floatAmp = Math.max(5, size * 0.07)
-  const wrapperAnim = slime
-    ? {
-        y: [0, -floatAmp, floatAmp * 0.55, -floatAmp * 0.7, 0],
-        rotate: [0, 1.4, -0.9, 0.6, 0],
-      }
-    : !icon
-      ? { y: [-5, 5, -5], rotate: [-2, 2, -2] }
-      : undefined
+  const wrapperAnim = {
+    y: [0, -floatAmp, floatAmp * 0.55, -floatAmp * 0.7, 0],
+    rotate: [0, 1.4, -0.9, 0.6, 0],
+  }
 
   const wrapperTransition = { duration: 6, repeat: Infinity, ease: "easeInOut" as const }
 
@@ -252,7 +251,7 @@ export function OpalCrystal({
     <motion.div
       ref={hostRef}
       animate={wrapperAnim}
-      transition={wrapperAnim ? wrapperTransition : undefined}
+      transition={wrapperTransition}
       style={{ width: size, height: size, willChange: "transform" }}
       className="relative"
     >
