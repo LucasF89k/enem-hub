@@ -1,6 +1,6 @@
 "use client"
 
-import { motion } from "framer-motion"
+import { motion, PresenceContext } from "framer-motion"
 import { useEffect, useId, useMemo, useRef, useSyncExternalStore } from "react"
 
 /**
@@ -261,7 +261,18 @@ export function OpalCrystal({
     [],
   )
 
-  return (
+  // Por que o PresenceContext.Provider value={null} lá embaixo, em volta de
+  // tudo: o AppShell envolve as páginas num <AnimatePresence mode="wait"
+  // initial={false}> (a transição entre rotas). Todo `motion` descendente
+  // herda esse contexto de presença, e com `initial={false}` o Framer marca
+  // a subárvore como "já estava aqui" e PULA a animação de entrada dos
+  // filhos. A animação de flutuar dispara na montagem, então ela nunca
+  // chegava a arrancar: a pedra ficava parada em y=0 pra sempre, no
+  // dashboard (dentro do AppShell) mas não numa página solta.
+  //
+  // Zerar o contexto aqui devolve o componente ao comportamento de quem
+  // está fora do AnimatePresence, sem tirar a transição de rota do app.
+  const conteudo = (
     <motion.div
       ref={hostRef}
       animate={wrapperAnim}
@@ -440,4 +451,6 @@ export function OpalCrystal({
       )}
     </motion.div>
   )
+
+  return <PresenceContext.Provider value={null}>{conteudo}</PresenceContext.Provider>
 }
