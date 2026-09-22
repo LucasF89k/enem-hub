@@ -301,27 +301,39 @@ export function AppSplash({ isLoggedIn }: { isLoggedIn: boolean }) {
               // vertical em vez de quadrado, pra não sobrar letterbox lateral.
               className="relative z-10 aspect-[9/16] w-[min(80vw,320px)]"
             >
-              <video
-                ref={stoneVideoRef}
-                src="/opal/reveal-kling.mp4"
-                // O poster é a rocha fechada: é o primeiro quadro do vídeo, então
-                // a espera pelo carregamento não mostra nada fora de lugar.
-                poster="/opal/stage-0.webp"
-                muted
-                playsInline
-                controls={false}
-                preload="auto"
-                onError={() => setStoneFailed(true)}
-                className="h-full w-full object-contain"
-                // mix-blend-mode: screen soma a luz do vídeo com o preto do fundo
-                // da splash (bg-black): preto vira transparente na prática (screen
-                // com preto = identidade), sobra só o brilho da pedra/orb. Diferente
-                // da máscara radial anterior, isso não depende de "acertar" um raio
-                // de corte contra o conteúdo do vídeo: qualquer região preta do
-                // vídeo simplesmente some, sem aresta nenhuma. Exige fundo do vídeo
-                // preto/bem escuro (é o caso); sobre fundo colorido isso não some.
-                style={{ mixBlendMode: "screen" }}
-              />
+              {/* Flutuar contínuo (sobe/desce devagar), igual ao OpalCrystal
+                  usado no resto do app: sem isso a pedra fica "morta" parada
+                  no centro enquanto só o vídeo interno se move. Wrapper
+                  separado do motion.div acima porque este anima em loop
+                  infinito (própria transition), enquanto o de fora só faz o
+                  fade/scale de entrada uma vez. */}
+              <motion.div
+                animate={{ y: [-5, 5, -5] }}
+                transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
+                className="h-full w-full"
+              >
+                <video
+                  ref={stoneVideoRef}
+                  src="/opal/reveal-kling.mp4"
+                  // O poster é a rocha fechada: é o primeiro quadro do vídeo, então
+                  // a espera pelo carregamento não mostra nada fora de lugar.
+                  poster="/opal/stage-0.webp"
+                  muted
+                  playsInline
+                  controls={false}
+                  preload="auto"
+                  onError={() => setStoneFailed(true)}
+                  className="h-full w-full object-contain"
+                  // mix-blend-mode: screen soma a luz do vídeo com o preto do fundo
+                  // da splash (bg-black): preto vira transparente na prática (screen
+                  // com preto = identidade), sobra só o brilho da pedra/orb. Diferente
+                  // da máscara radial anterior, isso não depende de "acertar" um raio
+                  // de corte contra o conteúdo do vídeo: qualquer região preta do
+                  // vídeo simplesmente some, sem aresta nenhuma. Exige fundo do vídeo
+                  // preto/bem escuro (é o caso); sobre fundo colorido isso não some.
+                  style={{ mixBlendMode: "screen" }}
+                />
+              </motion.div>
               {/* Fallback SÓ em caso de falha real (codec indisponível, autoplay
                   bloqueado). Antes ele entrava enquanto o vídeo carregava, e como
                   era a gema pronta, a abertura mostrava a gema, apagava, e só
