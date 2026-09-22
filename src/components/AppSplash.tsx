@@ -53,7 +53,7 @@ import { AnimatePresence, motion } from "framer-motion"
 type Step = "hidden" | "logo" | "reveal" | "pullback" | "done"
 
 const LOGO_MS = 4200 // duração do vídeo da logo (4.04s) + respiro
-const REVEAL_MS = 5000 // duração do vídeo da pedra
+const REVEAL_MS = 4200 // duração do vídeo da pedra (Kling, 4.04s) + respiro
 const PULLBACK_MS = 1000
 
 export function AppSplash({ isLoggedIn }: { isLoggedIn: boolean }) {
@@ -313,7 +313,7 @@ export function AppSplash({ isLoggedIn }: { isLoggedIn: boolean }) {
             >
               <video
                 ref={stoneVideoRef}
-                src="/opal/reveal.mp4"
+                src="/opal/reveal-kling.mp4"
                 // O poster é a rocha fechada: é o primeiro quadro do vídeo, então
                 // a espera pelo carregamento não mostra nada fora de lugar.
                 poster="/opal/stage-0.webp"
