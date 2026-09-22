@@ -24,11 +24,20 @@ export default async function PlannerPage() {
   const weekStart = getThisMondayUTC()
   const weekEnd = new Date(addDays(weekStart, 6).setUTCHours(23, 59, 59, 999))
 
-  const activePlan = await db.studyPlan.findFirst({
-    where: { userId, isActive: true },
-    select: { id: true, title: true, dailyGoal: true, createdAt: true },
-    orderBy: { createdAt: "desc" },
-  })
+  // O perfil não depende do plano, então sai junto com ele em vez de esperar
+  // a cadeia inteira (plano -> itens -> perfil) terminar. Os itens continuam
+  // depois do plano porque precisam do planId.
+  const [activePlan, profile] = await Promise.all([
+    db.studyPlan.findFirst({
+      where: { userId, isActive: true },
+      select: { id: true, title: true, dailyGoal: true, createdAt: true },
+      orderBy: { createdAt: "desc" },
+    }),
+    db.userProfile.findUnique({
+      where: { userId },
+      select: { dailyStudyGoal: true },
+    }),
+  ])
 
   const items = activePlan
     ? await db.studyPlanItem.findMany({
@@ -58,11 +67,6 @@ export default async function PlannerPage() {
         },
       })
     : []
-
-  const profile = await db.userProfile.findUnique({
-    where: { userId },
-    select: { dailyStudyGoal: true },
-  })
 
   return (
     <PlannerClient

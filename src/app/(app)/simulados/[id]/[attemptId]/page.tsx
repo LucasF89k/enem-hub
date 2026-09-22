@@ -33,37 +33,42 @@ export default async function SimuladoExamPage({
     redirect(`/simulados/${simuladoId}/${attemptId}/result`)
   }
 
-  const simulado = await db.simulado.findUnique({
-    where: { id: simuladoId },
-    select: { id: true, title: true, duration: true },
-  })
-  if (!simulado) notFound()
-
-  const questions = await db.simuladoQuestion.findMany({
-    where: { simuladoId },
-    orderBy: { order: "asc" },
-    include: {
-      question: {
-        select: {
-          id: true,
-          statement: true,
-          images: true,
-          areaSlug: true,
-          year: true,
-          source: true,
-          options: {
-            select: { id: true, letter: true, text: true },
-            orderBy: { letter: "asc" },
+  // A checagem da tentativa acima é guard (posse e status), tem que vir antes.
+  // Daqui pra baixo as três leituras só dependem de ids que já temos, então
+  // vão juntas: é a tela de fazer prova, cada ida a mais ao banco atrasa o
+  // aluno na hora que ele quer começar a responder.
+  const [simulado, questions, answers] = await Promise.all([
+    db.simulado.findUnique({
+      where: { id: simuladoId },
+      select: { id: true, title: true, duration: true },
+    }),
+    db.simuladoQuestion.findMany({
+      where: { simuladoId },
+      orderBy: { order: "asc" },
+      include: {
+        question: {
+          select: {
+            id: true,
+            statement: true,
+            images: true,
+            areaSlug: true,
+            year: true,
+            source: true,
+            options: {
+              select: { id: true, letter: true, text: true },
+              orderBy: { letter: "asc" },
+            },
           },
         },
       },
-    },
-  })
+    }),
+    db.userSimuladoAnswer.findMany({
+      where: { userSimuladoId: attemptId },
+      select: { questionId: true, selectedId: true, markedForReview: true },
+    }),
+  ])
 
-  const answers = await db.userSimuladoAnswer.findMany({
-    where: { userSimuladoId: attemptId },
-    select: { questionId: true, selectedId: true, markedForReview: true },
-  })
+  if (!simulado) notFound()
 
   const answerMap: Record<string, { selectedId: string | null; markedForReview: boolean }> = {}
   for (const a of answers) {

@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
-import { db } from "@/lib/db"
+import { getCatalogo } from "@/lib/catalogo"
+import { getTopicosEstudados } from "@/lib/progresso"
 import Link from "next/link"
 import { Progress } from "@/components/ui/progress"
 import {
@@ -80,25 +81,14 @@ export default async function StudyPage() {
   if (!session?.user?.id) redirect("/login")
   const userId = session.user.id
 
-  const areas = await db.area.findMany({
-    orderBy: { order: "asc" },
-    include: {
-      disciplines: {
-        include: { topics: { select: { id: true } } },
-      },
-    },
-  })
-
-  const allTopicIds = areas.flatMap((a) =>
-    a.disciplines.flatMap((d) => d.topics.map((t) => t.id))
-  )
-
-  const studiedSessions = await db.studySession.findMany({
-    where: { userId, topicId: { in: allTopicIds } },
-    select: { topicId: true },
-    distinct: ["topicId"],
-  })
-  const studiedSet = new Set(studiedSessions.map((s) => s.topicId))
+  // As duas leituras são independentes agora (a de progresso não precisa mais
+  // receber a lista de ids do catálogo), então vão em paralelo em vez de uma
+  // esperar a outra. O catálogo ainda por cima vem de cache na maioria das
+  // vezes, porque é o mesmo pra todo usuário.
+  const [areas, studiedSet] = await Promise.all([
+    getCatalogo(),
+    getTopicosEstudados(userId),
+  ])
 
   return (
     <div className="mx-auto max-w-5xl space-y-5 px-4 py-5">
@@ -107,7 +97,7 @@ export default async function StudyPage() {
         {areas.map((area, i) => {
           const Icon = AREA_ICON[area.slug] ?? BookOpen
           const accent = AREA_ACCENT[area.slug] ?? FALLBACK_ACCENT
-          const topicIds = area.disciplines.flatMap((d) => d.topics.map((t) => t.id))
+          const topicIds = area.disciplines.flatMap((d) => d.topicIds)
           const totalTopics = topicIds.length
           const studiedTopics = topicIds.filter((id) => studiedSet.has(id)).length
           const progressPct = totalTopics > 0 ? Math.round((studiedTopics / totalTopics) * 100) : 0

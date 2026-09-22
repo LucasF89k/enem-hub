@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth"
 import { redirect, notFound } from "next/navigation"
-import { db } from "@/lib/db"
+import { getAreaDoCatalogo } from "@/lib/catalogo"
+import { getTopicosEstudados } from "@/lib/progresso"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
@@ -26,7 +27,9 @@ import {
 
 export async function generateMetadata({ params }: { params: Promise<{ areaSlug: string }> }) {
   const { areaSlug } = await params
-  const area = await db.area.findUnique({ where: { slug: areaSlug }, select: { name: true } })
+  // Sai do catálogo em cache: o título não vale uma consulta própria ao banco
+  // (era uma segunda ida só pra ler o nome da área, que a página já carrega).
+  const area = await getAreaDoCatalogo(areaSlug)
   return { title: area ? `${area.name} · Vion` : "Área" }
 }
 
@@ -74,26 +77,16 @@ export default async function AreaPage({ params }: { params: Promise<{ areaSlug:
 
   const { areaSlug } = await params
 
-  const area = await db.area.findUnique({
-    where: { slug: areaSlug },
-    include: {
-      disciplines: {
-        orderBy: { order: "asc" },
-        include: { topics: { select: { id: true } } },
-      },
-    },
-  })
+  // Independentes entre si: vão em paralelo. O catálogo vem do cache
+  // compartilhado (é igual pra todo usuário); só o progresso é por aluno.
+  const [area, studiedSet] = await Promise.all([
+    getAreaDoCatalogo(areaSlug),
+    getTopicosEstudados(userId),
+  ])
 
   if (!area) notFound()
 
-  const allTopicIds = area.disciplines.flatMap((d) => d.topics.map((t) => t.id))
-
-  const studiedSessions = await db.studySession.findMany({
-    where: { userId, topicId: { in: allTopicIds } },
-    select: { topicId: true },
-    distinct: ["topicId"],
-  })
-  const studiedSet = new Set(studiedSessions.map((s) => s.topicId))
+  const allTopicIds = area.disciplines.flatMap((d) => d.topicIds)
 
   const AreaIcon = AREA_ICON[areaSlug] ?? BookOpen
   const headerGradient = AREA_HEADER[areaSlug] ?? "from-primary/20 to-transparent"
@@ -127,7 +120,7 @@ export default async function AreaPage({ params }: { params: Promise<{ areaSlug:
       <div className="px-4 py-4 space-y-3">
         {area.disciplines.map((discipline) => {
           const DisciplineIcon = DISCIPLINE_ICON[discipline.slug] ?? BookOpen
-          const topicIds = discipline.topics.map((t) => t.id)
+          const topicIds = discipline.topicIds
           const totalTopics = topicIds.length
           const studiedTopics = topicIds.filter((id) => studiedSet.has(id)).length
           const progressPct = totalTopics > 0 ? Math.round((studiedTopics / totalTopics) * 100) : 0
