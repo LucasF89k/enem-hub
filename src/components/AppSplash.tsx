@@ -19,7 +19,7 @@ import { AnimatePresence, motion } from "framer-motion"
  * verdade e reaberto.
  *
  *   logo se monta (vídeo) → a pedra flutua e a orb de luz surge ao redor
- *   dela (vídeo) → a câmera recua até a posição do hero → entra o app
+ *   dela (vídeo) → tudo desaparece (fade) → entra o app
  *
  * A fase da pedra é uma recompensa de quem já tem conta: só quem chega aqui
  * com sessão ativa (isLoggedIn) vê logo+pedra. Sem sessão, a splash mostra
@@ -50,11 +50,10 @@ import { AnimatePresence, motion } from "framer-motion"
  * baixo em paralelo) e desaparece sozinha: não bloqueia nada, só cobre.
  */
 
-type Step = "hidden" | "logo" | "reveal" | "pullback" | "done"
+type Step = "hidden" | "logo" | "reveal" | "done"
 
 const LOGO_MS = 4200 // duração do vídeo da logo (4.04s) + respiro
 const REVEAL_MS = 4200 // duração do vídeo da pedra (Kling, 4.04s) + respiro
-const PULLBACK_MS = 1000
 
 export function AppSplash({ isLoggedIn }: { isLoggedIn: boolean }) {
   // Começa direto em "logo" (cobre a tela já no primeiro paint, sem o
@@ -88,7 +87,7 @@ export function AppSplash({ isLoggedIn }: { isLoggedIn: boolean }) {
   const stoneVideoRef = useRef<HTMLVideoElement | null>(null)
   const logoTimersRef = useRef<ReturnType<typeof setTimeout>[]>([])
 
-  // A timeline (reveal → pullback → done) é disparada pelo evento onPlay do
+  // A timeline (reveal → done) é disparada pelo evento onPlay do
   // vídeo da logo (abaixo), não por um setTimeout fixo no mount. Se o
   // autoplay for recusado e o usuário precisar tocar pra continuar, a
   // contagem de LOGO_MS só pode começar quando o vídeo realmente começa a
@@ -110,8 +109,8 @@ export function AppSplash({ isLoggedIn }: { isLoggedIn: boolean }) {
     }
   }, [step])
 
-  // Dispara o resto da timeline (reveal → pullback → done) a partir do
-  // instante em que o vídeo da logo de fato começa a tocar: cobre tanto o
+  // Dispara o resto da timeline (reveal → done) a partir do instante em
+  // que o vídeo da logo de fato começa a tocar: cobre tanto o
   // caminho feliz (autoplay silencioso funcionou) quanto o caminho do toque
   // manual (needsTap), sem duplicar a lógica de agendamento. onPlay pode
   // disparar mais de uma vez (buffering, retomar após seek); só a primeira
@@ -135,11 +134,7 @@ export function AppSplash({ isLoggedIn }: { isLoggedIn: boolean }) {
     // Sem sessão: só a logo, direto pro login/cadastro. A pedra é
     // reservada pra quem já tem conta.
     logoTimersRef.current = isLoggedIn
-      ? [
-          setTimeout(() => setStep("reveal"), LOGO_MS),
-          setTimeout(() => setStep("pullback"), LOGO_MS + REVEAL_MS),
-          setTimeout(finish, LOGO_MS + REVEAL_MS + PULLBACK_MS),
-        ]
+      ? [setTimeout(() => setStep("reveal"), LOGO_MS), setTimeout(finish, LOGO_MS + REVEAL_MS)]
       : [setTimeout(finish, LOGO_MS)]
   }
 
@@ -220,8 +215,7 @@ export function AppSplash({ isLoggedIn }: { isLoggedIn: boolean }) {
     return () => clearTimeout(timeout)
   }, [step])
 
-  const showingStone = step === "reveal" || step === "pullback"
-  const pulling = step === "pullback"
+  const showingStone = step === "reveal"
 
   return (
     <AnimatePresence>
@@ -295,18 +289,14 @@ export function AppSplash({ isLoggedIn }: { isLoggedIn: boolean }) {
               chega logado. Sem sessão nem baixa o vídeo (preload="auto"
               puxaria o arquivo inteiro à toa pra quem nunca vai vê-lo). Uma
               vez montado, fica sempre no DOM (só invisível fora do reveal)
-              pra carregar cedo. No "pullback" a câmera recua: a gema encolhe
-              e sobe até onde ela fica no hero da Home, e o overlay some por
-              cima disso, dando sensação de continuidade, não de troca de tela. */}
+              pra carregar cedo. Ao terminar, a splash inteira desaparece
+              junto (fade do wrapper "fixed inset-0" acima) direto pro app;
+              não tem mais recuo de câmera nem reposicionamento pro hero. */}
           {isLoggedIn && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 0 }}
-              animate={
-                pulling
-                  ? { opacity: 1, scale: 0.42, y: -190 }
-                  : { opacity: showingStone ? 1 : 0, scale: 1, y: 0 }
-              }
-              transition={{ duration: pulling ? 1 : 0.5, ease: [0.16, 1, 0.3, 1] }}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: showingStone ? 1 : 0, scale: 1 }}
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
               // Vídeo em formato celular (9:16, igual ao da logo): container
               // vertical em vez de quadrado, pra não sobrar letterbox lateral.
               className="relative z-10 aspect-[9/16] w-[min(80vw,320px)]"
