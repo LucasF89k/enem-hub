@@ -234,13 +234,15 @@ export function OpalCrystal({
   // (inclusive quando o slime está desligado, ex.: mobile, onde o filtro
   // SVG pesado travava a animação inteira).
   //
-  // Curva orgânica com 5 keyframes assimétricos, que mudam de direção no
-  // meio do ciclo (o vaivém simples de 3 keyframes lia como quase parado).
+  // Sobe e desce, só isso: um vaivém de 3 keyframes, sem trocas de direção
+  // no meio do ciclo. A curva anterior tinha 5 keyframes assimétricos, e as
+  // 4 inversões de sentido dentro do mesmo tempo é o que fazia o movimento
+  // parecer apressado/nervoso em vez de boiando.
+  //
   // A amplitude escala com o tamanho (com um piso de 8px) pra ficar
   // proporcionalmente parecida em qualquer instância, do avatar de 32px do
-  // Mentor ao gauge de 132px da Home. Deslocamento generoso de propósito
-  // (~16px no gauge): tem que ficar óbvio que a pedra "flutua no espaço",
-  // não só uma deriva sutil que passa despercebida.
+  // Mentor ao gauge de 132px da Home. A rotação é quase imperceptível de
+  // propósito: só tira a rigidez de um deslocamento puramente vertical.
   //
   // useMemo por `size` (não recalcula a cada render): o StudyScoreGauge
   // re-renderiza a cada quadro por ~1.4s no mount (count-up do número), e
@@ -251,13 +253,15 @@ export function OpalCrystal({
   const wrapperAnim = useMemo(() => {
     const floatAmp = Math.max(8, size * 0.12)
     return {
-      y: [0, -floatAmp, floatAmp * 0.55, -floatAmp * 0.7, 0],
-      rotate: [0, 1.4, -0.9, 0.6, 0],
+      y: [-floatAmp * 0.5, floatAmp * 0.5, -floatAmp * 0.5],
+      rotate: [-0.8, 0.8, -0.8],
     }
   }, [size])
 
+  // 14s por ciclo: com um vaivém simples, a travessia inteira leva 7s pra
+  // cada lado, que é a cadência lenta de algo flutuando sem peso.
   const wrapperTransition = useMemo(
-    () => ({ duration: 5, repeat: Infinity, ease: "easeInOut" as const }),
+    () => ({ duration: 14, repeat: Infinity, ease: "easeInOut" as const }),
     [],
   )
 
