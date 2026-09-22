@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { useEffect, useId, useRef, useSyncExternalStore } from "react"
+import { useEffect, useId, useMemo, useRef, useSyncExternalStore } from "react"
 
 /**
  * A pedra de opala, nas 4 fases da animação de abertura:
@@ -239,13 +239,25 @@ export function OpalCrystal({
   // A amplitude escala com o tamanho (com um piso de 5px) pra ficar
   // proporcionalmente parecida em qualquer instância, do avatar de 32px do
   // Mentor ao gauge de 132px da Home.
-  const floatAmp = Math.max(5, size * 0.07)
-  const wrapperAnim = {
-    y: [0, -floatAmp, floatAmp * 0.55, -floatAmp * 0.7, 0],
-    rotate: [0, 1.4, -0.9, 0.6, 0],
-  }
+  //
+  // useMemo por `size` (não recalcula a cada render): o StudyScoreGauge
+  // re-renderiza a cada quadro por ~1.4s no mount (count-up do número), e
+  // sem isso o Framer Motion recebia um objeto NOVO de `animate` a cada
+  // desses renders, o que reinicia a animação do zero toda hora, em vez de
+  // deixar ela completar um ciclo. Resultado: parecia travada no frame
+  // inicial mesmo rodando.
+  const wrapperAnim = useMemo(() => {
+    const floatAmp = Math.max(5, size * 0.07)
+    return {
+      y: [0, -floatAmp, floatAmp * 0.55, -floatAmp * 0.7, 0],
+      rotate: [0, 1.4, -0.9, 0.6, 0],
+    }
+  }, [size])
 
-  const wrapperTransition = { duration: 6, repeat: Infinity, ease: "easeInOut" as const }
+  const wrapperTransition = useMemo(
+    () => ({ duration: 6, repeat: Infinity, ease: "easeInOut" as const }),
+    [],
+  )
 
   return (
     <motion.div
