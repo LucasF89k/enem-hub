@@ -229,15 +229,24 @@ export function OpalCrystal({
   // Movimento do wrapper: só uma deriva leve (flutuar/girar), bem devagar.
   // A deformação NÃO mora aqui (isso seria o objeto inteiro se mexendo, que lê
   // como "pulando"), mora no calombo que passeia pela superfície.
-  const wrapperAnim = !icon
-    ? { y: [-5, 5, -5], rotate: [-2, 2, -2] }
-    : slime
-      ? { y: [0, -1.5, 0.8, -1, 0], rotate: [0, 1, -0.6, 0.4, 0] }
+  //
+  // Mesma curva pra todo mundo (a "orgânica", com 5 keyframes assimétricos,
+  // que antes só o avatar do Mentor usava): o vaivém simples de 3 keyframes
+  // que a Home usava lia como quase parado, porque só vai e volta, sem
+  // mudar de direção no meio do ciclo. A amplitude escala com o tamanho (com
+  // um piso de 5px) pra ficar proporcionalmente parecida em qualquer
+  // instância, do avatar de 32px do Mentor ao gauge de 132px da Home.
+  const floatAmp = Math.max(5, size * 0.07)
+  const wrapperAnim = slime
+    ? {
+        y: [0, -floatAmp, floatAmp * 0.55, -floatAmp * 0.7, 0],
+        rotate: [0, 1.4, -0.9, 0.6, 0],
+      }
+    : !icon
+      ? { y: [-5, 5, -5], rotate: [-2, 2, -2] }
       : undefined
 
-  const wrapperTransition = !icon
-    ? { duration: 9, repeat: Infinity, ease: "easeInOut" as const }
-    : { duration: 6, repeat: Infinity, ease: "easeInOut" as const }
+  const wrapperTransition = { duration: 6, repeat: Infinity, ease: "easeInOut" as const }
 
   return (
     <motion.div
