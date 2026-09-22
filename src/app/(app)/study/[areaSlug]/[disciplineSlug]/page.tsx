@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth"
 import { redirect, notFound } from "next/navigation"
 import { db } from "@/lib/db"
+import { getTopicosEstudados } from "@/lib/progresso"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { ChevronRight, CheckCircle2, Star, Flame } from "lucide-react"
@@ -29,26 +30,24 @@ export default async function DisciplinePage({
 
   const { areaSlug, disciplineSlug } = await params
 
-  const discipline = await db.discipline.findUnique({
-    where: { slug: disciplineSlug },
-    include: {
-      area: { select: { name: true, slug: true } },
-      topics: {
-        orderBy: [{ importance: "desc" }, { frequency: "desc" }, { order: "asc" }],
+  // Em paralelo: o progresso do aluno não depende da disciplina (é lido só
+  // por userId), então não precisa esperar a leitura dos tópicos terminar.
+  // Aqui os tópicos vêm inteiros mesmo, diferente das telas de cima: esta
+  // lista mostra o conteúdo de cada um, não só a contagem.
+  const [discipline, studiedSet] = await Promise.all([
+    db.discipline.findUnique({
+      where: { slug: disciplineSlug },
+      include: {
+        area: { select: { name: true, slug: true } },
+        topics: {
+          orderBy: [{ importance: "desc" }, { frequency: "desc" }, { order: "asc" }],
+        },
       },
-    },
-  })
+    }),
+    getTopicosEstudados(userId),
+  ])
 
   if (!discipline || discipline.area.slug !== areaSlug) notFound()
-
-  const topicIds = discipline.topics.map((t) => t.id)
-
-  const studiedSessions = await db.studySession.findMany({
-    where: { userId, topicId: { in: topicIds } },
-    select: { topicId: true },
-    distinct: ["topicId"],
-  })
-  const studiedSet = new Set(studiedSessions.map((s) => s.topicId))
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6 space-y-5">

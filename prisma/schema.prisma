@@ -595,6 +595,10 @@ model StudySession {
 
   @@index([userId])
   @@index([userId, date])
+  // As telas de estudo perguntam "quais topicos esse aluno ja estudou?".
+  // Sem este indice o banco usava o de userId e filtrava topicId na marra,
+  // varrendo todas as sessoes do aluno.
+  @@index([userId, topicId])
 }
 
 enum SessionType {
