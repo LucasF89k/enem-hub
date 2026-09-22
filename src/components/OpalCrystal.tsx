@@ -236,9 +236,11 @@ export function OpalCrystal({
   //
   // Curva orgânica com 5 keyframes assimétricos, que mudam de direção no
   // meio do ciclo (o vaivém simples de 3 keyframes lia como quase parado).
-  // A amplitude escala com o tamanho (com um piso de 5px) pra ficar
+  // A amplitude escala com o tamanho (com um piso de 8px) pra ficar
   // proporcionalmente parecida em qualquer instância, do avatar de 32px do
-  // Mentor ao gauge de 132px da Home.
+  // Mentor ao gauge de 132px da Home. Deslocamento generoso de propósito
+  // (~16px no gauge): tem que ficar óbvio que a pedra "flutua no espaço",
+  // não só uma deriva sutil que passa despercebida.
   //
   // useMemo por `size` (não recalcula a cada render): o StudyScoreGauge
   // re-renderiza a cada quadro por ~1.4s no mount (count-up do número), e
@@ -247,7 +249,7 @@ export function OpalCrystal({
   // deixar ela completar um ciclo. Resultado: parecia travada no frame
   // inicial mesmo rodando.
   const wrapperAnim = useMemo(() => {
-    const floatAmp = Math.max(5, size * 0.07)
+    const floatAmp = Math.max(8, size * 0.12)
     return {
       y: [0, -floatAmp, floatAmp * 0.55, -floatAmp * 0.7, 0],
       rotate: [0, 1.4, -0.9, 0.6, 0],
@@ -255,7 +257,7 @@ export function OpalCrystal({
   }, [size])
 
   const wrapperTransition = useMemo(
-    () => ({ duration: 6, repeat: Infinity, ease: "easeInOut" as const }),
+    () => ({ duration: 5, repeat: Infinity, ease: "easeInOut" as const }),
     [],
   )
 
