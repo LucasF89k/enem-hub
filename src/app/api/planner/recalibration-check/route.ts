@@ -3,6 +3,7 @@ import { db } from "@/lib/db"
 import { NextResponse } from "next/server"
 // Provedor de IA: trocar para o MiMo depois é só mudar esta importação/função.
 import { generateJSON } from "@/lib/gemini"
+import { rateLimit } from "@/lib/rate-limit"
 
 interface Verdict {
   recommend: boolean
@@ -15,6 +16,14 @@ export async function POST() {
   const session = await auth()
   if (!session?.user?.id) return new Response("Unauthorized", { status: 401 })
   const userId = session.user.id
+
+  // Cinto de segurança contra chamadas em rajada a esta rota. O cache de 6h e
+  // o pré-filtro abaixo já evitam a maioria das idas à IA; este limite cobre
+  // o caso de alguém forçar a barra manipulando o estado pra furar o cache.
+  const limite = await rateLimit("recal-check", userId, 30, 60 * 60 * 1000)
+  if (!limite.allowed) {
+    return NextResponse.json({ recommend: false, reason: "Aguarde para reavaliar." } satisfies Verdict)
+  }
 
   const plan = await db.studyPlan.findFirst({
     where: { userId, isActive: true },

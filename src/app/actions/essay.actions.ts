@@ -3,6 +3,7 @@
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { generateMimoJSON } from "@/lib/mimo"
+import { rateLimit } from "@/lib/rate-limit"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { z } from "zod"
@@ -76,6 +77,13 @@ export async function generateEssayTheme(): Promise<{ theme?: string; error?: st
   const session = await auth()
   if (!session?.user?.id) return { error: "Não autenticado" }
 
+  // Gerar tema chama a IA. 10 por hora por usuário é muito mais do que
+  // alguém precisa de verdade e evita que um clique repetido torre a cota.
+  const limite = await rateLimit("essay-theme", session.user.id, 10, 60 * 60 * 1000)
+  if (!limite.allowed) {
+    return { error: "Muitos temas gerados. Aguarde um pouco." }
+  }
+
   const prompt = `Você é um elaborador de provas do ENEM. Proponha UM tema de redação inédito, no estilo ENEM (problema social brasileiro que exige proposta de intervenção), baseado em temas atuais e relevantes da atualidade brasileira que têm chance real de cair na prova.
 Regras:
 - O tema deve ser uma frase única, no formato do ENEM (ex.: "Desafios para..." / "Caminhos para..." / "O papel de... no Brasil").
@@ -101,6 +109,14 @@ export async function evaluateEssay(essayId: string): Promise<{
   const session = await auth()
   if (!session?.user?.id) throw new Error("Unauthorized")
   const userId = session.user.id
+
+  // Corrigir redação é a chamada de IA mais pesada do app (prompt longo +
+  // resposta longa). 15 por hora por usuário cobre até quem revisa e corrige
+  // várias vezes seguidas, e barra o loop que esvaziaria a cota.
+  const limite = await rateLimit("essay-eval", userId, 15, 60 * 60 * 1000)
+  if (!limite.allowed) {
+    return { success: false, error: "Muitas correções seguidas. Aguarde um pouco." }
+  }
 
   const essay = await db.essay.findFirst({
     where: { id: essayId, userId },
