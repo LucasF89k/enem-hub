@@ -172,7 +172,18 @@ Apurado, não assumido:
 - Sessão por JWT, sem hit no banco a cada request.
 - Todas as rotas de API checam `auth()`.
 
-### 3.3 Strix (pendente, precisa de combinado antes)
+### 3.3 Strix (NÃO rodou ainda)
+
+> **Status em 23/09/2026:** não executado. Dois motivos concretos, além do
+> combinado:
+> 1. O Strix roda em sandbox Docker, e **o Docker está instalado mas não
+>    ativo** nesta máquina.
+> 2. Sem banco acessível, nem dá pra subir uma instância local de teste pra
+>    apontar o scanner.
+>
+> Então mesmo com autorização, aqui ele não rodaria. Fica pro ambiente onde
+> o banco funciona e com o Docker ligado.
+
 
 Ferramenta pedida: https://github.com/usestrix/strix
 
@@ -188,7 +199,32 @@ apontar o Strix pra ela. Antes de rodar, confirmar:
 
 ---
 
-## 4. Pendência: LGPD
+## 4. LGPD (implementado, falta testar com banco)
+
+> **Feito em 23/09/2026, commit `bdcc3b5`.** Os três direitos do Art. 18 que
+> faltavam agora existem:
+> - `src/app/actions/privacidade.actions.ts`: exportar dados e excluir conta,
+>   as duas pedindo a senha de novo.
+> - `src/components/settings/PrivacidadeCard.tsx`: a interface, em
+>   Configurações.
+> - `src/app/privacidade/page.tsx`: a política, fora do grupo `(app)` pra
+>   abrir sem login, linkada na tela de cadastro.
+>
+> **Dois pontos que precisam de você:**
+> 1. A política termina dizendo "entre em contato pelo e-mail de suporte da
+>    plataforma", sem endereço. Não inventei um: e-mail falso em política de
+>    privacidade é pior que omissão. Me diga qual é e eu coloco.
+> 2. Falta o teste real (excluir uma conta de verdade e baixar o arquivo),
+>    que depende de banco acessível.
+>
+> Decisão que vale registrar: `FlashcardDeck` usa `onDelete: SetNull` porque
+> deck público pode estar em uso por outras pessoas. Deixar o deck **privado**
+> órfão seria manter dado do titular após o pedido de eliminação, então os
+> privados são apagados explicitamente antes, na mesma transação.
+
+O texto abaixo é o diagnóstico original, mantido como registro.
+
+### 4.1 Diagnóstico original
 
 O app guarda dado pessoal de estudante, provavelmente **menor de idade** (é
 público de vestibular, o que puxa o Art. 14, consentimento de responsável).
@@ -251,15 +287,21 @@ Prisma geraria.
 
 ## 6. Ordem sugerida pra retomar
 
-1. ~~Atualizar o Next e os pacotes de auth~~ **feito em 23/09**, commit
-   `a5b2930`. Falta só o teste manual com o app no ar: login, Mentor, upload
-   de foto e um simulado inteiro.
-2. **Ligar o adapter Neon** (seção 2), com o banco acessível pra validar.
-   Esta é a próxima da fila.
-3. Confirmar que a migration do índice foi aplicada.
-4. LGPD: política de privacidade, exclusão de conta, exportação de dados.
-5. Strix, em ambiente de teste separado, com o combinado da seção 3.3.
+1. ~~Atualizar o Next e os pacotes de auth~~ **feito**, commit `a5b2930`.
+2. ~~Zerar o resto das vulnerabilidades~~ **feito**, commit `5158628`.
+   `npm audit` agora dá **0**.
+3. ~~LGPD~~ **implementado**, commit `bdcc3b5`. Falta o e-mail de suporte na
+   política e o teste com banco.
+4. **Ligar o adapter Neon** (seção 2), com o banco acessível. É a próxima da
+   fila e a última pendência de performance.
+5. Confirmar que a migration do índice foi aplicada.
+6. Strix, em ambiente de teste separado, com o combinado da seção 3.3.
+   **Ainda não rodou** (ver 3.3 pro porquê).
 
-Itens 1 e 2 mexem em runtime e é melhor não fazer os dois no mesmo deploy:
-se algo quebrar, fica difícil saber qual foi. Como o 1 já subiu sozinho,
-vale confirmar que a produção está de pé antes de mexer no adapter.
+**Testes manuais acumulados pro próximo deploy**, todos por falta de banco
+aqui: login e Mentor (mexeram no Next e no next-auth), excluir uma conta de
+teste e baixar o arquivo de dados (LGPD), e um simulado inteiro.
+
+Os itens 1 e 4 mexem em runtime e é melhor não subir os dois no mesmo
+deploy. Como o 1 já foi sozinho, vale confirmar que a produção está de pé
+antes de mexer no adapter.
