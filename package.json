@@ -76,12 +76,12 @@
     "@types/adm-zip": "^0.5.8",
     "@types/bcryptjs": "^2.4.6",
     "@types/canvas-confetti": "^1.9.0",
-    "@types/node": "^20",
+    "@types/node": "^22.20.4",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/sql.js": "^1.4.11",
-    "@vitest/coverage-v8": "^4.1.10",
-    "adm-zip": "^0.5.18",
+    "@vitest/coverage-v8": "^5.0.1",
+    "adm-zip": "^0.6.1",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
     "fzstd": "^0.1.1",
@@ -91,7 +91,7 @@
     "tailwindcss": "^4",
     "tsx": "^4.22.4",
     "typescript": "^5",
-    "vitest": "^4.1.10",
+    "vitest": "^5.0.1",
     "vitest-mock-extended": "^5.1.1"
   },
   "allowScripts": {
@@ -101,5 +101,8 @@
     "prisma@6.19.3": true,
     "sharp@0.34.5": true,
     "unrs-resolver@1.12.2": true
+  },
+  "overrides": {
+    "deepmerge-ts": "^8.0.2"
   }
 }
