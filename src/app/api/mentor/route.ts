@@ -6,12 +6,25 @@ import { geminiKeys, geminiChatModelWithKey } from '@/lib/gemini'
 import { mimoKeys, mimoClientWithKey, MIMO_MODEL } from '@/lib/mimo'
 import { findCurso, estimateCutoff, cursoMedia } from '@/constants/cursos'
 import { findUniversidade } from '@/constants/universidades'
+import { rateLimit } from '@/lib/rate-limit'
 
 export async function POST(req: NextRequest) {
   try {
     const session = await auth()
     if (!session?.user?.id) {
       return new Response('Unauthorized', { status: 401 })
+    }
+
+    // Teto de uso por usuário: cada mensagem ao Mentor gasta cota de IA
+    // (MiMo/Gemini). 20 por minuto é muito acima do ritmo de uma conversa
+    // real e corta o loop automatizado que torraria a cota. Limita por
+    // userId, não por IP: aqui já está autenticado.
+    const limiteMentor = await rateLimit('mentor', session.user.id, 20, 60 * 1000)
+    if (!limiteMentor.allowed) {
+      return new Response('Muitas mensagens. Aguarde um instante.', {
+        status: 429,
+        headers: { 'Retry-After': String(limiteMentor.retryAfter) },
+      })
     }
 
     const { messages, topicId, image } = await req.json()

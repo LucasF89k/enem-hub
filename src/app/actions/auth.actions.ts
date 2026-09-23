@@ -7,6 +7,7 @@ import bcrypt from "bcryptjs"
 import { AuthError } from "next-auth"
 import { randomBytes } from "crypto"
 import { sendEmail, passwordResetEmail } from "@/lib/email"
+import { rateLimit, ipDaRequisicao } from "@/lib/rate-limit"
 
 export async function register(data: {
   name: string
@@ -18,6 +19,13 @@ export async function register(data: {
 
   if (!validated.success) {
     return { error: validated.error.issues[0].message }
+  }
+
+  // Trava criação de contas em massa a partir do mesmo IP.
+  const ipReg = await ipDaRequisicao()
+  const limiteReg = await rateLimit("register", ipReg, 5, 60 * 60 * 1000)
+  if (!limiteReg.allowed) {
+    return { error: "Muitas contas criadas. Tente novamente mais tarde." }
   }
 
   const { name, email, password } = validated.data
@@ -65,6 +73,18 @@ export async function login(data: {
     return { error: validated.error.issues[0].message }
   }
 
+  // Trava de brute force: no máximo 8 tentativas por IP a cada 5 minutos. É
+  // folgado pra quem errou a senha algumas vezes e apertado pra um script
+  // que testa milhares. A mensagem não diz se o e-mail existe, mantendo o
+  // padrão de não revelar contas.
+  const ip = await ipDaRequisicao()
+  const limite = await rateLimit("login", ip, 8, 5 * 60 * 1000)
+  if (!limite.allowed) {
+    return {
+      error: `Muitas tentativas. Tente de novo em ${limite.retryAfter} segundos.`,
+    }
+  }
+
   try {
     await signIn("credentials", {
       email: data.email,
@@ -97,6 +117,16 @@ export async function requestPasswordReset(
   const normalized = (email || "").trim().toLowerCase()
   if (!normalized || !normalized.includes("@")) {
     return { success: false, error: "E-mail inválido" }
+  }
+
+  // Sem isto, dá pra spammar e-mails de reset pra uma vítima e sondar quais
+  // contas existem pelo tempo de resposta. Limita por IP. A resposta segue
+  // sendo "sucesso" mesmo quando o limite estoura, pra não abrir outro canal
+  // de enumeração; só não dispara mais e-mails.
+  const ipReset = await ipDaRequisicao()
+  const limiteReset = await rateLimit("reset", ipReset, 5, 60 * 60 * 1000)
+  if (!limiteReset.allowed) {
+    return { success: true }
   }
 
   const user = await db.user.findUnique({

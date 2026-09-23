@@ -33,6 +33,10 @@ const dbMock = vi.hoisted(() => ({
 }))
 const signInMock = vi.hoisted(() => vi.fn())
 const sendEmailMock = vi.hoisted(() => vi.fn())
+// Rate limit: por padrão deixa passar, pra estes testes exercitarem a lógica
+// da action e não o limitador. Fica exposto (rateLimitMock) caso algum
+// cenário futuro queira simular o bloqueio.
+const rateLimitMock = vi.hoisted(() => vi.fn(async () => ({ allowed: true, retryAfter: 0 })))
 
 vi.mock("@/lib/db", () => ({ db: dbMock }))
 vi.mock("@/lib/auth", () => ({ signIn: signInMock, signOut: vi.fn(), auth: vi.fn() }))
@@ -40,6 +44,10 @@ vi.mock("next-auth", () => ({ AuthError }))
 vi.mock("@/lib/email", () => ({
   sendEmail: sendEmailMock,
   passwordResetEmail: () => "<html></html>",
+}))
+vi.mock("@/lib/rate-limit", () => ({
+  rateLimit: rateLimitMock,
+  ipDaRequisicao: vi.fn(async () => "127.0.0.1"),
 }))
 
 import { register, login, requestPasswordReset, resetPassword } from "./auth.actions"
@@ -57,6 +65,9 @@ beforeEach(() => {
   signInMock.mockRejectedValue(Object.assign(new Error("NEXT_REDIRECT"), {
     digest: "NEXT_REDIRECT",
   }))
+  // clearAllMocks apaga a implementacao, entao o rate limit volta a "deixa
+  // passar" a cada teste; quem quiser testar o bloqueio sobrescreve no proprio.
+  rateLimitMock.mockResolvedValue({ allowed: true, retryAfter: 0 })
 })
 
 describe("register (CTA-01 a CTA-03)", () => {
@@ -135,6 +146,15 @@ describe("login (CTA-04 a CTA-06)", () => {
     }).catch(() => {})
 
     expect(signInMock.mock.calls[0][1].redirectTo).toBe("/planner")
+  })
+
+  it("brute force: estourado o limite, avisa e nao chama o signIn", async () => {
+    rateLimitMock.mockResolvedValue({ allowed: false, retryAfter: 42 })
+
+    const r = await login({ email: "user@teste.com", password: "Senha123" })
+
+    expect(r).toEqual({ error: "Muitas tentativas. Tente de novo em 42 segundos." })
+    expect(signInMock).not.toHaveBeenCalled()
   })
 })
 
