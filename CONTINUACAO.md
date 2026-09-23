@@ -180,6 +180,12 @@ actions, rotas de API, XSS e headers. Corrigido:
   passa a usar sozinho, sem alteração). **Esse é o único passo que falta pra
   proteção ficar completa.**
 
+**Sobre DDoS:** o rate limit do código NÃO protege contra DDoS de rede,
+isso se resolve na borda. A Vercel já faz mitigação automática (L3/L4).
+O passo a passo pra reforçar (Attack Challenge Mode, regras de firewall)
+está em `docs/seguranca-vercel.md`, e é configuração no painel da Vercel,
+não código.
+
 **Ainda em aberto, precisa de app no ar:**
 - **CSP** (Content-Security-Policy): não configurada. Uma mal calibrada
   quebra o app (scripts inline do Next, data URLs, imagens externas do
