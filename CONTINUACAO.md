@@ -161,6 +161,26 @@ fix --force` quer instalar `next@16.3.6`, que sai do range declarado, então
 é atualização de minor com teste manual depois: login, Mentor (usa Server
 Actions e streaming), upload de foto de perfil e um simulado inteiro.
 
+### 3.1-b Revisão manual de segurança (23/09, commit `595a03f`)
+
+Revisão de código feita à mão (sem custo de IA), cobrindo auth, server
+actions, rotas de API, XSS e headers. Corrigido:
+
+- **IDOR em `toggleMarkForReview`** (simulado): checava sessão mas não a
+  posse do `attemptId`. Dava pra mexer no simulado de outra pessoa. Agora
+  cruza `userId` antes de escrever, como as actions irmãs já faziam.
+- **Abuso de custo no `/api/mentor`**: `messages`/`image` sem limite viravam
+  gasto de cota de IA. Adicionado teto (50 msgs, 100k chars, imagem 8MB).
+- **HSTS** adicionado nos headers.
+
+**Ainda em aberto, precisam de decisão de infra ou de app no ar:**
+- **Rate limiting**: não existe em login (brute force) nem no Mentor. Em
+  serverless pede storage externo (ex.: Upstash Redis). É a pendência de
+  segurança mais relevante que sobrou.
+- **CSP** (Content-Security-Policy): não configurada. Uma mal calibrada
+  quebra o app (scripts inline do Next, data URLs, imagens externas do
+  MiMo/Gemini), então precisa ser afinada com o app rodando.
+
 ### 3.2 O que já está correto
 
 Apurado, não assumido:
