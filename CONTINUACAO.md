@@ -173,10 +173,14 @@ actions, rotas de API, XSS e headers. Corrigido:
   gasto de cota de IA. Adicionado teto (50 msgs, 100k chars, imagem 8MB).
 - **HSTS** adicionado nos headers.
 
-**Ainda em aberto, precisam de decisão de infra ou de app no ar:**
-- **Rate limiting**: não existe em login (brute force) nem no Mentor. Em
-  serverless pede storage externo (ex.: Upstash Redis). É a pendência de
-  segurança mais relevante que sobrou.
+- ~~**Rate limiting**~~ **feito**, commit `9e3d18b`. `src/lib/rate-limit.ts`
+  cobre login, registro, reset de senha e Mentor. Já funciona em memória sem
+  setup; pra virar robusto contra ataque distribuído, criar conta no Upstash
+  e setar `UPSTASH_REDIS_REST_URL` e `UPSTASH_REDIS_REST_TOKEN` (o código já
+  passa a usar sozinho, sem alteração). **Esse é o único passo que falta pra
+  proteção ficar completa.**
+
+**Ainda em aberto, precisa de app no ar:**
 - **CSP** (Content-Security-Policy): não configurada. Uma mal calibrada
   quebra o app (scripts inline do Next, data URLs, imagens externas do
   MiMo/Gemini), então precisa ser afinada com o app rodando.
