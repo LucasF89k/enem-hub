@@ -14,8 +14,9 @@ export const metadata = {
  * cadastro aponta pra cá.
  *
  * O conteúdo descreve o que o código faz de verdade (os terceiros listados
- * são os que existem em src/lib: OpenAI, Gemini, Resend, Cloudinary, Neon e
- * Vercel). Se algum for adicionado ou removido, esta página precisa
+ * são os que existem em src/lib: Xiaomi/MiMo e Gemini para IA (via
+ * OpenRouter quando configurado), Resend, Cloudinary, Neon e Vercel). Se
+ * algum for adicionado ou removido, esta página precisa
  * acompanhar, senão vira declaração falsa.
  */
 export default function PrivacidadePage() {
@@ -77,10 +78,12 @@ export default function PrivacidadePage() {
         </p>
         <ul>
           <li>
-            <strong>OpenAI</strong> e <strong>Google (Gemini)</strong>: recebem
-            o texto que você manda ao Mentor, suas redações quando pede
-            correção e um resumo do seu desempenho quando o plano é
-            recalibrado.
+            <strong>Xiaomi (modelo MiMo)</strong> e{" "}
+            <strong>Google (Gemini)</strong>: são as inteligências artificiais
+            que recebem o texto que você manda ao Mentor, suas redações quando
+            pede correção e um resumo do seu desempenho quando o plano é
+            recalibrado. Dependendo da configuração, esse acesso pode passar
+            pelo intermediário <strong>OpenRouter</strong>.
           </li>
           <li>
             <strong>Resend</strong>: envio de e-mails da plataforma.

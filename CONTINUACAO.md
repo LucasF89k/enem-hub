@@ -245,9 +245,13 @@ código, não achei nada):
 3. **Exportação de dados** (Art. 18, portabilidade). Não existe.
 
 Ponto extra de transparência: dados do aluno são enviados a **terceiros**
-(OpenAI em `src/lib/mimo.ts` e `/api/mentor`; Google Gemini em
-`src/lib/gemini.ts` e `/api/planner/recalibration-check`). Transferência a
-terceiros precisa estar declarada na política, e provavelmente há
+de IA. O `src/lib/mimo.ts` é o modelo **MiMo, da Xiaomi**
+(`api.xiaomimimo.com`), com **OpenRouter** como alternativa; usa o SDK da
+OpenAI só porque a API é compatível com esse formato, mas não é a OpenAI. O
+`src/lib/gemini.ts` é o **Google Gemini**. O Mentor (`/api/mentor`) alterna
+entre MiMo e Gemini, a correção de redação usa MiMo e a recalibração do
+plano usa Gemini. Transferência a terceiros precisa estar declarada na
+política, e provavelmente há
 transferência internacional, o que tem regra própria.
 
 ---
