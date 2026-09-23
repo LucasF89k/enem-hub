@@ -161,6 +161,17 @@ export default function RegisterPage() {
         </Button>
       </form>
 
+      {/* A LGPD exige que a pessoa saiba como os dados dela serão tratados
+          ANTES de entregá-los, então o aviso fica junto do botão de criar
+          conta, não escondido no rodapé. */}
+      <p className="text-center text-xs text-muted-foreground mt-4">
+        Ao criar uma conta, você concorda com a nossa{" "}
+        <Link href="/privacidade" className="underline hover:text-foreground">
+          Política de Privacidade
+        </Link>
+        .
+      </p>
+
       <p className="text-center text-sm text-muted-foreground mt-6">
         Já tem conta?{" "}
         <Link href="/login" className="text-primary font-medium hover:underline">

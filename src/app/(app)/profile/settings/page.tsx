@@ -15,6 +15,7 @@ import { ArrowLeft, Loader2, LogOut, Save } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { CursoUniSelectors } from "@/components/settings/CursoUniSelectors"
+import { PrivacidadeCard } from "@/components/settings/PrivacidadeCard"
 
 interface ProfileData {
   name: string
@@ -161,6 +162,11 @@ export default function SettingsPage() {
           {isPending ? "Salvando…" : "Salvar alterações"}
         </Button>
       </form>
+
+      <Separator />
+
+      {/* Direitos de privacidade (LGPD): baixar os dados e excluir a conta */}
+      <PrivacidadeCard />
 
       <Separator />
 
