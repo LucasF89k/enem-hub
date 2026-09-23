@@ -116,18 +116,27 @@ amenizar.
 
 ### 3.1 Vulnerabilidades de dependência
 
-`npm audit` em 22/09/2026: **20 no total, 4 críticas**.
+> **RESOLVIDO em 23/09/2026, commit `a5b2930`.** O audit saiu de 20 problemas
+> com 4 críticas para **14 com nenhuma crítica**. Versões agora: `next@16.3.6`,
+> `next-auth@5.0.0-beta.32`, `@auth/prisma-adapter@2.11.3`, que puxa o
+> `@auth/core@0.41.3` corrigido.
+>
+> Detalhe que custou um passo a mais: subir só o `next-auth` não bastava. Ele
+> já usava o `@auth/core@0.41.3`, mas o `@auth/prisma-adapter@2.11.2`
+> continuava arrastando a `0.41.2` vulnerável como dependência própria. Só
+> ficou limpo depois de subir o adapter para `2.11.3`.
+>
+> Validado com typecheck, 66 testes, lint e `next build` chegando em
+> "Compiled successfully". **Ainda falta o teste manual** com o app rodando
+> (login, Mentor, upload de foto, um simulado inteiro), que aqui não dá por
+> falta de banco.
+>
+> Sobram 14 moderate/high, a maioria em ferramental de build (`postcss`,
+> `browserslist`, `vitest`) e nos scripts de importação (`adm-zip`,
+> `@xmldom/xmldom`), que não rodam em produção. O texto abaixo fica como
+> registro do que era e do que foi corrigido.
 
-As 4 críticas são em autenticação e framework, o que é o pior lugar possível:
-
-| pacote | instalado | corrige em |
-| --- | --- | --- |
-| `next` | 16.2.9 | 16.3.6 |
-| `next-auth` | 5.0.0-beta.31 | há fix |
-| `@auth/core` | 0.41.2 | há fix |
-| `@auth/prisma-adapter` | 2.11.2 | há fix |
-
-O que tem no `next` 16.2.9, entre outras:
+O que tinha no `next` 16.2.9, entre outras:
 - **RCE não autenticado em servidores Windows**
 - **RCE não autenticado** na Image Optimization API via arquivos AVIF
 - Bypass de Middleware/Proxy no App Router
@@ -242,12 +251,15 @@ Prisma geraria.
 
 ## 6. Ordem sugerida pra retomar
 
-1. **Atualizar o Next** pra 16.3.6 (RCE não autenticado é o risco mais alto
-   em aberto) e os pacotes de auth. Testar login, Mentor, upload e simulado.
+1. ~~Atualizar o Next e os pacotes de auth~~ **feito em 23/09**, commit
+   `a5b2930`. Falta só o teste manual com o app no ar: login, Mentor, upload
+   de foto e um simulado inteiro.
 2. **Ligar o adapter Neon** (seção 2), com o banco acessível pra validar.
+   Esta é a próxima da fila.
 3. Confirmar que a migration do índice foi aplicada.
 4. LGPD: política de privacidade, exclusão de conta, exportação de dados.
 5. Strix, em ambiente de teste separado, com o combinado da seção 3.3.
 
 Itens 1 e 2 mexem em runtime e é melhor não fazer os dois no mesmo deploy:
-se algo quebrar, fica difícil saber qual foi.
+se algo quebrar, fica difícil saber qual foi. Como o 1 já subiu sozinho,
+vale confirmar que a produção está de pé antes de mexer no adapter.
