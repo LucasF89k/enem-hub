@@ -16,6 +16,31 @@ export async function POST(req: NextRequest) {
 
     const { messages, topicId, image } = await req.json()
 
+    // Trava de abuso de custo: mesmo autenticado, um payload gigante (muitas
+    // mensagens, texto enorme ou imagem pesada) vira gasto direto de cota de
+    // IA (MiMo/Gemini). Estes limites são folgados pro uso real do Mentor e
+    // cortam o exagero antes de chamar o provedor.
+    if (!Array.isArray(messages) || messages.length === 0) {
+      return new Response('Requisição inválida', { status: 400 })
+    }
+    if (messages.length > 50) {
+      return new Response('Conversa longa demais. Comece uma nova.', { status: 413 })
+    }
+    const totalChars = messages.reduce(
+      (soma: number, m: { content?: unknown }) =>
+        soma + (typeof m?.content === 'string' ? m.content.length : 0),
+      0,
+    )
+    if (totalChars > 100_000) {
+      return new Response('Mensagem grande demais.', { status: 413 })
+    }
+    // A imagem chega como data URL base64. O upload de perfil já limita em
+    // ~700KB; aqui o teto é maior (a foto de um plano de estudos pode ser
+    // densa), mas ainda limitado pra não virar upload sem fim.
+    if (typeof image === 'string' && image.length > 8_000_000) {
+      return new Response('Imagem grande demais.', { status: 413 })
+    }
+
     const [profile, wrongQuestions, todayPlan, currentTopic, existingCards] = await Promise.all([
       db.userProfile.findUnique({
         where: { userId: session.user.id },

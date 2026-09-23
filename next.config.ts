@@ -23,6 +23,16 @@ const nextConfig: NextConfig = {
             key: "Permissions-Policy",
             value: "camera=(), microphone=(), geolocation=()",
           },
+          // Força HTTPS por 2 anos, incluindo subdomínios. A Vercel já serve
+          // só por HTTPS; isto impede downgrade pra HTTP num primeiro acesso.
+          // Não colocamos Content-Security-Policy aqui de propósito: uma CSP
+          // mal calibrada quebra o app (scripts inline do Next, data URLs das
+          // imagens, imagens externas do MiMo/Gemini), e afinar isso exige
+          // testar com o app rodando. Fica registrado como próximo passo.
+          {
+            key: "Strict-Transport-Security",
+            value: "max-age=63072000; includeSubDomains; preload",
+          },
         ],
       },
       {

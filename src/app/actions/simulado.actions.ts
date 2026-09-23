@@ -85,6 +85,17 @@ export async function toggleMarkForReview(
   const session = await auth()
   if (!session?.user?.id) throw new Error("Unauthorized")
 
+  // Confirma que a tentativa é DESTE usuário antes de mexer nela. Sem isso,
+  // qualquer pessoa logada que soubesse um attemptId alheio conseguiria
+  // marcar/desmarcar questões no simulado de outra (e criar uma resposta
+  // orfa). As outras actions daqui (saveAnswer, finalizeSimulado) já cruzam
+  // userId; esta era a única fora do padrão.
+  const attempt = await db.userSimulado.findFirst({
+    where: { id: attemptId, userId: session.user.id },
+    select: { id: true },
+  })
+  if (!attempt) throw new Error("Unauthorized")
+
   const existing = await db.userSimuladoAnswer.findFirst({
     where: { userSimuladoId: attemptId, questionId },
     select: { id: true, markedForReview: true },
