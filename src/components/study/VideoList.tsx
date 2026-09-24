@@ -35,11 +35,8 @@ export function VideoList({ initialVideos }: VideoListProps) {
         <YoutubeEmptyIcon />
         <p className="text-sm font-medium">Vídeos em breve</p>
         <p className="text-xs text-muted-foreground max-w-xs">
-          Estamos selecionando os melhores vídeos para este tópico. Use{" "}
-          <code className="font-mono text-[11px] bg-muted px-1 py-0.5 rounded">
-            npm run search-videos
-          </code>{" "}
-          para popular o banco.
+          Estamos selecionando as melhores aulas públicas do YouTube para este
+          tópico. Volte em breve.
         </p>
       </div>
     )

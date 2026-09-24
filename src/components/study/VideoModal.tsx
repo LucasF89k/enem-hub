@@ -8,7 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { CheckCircle2, Loader2 } from "lucide-react"
+import { CheckCircle2, Loader2, ExternalLink } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { markVideoWatched } from "@/app/actions/video.actions"
 import type { VideoWithWatched } from "@/app/actions/video.actions"
@@ -84,6 +84,20 @@ export function VideoModal({ video, onClose, onWatched }: VideoModalProps) {
           {video.description && (
             <p className="text-xs text-muted-foreground leading-relaxed">{video.description}</p>
           )}
+
+          {/* Link pro vídeo original no YouTube. Os Termos da API do YouTube
+              pedem que o usuário sempre tenha como chegar no vídeo de origem,
+              e deixar isso explícito reforça que o Vion só indexa conteúdo
+              público de terceiros, sem se apropriar dele. */}
+          <a
+            href={`https://www.youtube.com/watch?v=${video.youtubeId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+          >
+            <ExternalLink className="h-3.5 w-3.5" />
+            Assistir no YouTube
+          </a>
 
           {/* XP toast inline */}
           {showXP && (
