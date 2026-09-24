@@ -286,6 +286,33 @@ transferência internacional, o que tem regra própria.
 
 ---
 
+## 4-b. Vídeos do YouTube e comercialização (risco legal)
+
+As vídeoaulas são **embed do player oficial do YouTube**, o modelo de menor
+risco: guardamos só o `youtubeId` (nunca o vídeo), e reproduzimos via
+`iframe` de `youtube.com/embed`. O criador continua dono, recebe views e
+monetização. Isso não é pirataria nem re-hospedagem.
+
+Feito em 24/09 (commit `4b97563`): link "Assistir no YouTube" no player e
+limpeza de um texto que expunha `npm run search-videos` pro usuário final.
+
+**O que continua sendo obrigação sua antes de cobrar dinheiro:**
+- Ler os [YouTube API Services Terms](https://developers.google.com/youtube/terms/api-services-terms-of-service).
+  O `scripts/search-videos.ts` usa a YouTube Data API, que tem regras de UI
+  (mostrar branding, link pro original) e cota. Violar isso pode fazer o
+  YouTube bloquear o embed ou revogar a chave, e aí os vídeos param no app
+  inteiro. Esse é o risco mais provável, mais que processo de criador.
+- Não dar a entender que canais como "Descomplica" ou "Noslen" são
+  **parceiros** do Vion (é concorrente comercial direto; curadoria neutra é
+  ok, sugerir parceria não).
+- Falar com um advogado de propriedade intelectual antes de comercializar.
+  Nada disso é parecer jurídico, é orientação de risco técnico.
+
+- NUNCA baixar e re-hospedar os vídeos: aí vira pirataria clara. O modelo
+  atual (embed) é o que mantém o risco baixo.
+
+---
+
 ## 5. Coisas que aprendemos e não podem se perder
 
 ### 5.1 Service Worker segura troca de imagem por um carregamento
