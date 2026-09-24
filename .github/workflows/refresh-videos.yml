@@ -1,0 +1,49 @@
+name: Refresh dos vídeos do YouTube
+
+# Por que existe: as Políticas de Desenvolvedor do YouTube (III.E.4) só
+# permitem guardar dados da API (título, canal, duração, descrição) por até
+# 30 dias sem atualizar, e exigem checar nesse prazo se o vídeo saiu do ar.
+# Este workflow roda scripts/refresh-videos.ts sozinho, toda semana, pra que
+# ninguém precise lembrar de rodar na mão e o prazo nunca estoure.
+
+on:
+  # Toda segunda-feira às 06:00 UTC (03:00 no horário de Brasília). Semanal,
+  # bem dentro da janela de 30 dias, com folga pra uma execução falhar e a
+  # seguinte cobrir.
+  schedule:
+    - cron: "0 6 * * 1"
+  # Permite rodar na hora pelo painel do GitHub (aba Actions), sem esperar
+  # a segunda-feira. Útil pra testar ou forçar uma atualização.
+  workflow_dispatch:
+
+# Duas execuções simultâneas mexeriam no mesmo banco; cancela a antiga se
+# uma nova começar.
+concurrency:
+  group: refresh-videos
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    # Se travar (rede/API), não deixa o job pendurado consumindo minutos.
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instala dependências
+        run: npm ci
+
+      - name: Gera o Prisma Client
+        run: npx prisma generate
+
+      - name: Atualiza os vídeos e remove os que saíram do ar
+        run: npm run refresh-videos
+        env:
+          # Configurar em Settings > Secrets and variables > Actions do repo.
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}

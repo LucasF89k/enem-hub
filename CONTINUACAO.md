@@ -306,8 +306,15 @@ Corrigido o que dava:**
   `scripts/refresh-videos.ts` (`npm run refresh-videos`): reconsulta a API em
   lotes de 50, atualiza os metadados e apaga os vídeos que sumiram
   (deletado/privado). O `youtubeId` pode ficar pra sempre (é o
-  identificador, não "dados"). **Falta agendar isso** pra rodar sozinho a
-  cada menos de 30 dias (cron/GitHub Action) - por enquanto é manual.
+  identificador, não "dados").
+
+  **Agendado** (24/09): `.github/workflows/refresh-videos.yml` roda o refresh
+  toda segunda-feira, automático. Pra funcionar, precisa de dois secrets no
+  repositório (Settings > Secrets and variables > Actions):
+  `DATABASE_URL` e `YOUTUBE_API_KEY`. **Enquanto esses secrets não forem
+  configurados, o workflow falha** (fica quieto, mas não atualiza nada). Dá
+  pra rodar na mão pelo painel do GitHub (aba Actions > Refresh dos vídeos >
+  Run workflow) pra testar depois de setar os secrets.
 
 - **autoplay=1 -> autoplay=0:** com autoplay, o player coleta dados no
   carregamento, antes de o usuário interagir; as Políticas recomendam
