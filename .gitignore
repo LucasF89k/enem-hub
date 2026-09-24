@@ -32,6 +32,9 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# ...menos o modelo sem segredos, que DEVE ser versionado pra documentar
+# quais variaveis o app precisa.
+!.env.example
 
 # vercel
 .vercel

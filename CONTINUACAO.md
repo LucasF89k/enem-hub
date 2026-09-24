@@ -385,10 +385,19 @@ Prisma geraria.
    `npm audit` agora dá **0**.
 3. ~~LGPD~~ **implementado**, commit `bdcc3b5`. Falta o e-mail de suporte na
    política e o teste com banco.
-4. **Ligar o adapter Neon** (seção 2), com o banco acessível. É a próxima da
-   fila e a última pendência de performance.
-5. Confirmar que a migration do índice foi aplicada.
-6. Strix, em ambiente de teste separado, com o combinado da seção 3.3.
+4. **Configurar o Resend (e-mail).** O "esqueci a senha" NÃO funciona hoje:
+   a `RESEND_API_KEY` não está no `.env`, então o `sendEmail` sempre falha.
+   O código está certo, é só configuração. Pra testar: criar conta grátis no
+   resend.com, gerar a API Key e pôr `RESEND_API_KEY` e `EMAIL_FROM` no `.env`
+   (com `onboarding@resend.dev` só entrega pro próprio e-mail da conta). Pra
+   enviar pra qualquer aluno, verificar um **domínio próprio** no Resend e
+   trocar o `EMAIL_FROM`. O dono vai pegar o domínio primeiro, então isto
+   ficou parado esperando isso. Ver `.env.example` pra lista completa de
+   variáveis.
+5. **Ligar o adapter Neon** (seção 2), com o banco acessível. É a última
+   pendência de performance.
+6. Confirmar que a migration do índice foi aplicada.
+7. Strix, em ambiente de teste separado, com o combinado da seção 3.3.
    **Ainda não rodou** (ver 3.3 pro porquê).
 
 **Testes manuais acumulados pro próximo deploy**, todos por falta de banco
