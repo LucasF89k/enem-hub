@@ -296,6 +296,31 @@ monetização. Isso não é pirataria nem re-hospedagem.
 Feito em 24/09 (commit `4b97563`): link "Assistir no YouTube" no player e
 limpeza de um texto que expunha `npm run search-videos` pro usuário final.
 
+**Li os Termos e as Políticas de Desenvolvedor oficiais do YouTube (24/09).
+Corrigido o que dava:**
+
+- **Regra dos 30 dias (a mais séria):** as Políticas (III.E.4) dizem que
+  dados da API guardados (título, canal, duração, descrição) só podem ficar
+  30 dias sem refresh, e que a cada 30 dias é preciso checar se o vídeo não
+  saiu do ar. O app guardava tudo indefinidamente. Criado
+  `scripts/refresh-videos.ts` (`npm run refresh-videos`): reconsulta a API em
+  lotes de 50, atualiza os metadados e apaga os vídeos que sumiram
+  (deletado/privado). O `youtubeId` pode ficar pra sempre (é o
+  identificador, não "dados"). **Falta agendar isso** pra rodar sozinho a
+  cada menos de 30 dias (cron/GitHub Action) - por enquanto é manual.
+
+- **autoplay=1 -> autoplay=0:** com autoplay, o player coleta dados no
+  carregamento, antes de o usuário interagir; as Políticas recomendam
+  desligar. Trocado no `VideoModal`.
+
+**Ainda em aberto (baixo risco pro nicho, mas está nos termos):**
+
+- **Made For Kids:** as Políticas pedem verificar o status "Made For Kids"
+  de cada vídeo embedado e, se for infantil, desligar tracking (COPPA/GDPR).
+  Conteúdo de ENEM raramente é "For Kids", então o risco é baixo, mas pra
+  ficar 100% em conformidade seria uma chamada extra à API por vídeo no
+  `search-videos.ts`/`refresh-videos.ts`, guardando um flag no schema.
+
 **O que continua sendo obrigação sua antes de cobrar dinheiro:**
 - Ler os [YouTube API Services Terms](https://developers.google.com/youtube/terms/api-services-terms-of-service).
   O `scripts/search-videos.ts` usa a YouTube Data API, que tem regras de UI

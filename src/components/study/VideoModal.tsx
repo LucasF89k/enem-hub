@@ -60,8 +60,14 @@ export function VideoModal({ video, onClose, onWatched }: VideoModalProps) {
 
         {/* Player */}
         <div className="w-full aspect-video shrink-0 bg-black">
+          {/* autoplay=0 de propósito: com autoplay ligado, o player do YouTube
+              coleta e compartilha dados com o YouTube já no carregamento, antes
+              de qualquer interação. As Políticas de Desenvolvedor do YouTube
+              recomendam autoplay=false pra limitar isso, e com público
+              adolescente (LGPD/COPPA) isso pesa mais. O aluno dá um play a
+              mais, e em troca nada é coletado até ele decidir assistir. */}
           <iframe
-            src={`https://www.youtube.com/embed/${video.youtubeId}?autoplay=1&rel=0`}
+            src={`https://www.youtube.com/embed/${video.youtubeId}?autoplay=0&rel=0`}
             title={video.title}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowFullScreen
