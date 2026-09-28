@@ -3,7 +3,8 @@ import { redirect } from "next/navigation"
 import { db } from "@/lib/db"
 import { differenceInDays } from "date-fns"
 import { startOfDayBR, addDaysBR } from "@/lib/date-br"
-import { Timer, Repeat, Brain, CalendarDays } from "lucide-react"
+import { Timer, Repeat, Brain, CalendarDays, Crown, Zap } from "lucide-react"
+import Link from "next/link"
 
 import { detectTrail, getTrailConfig } from "@/lib/trail"
 import { effectiveStreak } from "@/lib/xp"
@@ -27,7 +28,7 @@ export default async function DashboardPage() {
   const todayStart = startOfDayBR()
   const tomorrowStart = addDaysBR(todayStart, 1)
 
-  const [profile, todayAgg, dueReviews] = await Promise.all([
+  const [profile, todayAgg, dueReviews, sub] = await Promise.all([
     db.userProfile.findUnique({
       where: { userId },
       select: {
@@ -47,7 +48,17 @@ export default async function DashboardPage() {
     db.flashcardReview.count({
       where: { userId, nextReview: { lte: new Date() } },
     }),
+    db.subscription.findUnique({
+      where: { userId },
+      select: { plano: true, status: true, periodoFim: true },
+    }),
   ])
+
+  const isPro =
+    sub &&
+    (sub.status === "ATIVA" || sub.status === "TRIAL") &&
+    sub.plano !== "FREE" &&
+    (!sub.periodoFim || sub.periodoFim > new Date())
 
   const minutesToday = todayAgg._sum.duration ?? 0
   const dailyGoal = profile?.dailyStudyGoal ?? 120
@@ -149,6 +160,24 @@ export default async function DashboardPage() {
           estimatedScore={estimatedScore}
         />
       </section>
+
+      {/* Banner Pro — só para usuários Free */}
+      {!isPro && (
+        <Link
+          href="/assine"
+          className="opal-enter mt-8 flex items-center gap-3 rounded-2xl bg-gradient-to-r from-violet-600/20 to-fuchsia-600/20 px-4 py-4 ring-1 ring-violet-500/30 transition-all hover:from-violet-600/30 hover:to-fuchsia-600/30 active:scale-[0.98]"
+          style={{ animationDelay: "560ms" }}
+        >
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-600 shadow">
+            <Crown className="h-5 w-5 text-white" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-bold text-violet-200">Torne-se Vion Pro</p>
+            <p className="text-xs text-violet-400">Mentor ilimitado, sem anúncios e muito mais</p>
+          </div>
+          <Zap className="h-4 w-4 shrink-0 text-amber-400" />
+        </Link>
+      )}
     </div>
   )
 }

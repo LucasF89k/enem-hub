@@ -19,9 +19,11 @@ import {
   GraduationCap,
   ChevronRight,
   Lock,
+  Crown,
 } from "lucide-react"
 import { findCurso } from "@/constants/cursos"
 import { findUniversidade } from "@/constants/universidades"
+import { PlanoTipo } from "@prisma/client"
 
 export const metadata = { title: "Perfil" }
 
@@ -30,7 +32,7 @@ export default async function ProfilePage() {
   if (!session?.user?.id) redirect("/login")
   const userId = session.user.id
 
-  const [user, profile, focusAgg, myXPRow, earnedRows] = await Promise.all([
+  const [user, profile, focusAgg, myXPRow, earnedRows, sub] = await Promise.all([
     db.user.findUnique({
       where: { id: userId },
       select: { name: true, email: true, image: true, createdAt: true },
@@ -58,7 +60,17 @@ export default async function ProfilePage() {
       where: { userId },
       select: { earnedAt: true, achievement: { select: { condition: true } } },
     }),
+    db.subscription.findUnique({
+      where: { userId },
+      select: { plano: true, status: true, periodoFim: true },
+    }),
   ])
+
+  const isPro =
+    sub &&
+    (sub.status === "ATIVA" || sub.status === "TRIAL") &&
+    sub.plano !== PlanoTipo.FREE &&
+    (!sub.periodoFim || sub.periodoFim > new Date())
 
   if (!user) redirect("/login")
 
@@ -246,6 +258,33 @@ export default async function ProfilePage() {
         <div className="mt-6 flex flex-col gap-2 px-4">
           <LinkRow href="/analytics" label="Ver analytics" />
           <LinkRow href="/ranking" label="Ranking semanal" />
+          {/* Assinatura — destaque se Free, simples se Pro */}
+          {isPro ? (
+            <Link
+              href="/assine"
+              className="opal-glass-card flex items-center justify-between rounded-xl px-4 py-3 text-sm transition-colors hover:bg-muted/40"
+            >
+              <span className="flex items-center gap-2">
+                <Crown className="h-4 w-4 text-amber-400" />
+                Assinatura
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-400 ring-1 ring-amber-500/30">
+                  Pro
+                </span>
+              </span>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            </Link>
+          ) : (
+            <Link
+              href="/assine"
+              className="flex items-center justify-between rounded-xl bg-gradient-to-r from-violet-600/20 to-fuchsia-600/20 px-4 py-3 text-sm ring-1 ring-violet-500/30 transition-colors hover:from-violet-600/30 hover:to-fuchsia-600/30"
+            >
+              <span className="flex items-center gap-2 font-semibold text-violet-300">
+                <Crown className="h-4 w-4 text-amber-400" />
+                Assine o Vion Pro
+              </span>
+              <ChevronRight className="h-4 w-4 text-violet-400" />
+            </Link>
+          )}
           <LinkRow href="/profile/settings" label="Configurações" />
         </div>
       </div>
