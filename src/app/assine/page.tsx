@@ -6,7 +6,6 @@ import { db } from "@/lib/db"
 import { PlanoTipo } from "@prisma/client"
 import { Check, Crown, ChevronLeft } from "lucide-react"
 import Link from "next/link"
-import { Mascote } from "@/components/Mascote"
 
 export const metadata = {
   title: "Vion Pro — Compare os planos",
@@ -86,18 +85,16 @@ export default async function AssinePage() {
         <div className="w-9" />
       </div>
 
-      {/* Mascote hero */}
-      <div className="relative flex flex-col items-center bg-gradient-to-b from-[#2d1b69] to-[#4c1d95] pb-0 pt-8">
-        {/* estrelas decorativas */}
+      {/* Hero */}
+      <div className="relative flex flex-col items-center bg-gradient-to-b from-[#2d1b69] to-[#4c1d95] pb-6 pt-8">
         <div className="absolute left-8 top-8 text-white/30 text-2xl select-none">✦</div>
         <div className="absolute right-10 top-12 text-white/20 text-lg select-none">✦</div>
         <div className="absolute left-1/3 top-3 text-white/15 text-sm select-none">✦</div>
 
-        {/* Mascote — pose "apontando pro futuro" (confiante) */}
-        <div className="relative mb-[-20px]">
-          <div className="absolute inset-0 scale-75 rounded-full bg-violet-500/30 blur-2xl" />
-          <Mascote pose="confiante" size={160} />
+        <div className="flex h-24 w-24 items-center justify-center rounded-full bg-white/10 backdrop-blur ring-2 ring-white/20">
+          <Crown className="h-12 w-12 text-amber-400 drop-shadow" />
         </div>
+        <p className="mt-3 text-sm font-semibold uppercase tracking-widest text-white/70">Vion Pro</p>
       </div>
 
       {/* Cards de plano */}

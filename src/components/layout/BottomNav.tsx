@@ -22,7 +22,6 @@ import {
 } from "@/components/ui/sheet"
 import { usePlano } from "@/hooks/use-plano"
 import { PlanoTipo } from "@prisma/client"
-import { Mascote } from "@/components/Mascote"
 
 interface Item {
   icon: LucideIcon
@@ -120,8 +119,8 @@ function MaisMenu() {
             href="/assine"
             className="flex items-center gap-4 px-6 py-4 text-base font-semibold transition-colors hover:bg-muted/40"
           >
-            <span className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-violet-500/10">
-              <Mascote pose="aprovando" size={40} />
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-500/15">
+              <Crown className="h-5 w-5 text-violet-400" />
             </span>
             <span className="flex-1">Assinatura</span>
             {pro && labelPlano && (
