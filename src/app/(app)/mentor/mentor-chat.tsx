@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import ReactMarkdown from "react-markdown"
-import { OpalCrystal } from "@/components/OpalCrystal"
+import { Mascote } from "@/components/Mascote"
 import remarkGfm from "remark-gfm"
 import { useMentorStore } from "@/store/mentor-store"
 import { fileToAttachment, isImageDataUrl, ATTACH_ACCEPT } from "@/lib/attach"
@@ -29,26 +29,14 @@ const QUICK_ACTIONS = [
   { label: "Estratégia de prova", text: "Como devo gerir meu tempo durante o ENEM? Me dê uma estratégia prática." },
 ]
 
-/** Mascote, usado no cabeçalho ("Mentor ENEM"). */
-function MentorMascot({ size = 30 }: { size?: number }) {
-  return (
-    <span
-      className="inline-block shrink-0 overflow-hidden rounded-full"
-      style={{ width: size, height: size }}
-    >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/opal/mascote.webp" alt="Mentor" className="h-full w-full object-cover" />
-    </span>
-  )
+/** Mascote no cabeçalho do Mentor — pose "apontando/confiante". */
+function MentorMascot({ size = 36 }: { size?: number }) {
+  return <Mascote pose="confiante" size={size} />
 }
 
-/** Avatar das bolhas do chat: a gema de opala ondulando (slime). */
-function MentorAvatar({ size = 32, slime = false }: { size?: number; slime?: boolean }) {
-  return (
-    <span className="shrink-0" style={{ width: size, height: size }}>
-      <OpalCrystal size={size} stage={3} slime={slime} icon />
-    </span>
-  )
+/** Avatar das bolhas do chat — pose "estudando" (com notebook). */
+function MentorAvatar({ size = 36 }: { size?: number; slime?: boolean }) {
+  return <Mascote pose="estudando" size={size} />
 }
 
 function TypingDots() {

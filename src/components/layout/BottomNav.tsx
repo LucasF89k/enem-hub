@@ -8,17 +8,26 @@ import {
   BookOpen,
   MessageCircle,
   Medal,
-  User,
   CalendarRange,
+  MoreHorizontal,
+  User,
+  Crown,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from "@/components/ui/sheet"
+import { usePlano } from "@/hooks/use-plano"
+import { PlanoTipo } from "@prisma/client"
+import { Mascote } from "@/components/Mascote"
 
 interface Item {
   icon: LucideIcon
   label: string
   href: string
-  /** Rotas extras que também acendem este item (além de href e href/*). */
   match?: string[]
 }
 
@@ -37,10 +46,8 @@ const ITEMS: Item[] = [
   },
   { icon: MessageCircle, label: "Mentor", href: "/mentor" },
   { icon: Medal, label: "Ranking", href: "/ranking" },
-  { icon: User, label: "Perfil", href: "/profile" },
 ]
 
-/** Cápsula de fundo que desliza entre os itens ativos (Opal §4.6/6.6). */
 function ActiveHighlight() {
   return (
     <motion.span
@@ -48,6 +55,92 @@ function ActiveHighlight() {
       className="absolute inset-x-1 inset-y-1 -z-10 rounded-2xl bg-primary/10"
       transition={{ type: "spring", stiffness: 420, damping: 34 }}
     />
+  )
+}
+
+function MaisMenu() {
+  const { pro, plano } = usePlano()
+  const pathname = usePathname()
+  const isActive =
+    pathname.startsWith("/profile") || pathname.startsWith("/assine")
+
+  const labelPlano =
+    plano === PlanoTipo.PRO_ANUAL
+      ? "Pro Anual"
+      : plano === PlanoTipo.PRO_MENSAL
+        ? "Pro Mensal"
+        : null
+
+  return (
+    <Sheet>
+      <SheetTrigger asChild>
+        <button
+          aria-label="Mais opções"
+          className={cn(
+            "relative flex min-h-[56px] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-0.5 transition-colors",
+            isActive
+              ? "text-primary"
+              : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          {isActive && <ActiveHighlight />}
+          <MoreHorizontal
+            className="h-5 w-5 shrink-0"
+            strokeWidth={isActive ? 2.5 : 1.75}
+          />
+          <span className="w-full truncate text-center text-[9.5px] font-medium leading-none">
+            Mais
+          </span>
+        </button>
+      </SheetTrigger>
+
+      <SheetContent
+        side="bottom"
+        className="rounded-t-2xl px-0 pb-0"
+        // remove o X padrão — não há título, e o overlay fecha ao tocar fora
+        aria-describedby={undefined}
+      >
+        {/* Puxador visual */}
+        <div className="mx-auto mb-4 mt-2 h-1 w-10 rounded-full bg-muted" />
+
+        <nav className="flex flex-col divide-y divide-border">
+          {/* Perfil */}
+          <Link
+            href="/profile"
+            className="flex items-center gap-4 px-6 py-4 text-base font-semibold transition-colors hover:bg-muted/40"
+          >
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-500/15">
+              <User className="h-5 w-5 text-blue-400" />
+            </span>
+            Perfil
+          </Link>
+
+          {/* Assinatura */}
+          <Link
+            href="/assine"
+            className="flex items-center gap-4 px-6 py-4 text-base font-semibold transition-colors hover:bg-muted/40"
+          >
+            <span className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-violet-500/10">
+              <Mascote pose="aprovando" size={40} />
+            </span>
+            <span className="flex-1">Assinatura</span>
+            {pro && labelPlano && (
+              <span className="rounded-full bg-amber-500/20 px-2.5 py-0.5 text-xs font-bold text-amber-400 ring-1 ring-amber-500/30">
+                {labelPlano}
+              </span>
+            )}
+            {!pro && (
+              <span className="rounded-full bg-violet-500/20 px-2.5 py-0.5 text-xs font-bold text-violet-400">
+                Upgrade
+              </span>
+            )}
+          </Link>
+        </nav>
+
+        {/* Espaço para safe-area iOS */}
+        <div style={{ height: "max(env(safe-area-inset-bottom), 1.5rem)" }} />
+      </SheetContent>
+    </Sheet>
   )
 }
 
@@ -76,17 +169,25 @@ export function BottomNav() {
               aria-current={active ? "page" : undefined}
               className={cn(
                 "relative flex min-h-[56px] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-0.5 transition-colors",
-                active ? "text-primary" : "text-muted-foreground hover:text-foreground",
+                active
+                  ? "text-primary"
+                  : "text-muted-foreground hover:text-foreground",
               )}
             >
               {active && <ActiveHighlight />}
-              <Icon className="h-5 w-5 shrink-0" strokeWidth={active ? 2.5 : 1.75} />
+              <Icon
+                className="h-5 w-5 shrink-0"
+                strokeWidth={active ? 2.5 : 1.75}
+              />
               <span className="w-full truncate text-center text-[9.5px] font-medium leading-none">
                 {item.label}
               </span>
             </Link>
           )
         })}
+
+        {/* Botão ⋯ com Sheet */}
+        <MaisMenu />
       </div>
     </nav>
   )

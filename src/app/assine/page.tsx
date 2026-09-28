@@ -6,7 +6,7 @@ import { db } from "@/lib/db"
 import { PlanoTipo } from "@prisma/client"
 import { Check, Crown, ChevronLeft } from "lucide-react"
 import Link from "next/link"
-import Image from "next/image"
+import { Mascote } from "@/components/Mascote"
 
 export const metadata = {
   title: "Vion Pro — Compare os planos",
@@ -87,18 +87,16 @@ export default async function AssinePage() {
       </div>
 
       {/* Mascote hero */}
-      <div className="relative flex flex-col items-center bg-gradient-to-b from-[#4b2d8f] to-[#6b21a8] pb-0 pt-6">
+      <div className="relative flex flex-col items-center bg-gradient-to-b from-[#2d1b69] to-[#4c1d95] pb-0 pt-8">
         {/* estrelas decorativas */}
-        <div className="absolute left-8 top-8 text-white/40 text-2xl select-none">✦</div>
-        <div className="absolute right-10 top-12 text-white/30 text-lg select-none">✦</div>
-        <div className="absolute left-1/4 top-4 text-white/20 text-sm select-none">✦</div>
+        <div className="absolute left-8 top-8 text-white/30 text-2xl select-none">✦</div>
+        <div className="absolute right-10 top-12 text-white/20 text-lg select-none">✦</div>
+        <div className="absolute left-1/3 top-3 text-white/15 text-sm select-none">✦</div>
 
-        {/* Orb / mascote */}
-        <div className="relative mb-[-28px] flex h-32 w-32 items-center justify-center">
-          <div className="absolute inset-0 rounded-full bg-white/10 blur-xl" />
-          <div className="relative flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-br from-violet-400 via-purple-500 to-fuchsia-600 shadow-2xl ring-4 ring-white/20">
-            <Crown className="h-12 w-12 text-white drop-shadow" />
-          </div>
+        {/* Mascote — pose "apontando pro futuro" (confiante) */}
+        <div className="relative mb-[-20px]">
+          <div className="absolute inset-0 scale-75 rounded-full bg-violet-500/30 blur-2xl" />
+          <Mascote pose="confiante" size={160} />
         </div>
       </div>
 
