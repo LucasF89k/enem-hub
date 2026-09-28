@@ -10,7 +10,7 @@ import { Crown } from "lucide-react"
 interface Props {
   planoId: PlanoId
   label?: string
-  variant?: "amber" | "emerald"
+  variant?: "amber" | "emerald" | "purple"
 }
 
 export function BotaoAssinar({
@@ -24,8 +24,10 @@ export function BotaoAssinar({
 
   const cores =
     variant === "emerald"
-      ? "bg-emerald-500 hover:bg-emerald-400 text-black"
-      : "bg-amber-500 hover:bg-amber-400 text-black"
+      ? "bg-emerald-500 hover:bg-emerald-400 text-white"
+      : variant === "purple"
+        ? "bg-[#6b21a8] hover:bg-[#7c3aed] text-white"
+        : "bg-amber-500 hover:bg-amber-400 text-black"
 
   function handleClick() {
     setErro(null)
@@ -46,9 +48,8 @@ export function BotaoAssinar({
       <button
         onClick={handleClick}
         disabled={pending}
-        className={`flex w-full items-center justify-center gap-2 rounded-xl px-5 py-3 font-semibold transition-colors disabled:opacity-60 ${cores}`}
+        className={`flex w-full items-center justify-center gap-2 rounded-2xl px-5 py-3.5 text-sm font-black uppercase tracking-wide transition-all active:scale-95 disabled:opacity-60 ${cores}`}
       >
-        <Crown className="h-4 w-4" />
         {pending ? "Aguarde..." : label}
       </button>
       {erro && <p className="text-center text-xs text-red-400">{erro}</p>}
