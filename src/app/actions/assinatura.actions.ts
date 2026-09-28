@@ -4,7 +4,6 @@ import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { abacate, ABACATE_PRODUTOS, PRECOS, type PlanoId } from "@/lib/abacatepay"
 import { PlanoTipo } from "@prisma/client"
-import { PaymentMethod } from "@abacatepay/types/v2"
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
 
@@ -64,34 +63,40 @@ export async function iniciarAssinatura(planoId: PlanoId): Promise<{
       usuario.email,
     )
 
-    const resultado = await abacate.subscriptions.create({
-      name: planoId === "PRO_MENSAL" ? "Vion Pro Mensal" : "Vion Pro Anual",
-      amount: PRECOS[planoId],
-      externalId: `${sessao.user.id}_${planoId}_${Date.now()}`,
-      method: PaymentMethod.Card,
-      frequency: {
-        cycle: planoId === "PRO_MENSAL" ? "MONTHLY" : "YEARLY",
-        dayOfProcessing: new Date().getDate(),
+    const apiKey = process.env.ABACATEPAY_API_KEY!
+
+    const res = await fetch("https://api.abacatepay.com/v2/subscriptions/create", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
       },
-      customerId,
-      retryPolicy: { maxRetry: 3, retryEvery: 2 },
+      body: JSON.stringify({
+        items: [{ productId, quantity: 1 }],
+        externalId: `${sessao.user.id}_${planoId}_${Date.now()}`,
+        methods: ["CARD"],
+        customerId,
+        completionUrl: `${APP_URL}/assine/sucesso`,
+        returnUrl: `${APP_URL}/assine`,
+        retryPolicy: { maxRetry: 3, retryEvery: 2 },
+      }),
     })
 
-    if (!resultado.success || !resultado.data) {
-      console.error("[assinatura] AbacatePay error:", resultado.error)
-      return { ok: false, erro: resultado.error ?? "Erro ao criar assinatura" }
+    const json = await res.json() as { data?: { id: string; url?: string }; error?: string }
+    console.log("[assinatura] AbacatePay response:", JSON.stringify(json))
+
+    if (!res.ok || !json.data) {
+      console.error("[assinatura] AbacatePay error:", json.error)
+      return { ok: false, erro: json.error ?? `Erro HTTP ${res.status}` }
     }
 
     // Salva o ID da assinatura criada (status virá pelo webhook)
     await db.subscription.update({
       where: { userId: sessao.user.id },
-      data: { abacateSubscriptionId: resultado.data.id },
+      data: { abacateSubscriptionId: json.data.id },
     })
 
-    // A URL de checkout vem no campo url da assinatura
-    const url =
-      (resultado.data as unknown as Record<string, string>).url ??
-      `${APP_URL}/assine/pendente`
+    const url = json.data.url ?? `${APP_URL}/assine/pendente`
 
     return { ok: true, url }
   } catch (err) {
