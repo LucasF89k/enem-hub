@@ -72,7 +72,7 @@ export async function iniciarAssinatura(planoId: PlanoId): Promise<{
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        items: [{ productId: produtoId, quantity: 1 }],
+        items: [{ id: produtoId, quantity: 1 }],
         externalId: `${sessao.user.id}_${planoId}_${Date.now()}`,
         methods: ["CARD"],
         customerId,
