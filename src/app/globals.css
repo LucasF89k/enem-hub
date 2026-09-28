@@ -39,54 +39,44 @@
 :root {
   --radius: 0.5rem;
 
-  /* Não branco puro: um cinza-azulado bem sutil (mesmo matiz 224 do
-     foreground e do fundo escuro), pra combinar com a imagem de fundo
-     espacial (caverna/nebulosa) em vez de destoar dela. */
-  --background: hsl(224 30% 96%);
-  --foreground: hsl(224 71.4% 4.1%);
+  /* Fundo roxo-escuro suave: combina com a nebulosa/caverna do hero
+     e mantém a identidade roxa da marca no modo claro. */
+  --background: hsl(248 28% 12%);
+  --foreground: hsl(210 20% 94%);
 
-  --card: hsl(224 25% 98.5%);
-  --card-foreground: hsl(224 71.4% 4.1%);
+  --card: hsl(248 22% 16%);
+  --card-foreground: hsl(210 20% 94%);
 
-  --popover: hsl(224 25% 98.5%);
-  --popover-foreground: hsl(224 71.4% 4.1%);
+  --popover: hsl(248 22% 16%);
+  --popover-foreground: hsl(210 20% 94%);
 
-  /* Mint principal: mesma identidade do dark mode (ver comentário lá),
-     só mais escuro (163 75% 26% em vez de 163 60% 58%) pro contraste com
-     texto branco em cima ficar bom em fundo claro (~5.7:1, acima do AA). */
-  --primary: hsl(163 75% 26%);
-  --primary-foreground: hsl(0 0% 100%);
+  --primary: hsl(163 60% 52%);
+  --primary-foreground: hsl(220 26% 6%);
 
-  /* Escurecidos junto com o background (que deixou de ser 100%): mantém a
-     mesma diferença perceptível de antes entre fundo da página e fundo de
-     card/badge secundário, senão os dois ficam indistinguíveis. */
-  --secondary: hsl(220 18% 92%);
-  --secondary-foreground: hsl(220.9 39.3% 11%);
+  --secondary: hsl(248 20% 20%);
+  --secondary-foreground: hsl(210 20% 88%);
 
-  --muted: hsl(220 18% 92%);
-  --muted-foreground: hsl(220 8.9% 40%);
+  --muted: hsl(248 20% 20%);
+  --muted-foreground: hsl(248 12% 60%);
 
-  /* Verde conquista */
-  --accent: hsl(142 71% 45%);
-  --accent-foreground: hsl(0 0% 100%);
+  --accent: hsl(157 78% 68%);
+  --accent-foreground: hsl(220 26% 6%);
 
-  --destructive: hsl(0 84.2% 60.2%);
+  --destructive: hsl(0 79% 65%);
   --destructive-foreground: hsl(0 0% 98%);
 
-  --border: hsl(220 18% 88%);
-  --input: hsl(220 18% 88%);
-  --ring: hsl(163 75% 26%);
+  --border: hsl(0 0% 100% / 0.10);
+  --input: hsl(0 0% 100% / 0.10);
+  --ring: hsl(163 60% 52%);
 
-  /* Amarelo atenção */
   --warning: hsl(38 92% 50%);
   --warning-foreground: hsl(0 0% 5%);
 
-  /* Tokens do gauge/glow "Opal": mesma paleta mint/purple do dark mode */
-  --gauge-track: hsl(220 18% 88%);
-  --gauge-from: hsl(163 75% 26%);
-  --gauge-to: hsl(142 71% 45%);
-  --glow-mint: hsl(163 75% 26%);
-  --glow-purple: hsl(252 47% 55%);
+  --gauge-track: hsl(0 0% 100% / 0.10);
+  --gauge-from: hsl(206 70% 63%);
+  --gauge-to: hsl(157 78% 68%);
+  --glow-mint: hsl(157 78% 68%);
+  --glow-purple: hsl(252 47% 62%);
 }
 
 /* ── Dark theme: paleta inspirada no Opal (dark/mint/glow) ── */
@@ -203,12 +193,7 @@
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--glow-mint) 5%, transparent) inset,
     0 12px 32px -16px color-mix(in srgb, black 60%, transparent);
 }
-:root:not(.dark) .opal-glass-card {
-  background: var(--card);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  box-shadow: none;
-}
+/* light mode usa o mesmo glass do dark — fundo já é escuro */
 
 @media (prefers-reduced-motion: reduce) {
   .opal-breathing-glow {
