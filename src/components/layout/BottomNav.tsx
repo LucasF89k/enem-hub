@@ -142,7 +142,7 @@ function MaisMenu() {
                   </span>
                 )}
                 {!pro && (
-                  <span className="rounded-full bg-violet-500/20 px-2 py-0.5 text-[10px] font-bold text-violet-400">
+                  <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-400 ring-1 ring-emerald-500/30">
                     Upgrade
                   </span>
                 )}
