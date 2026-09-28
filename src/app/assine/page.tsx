@@ -143,7 +143,7 @@ export default async function AssinePage() {
               <img
                 src="/mascote/icone-mensal.png"
                 alt=""
-                className="h-16 w-16 shrink-0 object-contain drop-shadow-lg"
+                className="h-14 w-28 shrink-0 object-contain drop-shadow-lg"
               />
             </div>
 
