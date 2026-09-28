@@ -235,8 +235,8 @@ export default async function AssinePage() {
           <img
             src="/mascote/banner.png"
             alt="Vion Pro"
-            className="w-full rounded-2xl object-cover object-top shadow-xl"
-            style={{ height: 380 }}
+            className="w-full rounded-2xl object-cover object-center shadow-xl"
+            style={{ height: 560 }}
           />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
