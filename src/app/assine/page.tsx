@@ -90,12 +90,23 @@ export default async function AssinePage() {
       <img
         src="/mascote/banner.png"
         alt="Vion Pro"
-        className="w-full object-cover object-top"
-        style={{ height: 220 }}
+        className="w-full object-cover object-center"
+        style={{ height: 180 }}
       />
 
+      {/* Mascote flutuante entre banner e cards */}
+      <div className="relative flex justify-center" style={{ height: 0 }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/mascote/flutuante.png"
+          alt=""
+          className="absolute z-10 object-contain"
+          style={{ width: 160, height: 160, bottom: -80 }}
+        />
+      </div>
+
       {/* Cards de plano */}
-      <div className="flex-1 space-y-4 bg-white px-4 pb-8 pt-10 dark:bg-zinc-950">
+      <div className="flex-1 space-y-4 bg-white px-4 pb-8 pt-24 dark:bg-zinc-950">
         {/* Banner Pro ativo */}
         {pro && (
           <div className="mb-2 rounded-2xl border border-amber-400/30 bg-amber-50 p-4 text-center dark:bg-amber-950/30">
@@ -138,13 +149,9 @@ export default async function AssinePage() {
                   Estude sem distrações
                 </p>
               </div>
-              {/* Mascote mini */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/mascote/icone-mensal.png"
-                alt=""
-                className="h-12 w-24 shrink-0 object-contain"
-              />
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-600 shadow">
+                <span className="text-2xl">⭐</span>
+              </div>
             </div>
 
             <ul className="mb-5 space-y-2">
