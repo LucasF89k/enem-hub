@@ -4,7 +4,7 @@ import { BotaoAssinar } from "@/components/assinatura/BotaoAssinar"
 import { BotaoCancelar } from "@/components/assinatura/BotaoCancelar"
 import { db } from "@/lib/db"
 import { PlanoTipo } from "@prisma/client"
-import { Check, Crown, ChevronLeft } from "lucide-react"
+import { Check, ChevronLeft } from "lucide-react"
 import Link from "next/link"
 
 export const metadata = {
@@ -139,9 +139,12 @@ export default async function AssinePage() {
                 </p>
               </div>
               {/* Mascote mini */}
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-600 shadow">
-                <Crown className="h-7 w-7 text-white" />
-              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/mascote/icone-mensal.png"
+                alt=""
+                className="h-16 w-16 shrink-0 object-contain drop-shadow-lg"
+              />
             </div>
 
             <ul className="mb-5 space-y-2">
