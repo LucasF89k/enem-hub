@@ -205,8 +205,8 @@ export default async function AssinePage() {
         <img
           src="/mascote/banner.png"
           alt="Vion Pro"
-          className="w-full object-cover object-center"
-          style={{ height: 180 }}
+          className="w-full object-cover object-top"
+          style={{ height: 320 }}
         />
         <div className="relative flex justify-center" style={{ height: 0 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -235,8 +235,8 @@ export default async function AssinePage() {
           <img
             src="/mascote/banner.png"
             alt="Vion Pro"
-            className="w-full rounded-2xl object-cover object-center shadow-xl"
-            style={{ height: 260 }}
+            className="w-full rounded-2xl object-cover object-top shadow-xl"
+            style={{ height: 380 }}
           />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
