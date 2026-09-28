@@ -233,7 +233,7 @@ export default async function AssinePage() {
         <div className="flex w-[380px] shrink-0 flex-col items-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/mascote/banner.png"
+            src="/mascote/banner-v2.png"
             alt="Vion Pro"
             className="w-full rounded-2xl object-cover shadow-xl"
             style={{ height: 600, objectPosition: "center 20%" }}
