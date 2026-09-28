@@ -30,13 +30,13 @@ const QUICK_ACTIONS = [
 ]
 
 /** Mascote no cabeçalho do Mentor. */
-function MentorMascot({ size = 36 }: { size?: number }) {
+function MentorMascot({ size = 40 }: { size?: number }) {
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src="/mascote/icone.png"
+      src="/mascote/mentor.png"
       alt="Mentor Vion"
-      className="shrink-0 rounded-xl object-cover"
+      className="shrink-0 object-contain"
       style={{ width: size, height: size }}
     />
   )
