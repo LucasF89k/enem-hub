@@ -20,8 +20,8 @@ export const ABACATE_PRODUTOS = {
 
 // Preços exibidos na UI (fonte da verdade para o frontend).
 export const PRECOS = {
-  PRO_MENSAL: 1900, // R$19,00 em centavos
-  PRO_ANUAL: 15900, // R$159,00 em centavos (~R$13,25/mês)
+  PRO_MENSAL: 1790, // R$17,90 em centavos
+  PRO_ANUAL: 14990, // R$149,90 em centavos (~R$12,49/mês, ~30% OFF)
 } as const
 
 export type PlanoId = keyof typeof ABACATE_PRODUTOS
