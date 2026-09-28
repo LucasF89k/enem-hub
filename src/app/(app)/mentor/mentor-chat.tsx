@@ -30,15 +30,15 @@ const QUICK_ACTIONS = [
 ]
 
 /** Mascote no cabeçalho do Mentor. */
-function MentorMascot({ size = 30 }: { size?: number }) {
+function MentorMascot({ size = 36 }: { size?: number }) {
   return (
-    <span
-      className="inline-block shrink-0 overflow-hidden rounded-full"
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src="/mascote/icone.png"
+      alt="Mentor Vion"
+      className="shrink-0 rounded-xl object-cover"
       style={{ width: size, height: size }}
-    >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/opal/mascote.webp" alt="Mentor" className="h-full w-full object-cover" />
-    </span>
+    />
   )
 }
 
