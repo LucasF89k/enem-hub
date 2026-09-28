@@ -74,7 +74,7 @@ export async function iniciarAssinatura(planoId: PlanoId): Promise<{
       body: JSON.stringify({
         items: [{ id: produtoId, quantity: 1 }],
         externalId: `${sessao.user.id}_${planoId}_${Date.now()}`,
-        methods: ["CARD"],
+        methods: ["PIX"],
         customerId,
         completionUrl: `${APP_URL}/assine/sucesso`,
         returnUrl: `${APP_URL}/assine`,
