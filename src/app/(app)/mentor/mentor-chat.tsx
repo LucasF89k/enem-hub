@@ -42,11 +42,11 @@ function MentorMascot({ size = 40 }: { size?: number }) {
   )
 }
 
-/** Avatar das bolhas do chat: a gema de opala ondulando (slime), sem bolha de vidro. */
-function MentorAvatar({ size = 32, slime = false }: { size?: number; slime?: boolean }) {
+/** Avatar das bolhas do chat: igual à pedra da página inicial (bubble, sem slime). */
+function MentorAvatar({ size = 32 }: { size?: number }) {
   return (
     <span className="shrink-0" style={{ width: size, height: size }}>
-      <OpalCrystal size={size} stage={3} slime={slime} />
+      <OpalCrystal size={size} stage={3} bubble />
     </span>
   )
 }
@@ -538,7 +538,7 @@ export function MentorChat() {
               msg.role === "user" ? "justify-end" : "justify-start"
             )}
           >
-            {msg.role === "assistant" && <MentorAvatar size={32} slime />}
+            {msg.role === "assistant" && <MentorAvatar size={32} />}
 
             <div
               className={cn(
@@ -621,7 +621,7 @@ export function MentorChat() {
 
         {isLoading && messages[messages.length - 1]?.role !== "assistant" && (
           <div className="flex gap-2.5 justify-start">
-            <MentorAvatar size={32} slime />
+            <MentorAvatar size={32} />
             <div className="bg-muted rounded-2xl rounded-tl-sm px-4 py-2.5">
               <TypingDots />
             </div>
