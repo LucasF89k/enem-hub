@@ -230,13 +230,13 @@ export default async function AssinePage() {
       {/* ── DESKTOP: banner à esquerda, cards à direita ── */}
       <div className="hidden md:flex md:flex-1 md:gap-10 md:px-12 md:py-10 lg:px-20 xl:px-32">
         {/* Coluna esquerda: banner + mascote */}
-        <div className="flex w-[420px] shrink-0 flex-col items-center">
+        <div className="flex w-[380px] shrink-0 flex-col items-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/mascote/banner.png"
             alt="Vion Pro"
-            className="w-full rounded-2xl object-cover object-center shadow-xl"
-            style={{ height: 560 }}
+            className="w-full rounded-2xl object-cover shadow-xl"
+            style={{ height: 600, objectPosition: "center 20%" }}
           />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
