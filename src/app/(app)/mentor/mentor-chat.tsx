@@ -407,6 +407,20 @@ export function MentorChat() {
 
         if (!response.ok) {
           const errorBody = await response.text().catch(() => "")
+          if (response.status === 403) {
+            try {
+              const parsed = JSON.parse(errorBody) as { error?: string; mensagem?: string }
+              if (parsed.error === "limite_free") {
+                appendToMessage(
+                  assistantId,
+                  `⚠️ ${parsed.mensagem ?? "Limite diário atingido."}\n\n[👑 Assinar Vion Pro](/assine)`,
+                )
+                return
+              }
+            } catch {
+              // body não era JSON, usa o fallback abaixo
+            }
+          }
           const errorMsg = errorBody.trim() || `Erro ${response.status}`
           console.error("[Mentor] API error:", response.status, errorBody)
           appendToMessage(assistantId, `⚠️ ${errorMsg}`)

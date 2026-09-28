@@ -7,6 +7,9 @@ import { mimoKeys, mimoClientWithKey, MIMO_MODEL } from '@/lib/mimo'
 import { findCurso, estimateCutoff, cursoMedia } from '@/constants/cursos'
 import { findUniversidade } from '@/constants/universidades'
 import { rateLimit } from '@/lib/rate-limit'
+import { PlanoTipo } from '@prisma/client'
+
+const LIMITE_MENTOR_FREE = 5 // perguntas por dia no plano grátis
 
 export async function POST(req: NextRequest) {
   try {
@@ -25,6 +28,39 @@ export async function POST(req: NextRequest) {
         status: 429,
         headers: { 'Retry-After': String(limiteMentor.retryAfter) },
       })
+    }
+
+    // Limite diário para plano Free: 5 perguntas/dia
+    const sub = await db.subscription.findUnique({
+      where: { userId: session.user.id },
+      select: { plano: true, status: true, periodoFim: true },
+    })
+    const isPro =
+      sub &&
+      (sub.status === 'ATIVA' || sub.status === 'TRIAL') &&
+      sub.plano !== PlanoTipo.FREE &&
+      (!sub.periodoFim || sub.periodoFim > new Date())
+
+    if (!isPro) {
+      // Janela de 24h reinicia no mesmo horário da primeira pergunta do dia.
+      // Com Upstash configurado isso persiste entre instâncias; em memória
+      // funciona razoavelmente (usuário no mesmo servidor).
+      const limiteDiario = await rateLimit(
+        'mentor_free',
+        session.user.id,
+        LIMITE_MENTOR_FREE,
+        24 * 60 * 60 * 1000,
+      )
+      if (!limiteDiario.allowed) {
+        return new Response(
+          JSON.stringify({
+            error: 'limite_free',
+            mensagem: `Você usou suas ${LIMITE_MENTOR_FREE} perguntas gratuitas de hoje. Assine o Vion Pro para perguntas ilimitadas.`,
+            retryAfter: limiteDiario.retryAfter,
+          }),
+          { status: 403, headers: { 'Content-Type': 'application/json' } },
+        )
+      }
     }
 
     const { messages, topicId, image } = await req.json()

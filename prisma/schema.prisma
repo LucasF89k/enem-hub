@@ -31,6 +31,7 @@ model User {
 
   // App relations
   profile          UserProfile?
+  subscription     Subscription?
   studySessions    StudySession[]
   flashcardReviews FlashcardReview[]
   userQuestions    UserQuestion[]
@@ -47,6 +48,46 @@ model User {
   rankingGroupsOwned  RankingGroup[]       @relation("GroupOwner")
   rankingMemberships  RankingGroupMember[]
   leagueMemberships   LeagueMembership[]
+}
+
+// ============================================================
+// ASSINATURAS (AbacatePay)
+// ============================================================
+
+enum PlanoTipo {
+  FREE
+  PRO_MENSAL
+  PRO_ANUAL
+}
+
+enum AssinaturaStatus {
+  ATIVA
+  CANCELADA
+  INADIMPLENTE
+  TRIAL
+}
+
+model Subscription {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  plano     PlanoTipo        @default(FREE)
+  status    AssinaturaStatus @default(ATIVA)
+
+  // IDs do AbacatePay
+  abacateCustomerId    String?
+  abacateSubscriptionId String?
+
+  // Datas de controle
+  periodoFim        DateTime?  // quando expira o plano atual
+  canceladoEm       DateTime?
+  ultimaCobrancaEm  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([abacateSubscriptionId])
 }
 
 model PasswordResetToken {

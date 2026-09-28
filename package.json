@@ -17,6 +17,7 @@
     "test:e2e:report": "playwright show-report"
   },
   "dependencies": {
+    "@abacatepay/sdk": "^2.0.3",
     "@auth/prisma-adapter": "^2.11.3",
     "@google/generative-ai": "^0.24.1",
     "@hookform/resolvers": "^5.4.0",

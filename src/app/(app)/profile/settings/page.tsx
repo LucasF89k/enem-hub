@@ -16,6 +16,7 @@ import Link from "next/link"
 import { useEffect, useState } from "react"
 import { CursoUniSelectors } from "@/components/settings/CursoUniSelectors"
 import { PrivacidadeCard } from "@/components/settings/PrivacidadeCard"
+import { AssinaturaCard } from "@/components/settings/AssinaturaCard"
 
 interface ProfileData {
   name: string
@@ -162,6 +163,11 @@ export default function SettingsPage() {
           {isPending ? "Salvando…" : "Salvar alterações"}
         </Button>
       </form>
+
+      <Separator />
+
+      {/* Assinatura: plano atual e opção de upgrade/cancelamento */}
+      <AssinaturaCard />
 
       <Separator />
 
