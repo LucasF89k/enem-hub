@@ -44,10 +44,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   viewportFit: "cover",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#7C3AED" },
-    { media: "(prefers-color-scheme: dark)", color: "#0F0A1E" },
-  ],
+  themeColor: "#0F0A1E",
 }
 
 export default async function RootLayout({
@@ -63,17 +60,9 @@ export default async function RootLayout({
   return (
     <html
       lang="pt-BR"
-      className={`${inter.variable} ${jetbrainsMono.variable}`}
-      suppressHydrationWarning
+      className={`${inter.variable} ${jetbrainsMono.variable} dark`}
     >
-      <head>
-        {/* Aplica o tema salvo antes da pintura (evita flash). Padrão: escuro. */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `try{var t=localStorage.getItem('theme');if(t!=='light'){document.documentElement.classList.add('dark')}}catch(e){document.documentElement.classList.add('dark')}`,
-          }}
-        />
-      </head>
+      <head />
       <body className="min-h-screen bg-background text-foreground font-sans antialiased">
         <ServiceWorkerRegistrar />
         <OfflineBanner />

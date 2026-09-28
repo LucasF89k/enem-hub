@@ -35,92 +35,79 @@
   --font-mono: var(--font-jetbrains-mono);
 }
 
-/* ── Light theme ─────────────────────────────────────────── */
+/* ── Tokens base (compartilhados) ────────────────────────── */
 :root {
   --radius: 0.5rem;
-
-  /* Fundo roxo-escuro suave: combina com a nebulosa/caverna do hero
-     e mantém a identidade roxa da marca no modo claro. */
-  --background: hsl(248 28% 12%);
-  --foreground: hsl(210 20% 94%);
-
-  --card: hsl(248 22% 16%);
-  --card-foreground: hsl(210 20% 94%);
-
-  --popover: hsl(248 22% 16%);
-  --popover-foreground: hsl(210 20% 94%);
-
-  --primary: hsl(163 60% 52%);
-  --primary-foreground: hsl(220 26% 6%);
-
-  --secondary: hsl(248 20% 20%);
-  --secondary-foreground: hsl(210 20% 88%);
-
-  --muted: hsl(248 20% 20%);
-  --muted-foreground: hsl(248 12% 60%);
-
-  --accent: hsl(157 78% 68%);
-  --accent-foreground: hsl(220 26% 6%);
-
-  --destructive: hsl(0 79% 65%);
-  --destructive-foreground: hsl(0 0% 98%);
-
-  --border: hsl(0 0% 100% / 0.10);
-  --input: hsl(0 0% 100% / 0.10);
-  --ring: hsl(163 60% 52%);
-
-  --warning: hsl(38 92% 50%);
-  --warning-foreground: hsl(0 0% 5%);
-
-  --gauge-track: hsl(0 0% 100% / 0.10);
-  --gauge-from: hsl(206 70% 63%);
-  --gauge-to: hsl(157 78% 68%);
-  --glow-mint: hsl(157 78% 68%);
-  --glow-purple: hsl(252 47% 62%);
 }
 
-/* ── Dark theme: paleta inspirada no Opal (dark/mint/glow) ── */
-.dark {
-  --background: hsl(220 26% 4%);       /* #06070A-ish, leve tom azulado */
-  --foreground: hsl(210 20% 97%);      /* #F5F6F7 */
+/* ── Tema único: dark fixo ───────────────────────────────── */
+:root {
+  --background: hsl(220 26% 4%);
+  --foreground: hsl(210 20% 97%);
 
-  --card: hsl(213 15% 8%);             /* #0F1215 */
+  --card: hsl(213 15% 8%);
   --card-foreground: hsl(210 20% 97%);
 
   --popover: hsl(213 15% 7%);
   --popover-foreground: hsl(210 20% 97%);
 
-  /* Antes era roxo (o "violeta de SaaS de IA" clássico), trocado pelo
-     mint que já é a identidade do app (gauge/accent), pra não parecer
-     tema padrão de IA. Botões/estados ativos usam essa cor agora. */
   --primary: hsl(163 60% 58%);
   --primary-foreground: hsl(220 26% 6%);
 
-  --secondary: hsl(210 12% 12%);       /* #171B1F: bg-elevated-2 */
+  --secondary: hsl(210 12% 12%);
   --secondary-foreground: hsl(210 20% 97%);
 
   --muted: hsl(210 12% 12%);
-  --muted-foreground: hsl(220 6% 60%); /* #9AA0A6 */
+  --muted-foreground: hsl(220 6% 60%);
 
-  --accent: hsl(157 78% 74%);          /* #7CF2C8: mint, glow principal */
+  --accent: hsl(157 78% 74%);
   --accent-foreground: hsl(220 26% 6%);
 
-  --destructive: hsl(0 79% 71%);       /* #F26D6D */
+  --destructive: hsl(0 79% 71%);
   --destructive-foreground: hsl(220 26% 6%);
 
   --border: hsl(0 0% 100% / 0.08);
   --input: hsl(0 0% 100% / 0.08);
   --ring: hsl(157 78% 74%);
 
-  --warning: hsl(36 91% 57%);          /* #F5A623: chama de streak */
+  --warning: hsl(36 91% 57%);
   --warning-foreground: hsl(220 26% 6%);
 
-  /* Tokens extras do gauge/glow "Opal": usados por ScoreGauge/hero */
   --gauge-track: hsl(0 0% 100% / 0.08);
-  --gauge-from: hsl(206 70% 63%);      /* #5AA9E6 */
-  --gauge-to: hsl(157 78% 74%);        /* #7CF2C8 */
+  --gauge-from: hsl(206 70% 63%);
+  --gauge-to: hsl(157 78% 74%);
   --glow-mint: hsl(157 78% 74%);
-  --glow-purple: hsl(252 47% 68%);     /* #8B7FD1 */
+  --glow-purple: hsl(252 47% 68%);
+}
+
+/* Alias .dark → mesmas vars (componentes que usam .dark: continuam funcionando) */
+.dark {
+  --background: hsl(220 26% 4%);
+  --foreground: hsl(210 20% 97%);
+  --card: hsl(213 15% 8%);
+  --card-foreground: hsl(210 20% 97%);
+  --popover: hsl(213 15% 7%);
+  --popover-foreground: hsl(210 20% 97%);
+  --primary: hsl(163 60% 58%);
+  --primary-foreground: hsl(220 26% 6%);
+  --secondary: hsl(210 12% 12%);
+  --secondary-foreground: hsl(210 20% 97%);
+  --muted: hsl(210 12% 12%);
+  --muted-foreground: hsl(220 6% 60%);
+  --accent: hsl(157 78% 74%);
+  --accent-foreground: hsl(220 26% 6%);
+  --destructive: hsl(0 79% 71%);
+  --destructive-foreground: hsl(220 26% 6%);
+  --border: hsl(0 0% 100% / 0.08);
+  --input: hsl(0 0% 100% / 0.08);
+  --ring: hsl(157 78% 74%);
+  --warning: hsl(36 91% 57%);
+  --warning-foreground: hsl(220 26% 6%);
+  --gauge-track: hsl(0 0% 100% / 0.08);
+  --gauge-from: hsl(206 70% 63%);
+  --gauge-to: hsl(157 78% 74%);
+  --glow-mint: hsl(157 78% 74%);
+  --glow-purple: hsl(252 47% 68%);
 }
 
 /* ── Base styles ─────────────────────────────────────────── */
