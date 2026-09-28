@@ -42,11 +42,11 @@ function MentorMascot({ size = 40 }: { size?: number }) {
   )
 }
 
-/** Avatar das bolhas do chat: a gema de opala ondulando (slime). */
+/** Avatar das bolhas do chat: a gema de opala ondulando (slime), sem bolha de vidro. */
 function MentorAvatar({ size = 32, slime = false }: { size?: number; slime?: boolean }) {
   return (
     <span className="shrink-0" style={{ width: size, height: size }}>
-      <OpalCrystal size={size} stage={3} slime={slime} icon />
+      <OpalCrystal size={size} stage={3} slime={slime} />
     </span>
   )
 }
