@@ -119,9 +119,12 @@ function MaisMenu() {
             href="/assine"
             className="flex items-center gap-4 px-6 py-4 text-base font-semibold transition-colors hover:bg-muted/40"
           >
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-500/15">
-              <Crown className="h-5 w-5 text-violet-400" />
-            </span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/mascote/icone-joinha.png"
+              alt=""
+              className="h-10 w-10 shrink-0 overflow-hidden rounded-full object-cover"
+            />
             <span className="flex-1">Assinatura</span>
             {pro && labelPlano && (
               <span className="rounded-full bg-amber-500/20 px-2.5 py-0.5 text-xs font-bold text-amber-400 ring-1 ring-amber-500/30">
