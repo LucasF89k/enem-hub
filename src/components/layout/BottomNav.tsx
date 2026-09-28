@@ -2,7 +2,8 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { motion } from "framer-motion"
+import { useEffect, useRef, useState } from "react"
+import { motion, AnimatePresence } from "framer-motion"
 import {
   Home,
   BookOpen,
@@ -11,15 +12,9 @@ import {
   CalendarRange,
   MoreHorizontal,
   User,
-  Crown,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
-import {
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-} from "@/components/ui/sheet"
 import { usePlano } from "@/hooks/use-plano"
 import { PlanoTipo } from "@prisma/client"
 
@@ -60,6 +55,9 @@ function ActiveHighlight() {
 function MaisMenu() {
   const { pro, plano } = usePlano()
   const pathname = usePathname()
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
   const isActive =
     pathname.startsWith("/profile") || pathname.startsWith("/assine")
 
@@ -70,79 +68,90 @@ function MaisMenu() {
         ? "Pro Mensal"
         : null
 
+  // Fecha ao clicar fora
+  useEffect(() => {
+    if (!open) return
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handler)
+    return () => document.removeEventListener("mousedown", handler)
+  }, [open])
+
   return (
-    <Sheet>
-      <SheetTrigger asChild>
-        <button
-          aria-label="Mais opções"
-          className={cn(
-            "relative flex min-h-[56px] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-0.5 transition-colors",
-            isActive
-              ? "text-primary"
-              : "text-muted-foreground hover:text-foreground",
-          )}
-        >
-          {isActive && <ActiveHighlight />}
-          <MoreHorizontal
-            className="h-5 w-5 shrink-0"
-            strokeWidth={isActive ? 2.5 : 1.75}
-          />
-          <span className="w-full truncate text-center text-[9.5px] font-medium leading-none">
-            Mais
-          </span>
-        </button>
-      </SheetTrigger>
-
-      <SheetContent
-        side="bottom"
-        className="rounded-t-2xl px-0 pb-0"
-        // remove o X padrão — não há título, e o overlay fecha ao tocar fora
-        aria-describedby={undefined}
+    <div ref={ref} className="relative flex min-h-[56px] min-w-0 flex-1 items-stretch">
+      <button
+        aria-label="Mais opções"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        className={cn(
+          "relative flex w-full flex-col items-center justify-center gap-0.5 px-0.5 transition-colors",
+          isActive || open
+            ? "text-primary"
+            : "text-muted-foreground hover:text-foreground",
+        )}
       >
-        {/* Puxador visual */}
-        <div className="mx-auto mb-4 mt-2 h-1 w-10 rounded-full bg-muted" />
+        {(isActive || open) && <ActiveHighlight />}
+        <MoreHorizontal
+          className="h-5 w-5 shrink-0"
+          strokeWidth={isActive || open ? 2.5 : 1.75}
+        />
+        <span className="w-full truncate text-center text-[9.5px] font-medium leading-none">
+          Mais
+        </span>
+      </button>
 
-        <nav className="flex flex-col divide-y divide-border">
-          {/* Perfil */}
-          <Link
-            href="/profile"
-            className="flex items-center gap-4 px-6 py-4 text-base font-semibold transition-colors hover:bg-muted/40"
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: 8, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 8, scale: 0.96 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
+            className="absolute bottom-full right-0 mb-2 w-56 overflow-hidden rounded-2xl border border-border bg-card shadow-xl"
           >
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-500/15">
-              <User className="h-5 w-5 text-blue-400" />
-            </span>
-            Perfil
-          </Link>
+            <nav className="flex flex-col divide-y divide-border">
+              <Link
+                href="/profile"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-3 px-4 py-3 text-sm font-semibold transition-colors hover:bg-muted/40"
+              >
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500/15">
+                  <User className="h-4 w-4 text-blue-400" />
+                </span>
+                Perfil
+              </Link>
 
-          {/* Assinatura */}
-          <Link
-            href="/assine"
-            className="flex items-center gap-4 px-6 py-4 text-base font-semibold transition-colors hover:bg-muted/40"
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/mascote/icone-joinha.png"
-              alt=""
-              className="h-10 w-10 shrink-0 overflow-hidden rounded-full object-cover"
-            />
-            <span className="flex-1">Assinatura</span>
-            {pro && labelPlano && (
-              <span className="rounded-full bg-amber-500/20 px-2.5 py-0.5 text-xs font-bold text-amber-400 ring-1 ring-amber-500/30">
-                {labelPlano}
-              </span>
-            )}
-            {!pro && (
-              <span className="rounded-full bg-violet-500/20 px-2.5 py-0.5 text-xs font-bold text-violet-400">
-                Upgrade
-              </span>
-            )}
-          </Link>
-        </nav>
-
-        {/* Espaço para safe-area iOS */}
-        <div style={{ height: "max(env(safe-area-inset-bottom), 1.5rem)" }} />
-      </SheetContent>
-    </Sheet>
+              <Link
+                href="/assine"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-3 px-4 py-3 text-sm font-semibold transition-colors hover:bg-muted/40"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/mascote/icone-joinha.png"
+                  alt=""
+                  className="h-8 w-8 shrink-0 rounded-full object-cover"
+                />
+                <span className="flex-1">Assinatura</span>
+                {pro && labelPlano && (
+                  <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-bold text-amber-400 ring-1 ring-amber-500/30">
+                    {labelPlano}
+                  </span>
+                )}
+                {!pro && (
+                  <span className="rounded-full bg-violet-500/20 px-2 py-0.5 text-[10px] font-bold text-violet-400">
+                    Upgrade
+                  </span>
+                )}
+              </Link>
+            </nav>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   )
 }
 
