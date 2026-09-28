@@ -78,6 +78,7 @@ export async function iniciarAssinatura(planoId: PlanoId): Promise<{
     })
 
     if (!resultado.success || !resultado.data) {
+      console.error("[assinatura] AbacatePay error:", resultado.error)
       return { ok: false, erro: resultado.error ?? "Erro ao criar assinatura" }
     }
 
@@ -94,8 +95,9 @@ export async function iniciarAssinatura(planoId: PlanoId): Promise<{
 
     return { ok: true, url }
   } catch (err) {
-    console.error("[assinatura] iniciarAssinatura:", err)
-    return { ok: false, erro: "Erro interno ao iniciar assinatura" }
+    const msg = err instanceof Error ? err.message : String(err)
+    console.error("[assinatura] iniciarAssinatura:", msg, err)
+    return { ok: false, erro: `Erro ao iniciar assinatura: ${msg}` }
   }
 }
 
