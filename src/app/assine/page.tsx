@@ -203,10 +203,10 @@ export default async function AssinePage() {
       <div className="md:hidden">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/mascote/banner.png"
+          src="/mascote/banner-mobile.png"
           alt="Vion Pro"
-          className="w-full object-cover object-top"
-          style={{ height: 320 }}
+          className="w-full object-cover object-center"
+          style={{ height: 180 }}
         />
         <div className="relative flex justify-center" style={{ height: 0 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
