@@ -42,11 +42,11 @@ function MentorMascot({ size = 40 }: { size?: number }) {
   )
 }
 
-/** Avatar das bolhas do chat: igual à pedra da página inicial (bubble, sem slime). */
+/** Avatar das bolhas do chat: só a pedra, sem halo nem bolha. */
 function MentorAvatar({ size = 32 }: { size?: number }) {
   return (
     <span className="shrink-0" style={{ width: size, height: size }}>
-      <OpalCrystal size={size} stage={3} bubble />
+      <OpalCrystal size={size} stage={3} />
     </span>
   )
 }
