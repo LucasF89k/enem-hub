@@ -10,7 +10,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { ThemeSelect } from "@/components/settings/ThemeSelect"
 import { ArrowLeft, Loader2, LogOut, Save } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
@@ -26,7 +25,6 @@ interface ProfileData {
   targetInstitution: string
   examDate: string
   dailyStudyGoal: number
-  theme: string
 }
 
 export default function SettingsPage() {
@@ -138,22 +136,6 @@ export default function SettingsPage() {
                 max={720}
                 step={30}
               />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Aparência */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-              Aparência
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-1.5">
-              <Label>Tema</Label>
-              <ThemeSelect />
-              <p className="text-xs text-muted-foreground">Aplica na hora, não precisa salvar.</p>
             </div>
           </CardContent>
         </Card>
