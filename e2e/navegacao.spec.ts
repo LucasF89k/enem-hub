@@ -7,8 +7,8 @@ import { test, expect, type Page } from "@playwright/test"
  */
 
 const USUARIO = {
-  email: process.env.E2E_EMAIL ?? "lucasfortuna89@outlook.com",
-  senha: process.env.E2E_PASSWORD ?? "LucasF89k.",
+  email: process.env.E2E_EMAIL ?? "",
+  senha: process.env.E2E_PASSWORD ?? "",
 }
 
 test.beforeEach(async ({ page }) => {
